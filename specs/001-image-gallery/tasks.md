@@ -22,7 +22,10 @@ description: "Task list for Modern Image Gallery implementation"
 **Purpose**: Project initialization and basic structure
 
 - [ ] T001 Create base directories (src/generator, src/static/css, src/static/js, src/templates, tests/unit, tests/integration, config, content)
-- [ ] T002 Initialize Python project metadata (pyproject.toml) with PyYAML + Pillow (optional) deps at repository root
+- [ ] T002 Initialize Python project metadata (pyproject.toml) with PyYAML + Pillow (optional) deps at repository root (managed via uv)
+- [ ] T002a [P] Generate uv lock file `uv.lock` ensuring reproducible dependency resolution
+- [ ] T002b [P] Add `uv` install & run instructions to README (development + test commands)
+- [ ] T002c Add CI workflow step placeholder for `uv sync` in `.github/workflows/ci.yml`
 - [ ] T003 Create `config/settings.yaml` with default paths (content_dir, gallery_yaml_path, default_category, enable_thumbnails)
 - [ ] T004 Add `.gitignore` entries for `dist/` and cache artifacts
 - [ ] T005 [P] Create placeholder `config/gallery.yaml` with categories list and empty images section
@@ -128,7 +131,7 @@ description: "Task list for Modern Image Gallery implementation"
 - [ ] T048 Add README section for accessibility & performance budgets
 - [ ] T049 Security review checklist update `docs/decisions/0002-security-baseline.md`
 - [ ] T050 [P] Add optional Pillow thumbnail generation path in `src/generator/scan.py` & config flag integration
-- [ ] T051 Add coverage configuration (if desired) `pyproject.toml` updates
+- [ ] T051 Add coverage configuration (if desired) `pyproject.toml` updates + integrate with `uv run`
 - [ ] T052 Final Lighthouse / axe report capture for documentation `docs/metrics/INITIAL_REPORT.md`
 
 ---

@@ -31,4 +31,4 @@
 
 ## Notes
 
-Specification passes all checklist items; ready for `/speckit.plan`.
+Added assumption about using `uv` as the package manager (performance & reproducibility). Considered a tooling note; does not impact user-facing scope or violate neutrality goals.

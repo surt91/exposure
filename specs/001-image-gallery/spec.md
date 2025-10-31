@@ -131,6 +131,7 @@ modifying existing category order.
 - Image processing (thumbnails) assumed available or pre-generated outside scope.
 - Virtualization/lazy loading strategy will meet performance criteria (implementation detail deferred).
 - YAML file is authoritative for category order; absence means alphabetical order of discovered categories.
+- Python dependency management will use the `uv` package manager for speed and reproducible resolution (does not affect user-visible behavior).
 
 ## Out of Scope
 
