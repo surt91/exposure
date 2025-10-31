@@ -21,18 +21,18 @@ description: "Task list for Modern Image Gallery implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create base directories (src/generator, src/static/css, src/static/js, src/templates, tests/unit, tests/integration, config, content)
-- [ ] T002 Initialize Python project metadata (pyproject.toml) with PyYAML + Pillow (optional) deps at repository root (managed via uv)
-- [ ] T002a [P] Generate uv lock file `uv.lock` ensuring reproducible dependency resolution
-- [ ] T002b [P] Add `uv` install & run instructions to README (development + test commands)
-- [ ] T002c Add CI workflow step placeholder for `uv sync` in `.github/workflows/ci.yml`
-- [ ] T003 Create `config/settings.yaml` with default paths (content_dir, gallery_yaml_path, default_category, enable_thumbnails)
-- [ ] T004 Add `.gitignore` entries for `dist/` and cache artifacts
-- [ ] T005 [P] Create placeholder `config/gallery.yaml` with categories list and empty images section
-- [ ] T006 [P] Create initial README quickstart section referencing generator usage
-- [ ] T007 Add LICENSE placeholder (if required) in repository root
-- [ ] T008 Configure basic `pytest` settings (add `tests/__init__.py` and `pytest.ini`)
-- [ ] T009 Add initial CHANGELOG.md with Unreleased section
+- [X] T001 Create base directories (src/generator, src/static/css, src/static/js, src/templates, tests/unit, tests/integration, config, content)
+- [X] T002 Initialize Python project metadata (pyproject.toml) with PyYAML + Pillow (optional) deps at repository root (managed via uv)
+- [X] T002a [P] Generate uv lock file `uv.lock` ensuring reproducible dependency resolution
+- [X] T002b [P] Add `uv` install & run instructions to README (development + test commands)
+- [X] T002c Add CI workflow step placeholder for `uv sync` in `.github/workflows/ci.yml`
+- [X] T003 Create `config/settings.yaml` with default paths (content_dir, gallery_yaml_path, default_category, enable_thumbnails)
+- [X] T004 Add `.gitignore` entries for `dist/` and cache artifacts
+- [X] T005 [P] Create placeholder `config/gallery.yaml` with categories list and empty images section
+- [X] T006 [P] Create initial README quickstart section referencing generator usage
+- [X] T007 Add LICENSE placeholder (if required) in repository root
+- [X] T008 Configure basic `pytest` settings (add `tests/__init__.py` and `pytest.ini`)
+- [X] T009 Add initial CHANGELOG.md with Unreleased section
 
 ---
 
@@ -42,17 +42,17 @@ description: "Task list for Modern Image Gallery implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T010 Implement data models in `src/generator/model.py` (Image, Category, GalleryConfig, YamlEntry)
-- [ ] T011 [P] Implement YAML loader/saver utilities in `src/generator/yaml_sync.py` (read, write, stub append)
-- [ ] T012 [P] Implement image scanning logic in `src/generator/scan.py` (discover files, detect duplicates)
-- [ ] T013 Implement basic hashing utility in `src/generator/assets.py` (hash + copy static assets)
-- [ ] T014 Create template placeholders: `src/templates/index.html.tpl` and `src/templates/fullscreen.html.part` (structure only)
-- [ ] T015 [P] Add unit tests for models and validation rules in `tests/unit/test_model.py`
-- [ ] T016 [P] Add unit tests for YAML sync (existing entry, stub creation) in `tests/unit/test_yaml_sync.py`
-- [ ] T017 Add unit tests for scan behavior (duplicates, filtering) in `tests/unit/test_scan.py`
-- [ ] T018 Establish build script entry point stub `src/generator/build_html.py` (parse settings, orchestrate pipeline skeleton)
-- [ ] T019 Integration test skeleton `tests/integration/test_end_to_end.py` (invokes build and asserts basic outputs exist)
-- [ ] T020 Add accessibility test harness placeholder script `tests/accessibility/axe_runner.sh` (to be wired in CI)
+- [X] T010 Implement data models in `src/generator/model.py` (Image, Category, GalleryConfig, YamlEntry)
+- [X] T011 [P] Implement YAML loader/saver utilities in `src/generator/yaml_sync.py` (read, write, stub append)
+- [X] T012 [P] Implement image scanning logic in `src/generator/scan.py` (discover files, detect duplicates)
+- [X] T013 Implement basic hashing utility in `src/generator/assets.py` (hash + copy static assets)
+- [X] T014 Create template placeholders: `src/templates/index.html.tpl` and `src/templates/fullscreen.html.part` (structure only)
+- [X] T015 [P] Add unit tests for models and validation rules in `tests/unit/test_model.py`
+- [X] T016 [P] Add unit tests for YAML sync (existing entry, stub creation) in `tests/unit/test_yaml_sync.py`
+- [X] T017 Add unit tests for scan behavior (duplicates, filtering) in `tests/unit/test_scan.py`
+- [X] T018 Establish build script entry point stub `src/generator/build_html.py` (parse settings, orchestrate pipeline skeleton)
+- [X] T019 Integration test skeleton `tests/integration/test_end_to_end.py` (invokes build and asserts basic outputs exist)
+- [X] T020 Add accessibility test harness placeholder script `tests/accessibility/axe_runner.sh` (to be wired in CI)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
