@@ -1,0 +1,29 @@
+# YAML Schema (informal) for gallery.yaml
+# Ordered list of categories followed by image entries.
+# This is a human-maintained file augmented with generated stubs.
+
+categories:
+  - Landscapes
+  - Portraits
+  - Uncategorized  # Implicit default; may be omitted if no uncategorized images
+
+images:
+  - filename: img001.jpg
+    category: Landscapes
+    title: Sunrise Ridge
+    description: Early morning light over the mountains.
+  - filename: img002.jpg
+    category: Portraits
+    title: Smiling Child
+    description: Joyful candid portrait.
+  # Auto-generated stub example (added by generator on run):
+  - filename: new_stub.jpg
+    category: Uncategorized
+    title: ""  # User to fill
+    description: ""  # User to fill
+
+# Validation Rules:
+# - categories must be a list of unique strings (render order = list order)
+# - images must be a list; each filename unique
+# - image.category must be in categories OR default_category
+# - title/description optional
