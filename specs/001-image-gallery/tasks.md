@@ -62,7 +62,7 @@ description: "Task list for Modern Image Gallery implementation"
 
 **Goal**: Display scrollable gallery with category ordering from YAML
 
-**Independent Test**: Given sample YAML with categories A then B, generated `dist/index.html` lists A images then B images; >30 images scroll without layout breakage
+**Independent Test**: Given sample YAML with categories A then B, generated `dist/index.html` lists A images then B images; >30 images scroll without layout breakage; asset budget script passes.
 
 ### Tests for User Story 1
 
@@ -72,7 +72,8 @@ description: "Task list for Modern Image Gallery implementation"
 - [ ] T024 [P] [US1] Implement JS for lazy loading / progressive enhancement in `src/static/js/gallery.js`
 - [ ] T025 [US1] Add unit test for category ordering in `tests/unit/test_build_html.py`
 - [ ] T026 [US1] Extend integration test verifying scrollable content structure in `tests/integration/test_end_to_end.py`
-- [ ] T027 [US1] Add performance budget assertion script placeholder `tests/integration/test_performance_budget.py`
+- [ ] T027 [US1] Add asset budget enforcement test `tests/integration/test_asset_budgets.py` (HTML ≤30KB, critical CSS ≤25KB, initial JS ≤75KB uncompressed)
+- [ ] T027a [P] [US1] Add CI workflow step to run asset budget & Lighthouse checks `.github/workflows/ci.yml` (fail if thresholds exceeded)
 - [ ] T028 [US1] Generate dist output and manual verify (document in test) `dist/index.html`
 
 **Checkpoint**: Gallery MVP complete; fulfills SC-001, partial SC-004
@@ -95,6 +96,7 @@ description: "Task list for Modern Image Gallery implementation"
 - [ ] T034 [US2] Add integration test for fullscreen open/close behavior (DOM presence) `tests/integration/test_fullscreen.py`
 - [ ] T035 [US2] Add accessibility test case in axe harness referencing overlay `tests/accessibility/axe_runner.sh`
 - [ ] T036 [US2] Update performance budget test if overlay assets increase size `tests/integration/test_performance_budget.py`
+ - [ ] T035a [US2] Add fullscreen latency test `tests/integration/test_fullscreen_latency.py` (overlay visible <300ms average over 5 opens)
 
 **Checkpoint**: Fullscreen feature complete; fulfills SC-002 & part of accessibility goals
 
@@ -113,6 +115,8 @@ description: "Task list for Modern Image Gallery implementation"
 - [ ] T039 [P] [US3] Add integration test adding new images then verifying YAML updated `tests/integration/test_stub_generation.py`
 - [ ] T040 [US3] Add validation: no category order mutation in `tests/integration/test_stub_generation.py`
 - [ ] T041 [US3] Update end-to-end test to include stub scenario `tests/integration/test_end_to_end.py`
+ - [ ] T041a [US3] Add stub coverage test `tests/integration/test_stub_coverage.py` (assert 100% content/ images represented in YAML after build)
+ - [ ] T041b [P] [US3] Add batch stub generation performance test `tests/integration/test_stub_batch.py` (50 new images; ordering preserved; runtime <5s)
 
 **Checkpoint**: Auto-stub functionality complete; fulfills SC-003 & SC-005
 
@@ -133,6 +137,11 @@ description: "Task list for Modern Image Gallery implementation"
 - [ ] T050 [P] Add optional Pillow thumbnail generation path in `src/generator/scan.py` & config flag integration
 - [ ] T051 Add coverage configuration (if desired) `pyproject.toml` updates + integrate with `uv run`
 - [ ] T052 Final Lighthouse / axe report capture for documentation `docs/metrics/INITIAL_REPORT.md`
+ - [ ] T053 Add release changelog update script `scripts/update_changelog.py`
+ - [ ] T054 Add release workflow `.github/workflows/release.yml` (tag + CHANGELOG verification)
+ - [ ] T055 Add changelog gate script `scripts/check_changelog.py` (fail PR if version entry missing)
+ - [ ] T056 Add governance review checklist `docs/governance/review_checklist.md`
+ - [ ] T057 Add monthly governance CI workflow `.github/workflows/monthly_governance.yml` (schedule monthly)
 
 ---
 
