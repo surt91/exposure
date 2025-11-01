@@ -51,3 +51,15 @@ ignore = []
 [tool.ruff.lint.per-file-ignores]
 "tests/integration/test_asset_budgets.py" = ["E501"]  # Allow long lines for budget reports
 "tests/integration/test_reproducibility.py" = ["E501"]  # Allow long lines for subprocess calls
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "htmlcov"

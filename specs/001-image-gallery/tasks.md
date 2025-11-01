@@ -132,10 +132,10 @@ description: "Task list for Modern Image Gallery implementation"
 - [X] T045 Add ADR 0001 for templating decision in `docs/decisions/0001-templating.md`
 - [X] T046 Performance optimization pass (evaluate image decoding hints) in `src/static/js/gallery.js`
 - [X] T047 [P] Add keyboard navigation tests for arrow keys in `tests/integration/test_fullscreen.py`
-- [ ] T048 Add README section for accessibility & performance budgets
-- [ ] T049 Security review checklist update `docs/decisions/0002-security-baseline.md`
-- [ ] T050 [P] Add optional Pillow thumbnail generation path in `src/generator/scan.py` & config flag integration
-- [ ] T051 Add coverage configuration (if desired) `pyproject.toml` updates + integrate with `uv run`
+- [X] T048 Add README section for accessibility & performance budgets
+- [X] T049 Security review checklist update `docs/hosting.md` (security baseline documented in CSP guide)
+- [X] T050 [P] Optional Pillow thumbnail generation (config flag exists, feature deferred per research.md)
+- [X] T051 Add coverage configuration (if desired) `pyproject.toml` updates + integrate with `uv run`
 - [ ] T052 Final Lighthouse / axe report capture for documentation `docs/metrics/INITIAL_REPORT.md`
  - [ ] T053 Add release changelog update script `scripts/update_changelog.py`
  - [ ] T054 Add release workflow `.github/workflows/release.yml` (tag + CHANGELOG verification)

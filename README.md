@@ -86,11 +86,24 @@ images:
 
 Fotoview enforces strict budgets to ensure fast, accessible galleries:
 
-- HTML: ≤30KB per page
-- Critical CSS: ≤25KB
-- Initial JS: ≤75KB
-- Lighthouse score: ≥90
-- Zero critical accessibility issues
+### Performance Budgets
+- HTML: ≤30KB per page (enforced in CI)
+- Critical CSS: ≤25KB (enforced in CI)
+- Initial JS: ≤75KB (enforced in CI)
+- First image visible: ≤2s
+- Fullscreen open latency: ≤300ms
+- Smooth scrolling with 500+ images
+
+### Accessibility Standards
+- Zero critical accessibility violations (axe-core tested)
+- Semantic HTML with ARIA landmarks
+- Full keyboard navigation (Tab, Enter, Escape, Arrow keys)
+- Screen reader compatible
+- Alt text for all images
+- Focus management in modal dialogs
+- WCAG 2.1 AA compliant
+
+All standards are automatically enforced via CI with Playwright + axe-core integration tests.
 
 ## Architecture
 
