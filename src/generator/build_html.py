@@ -47,7 +47,7 @@ def load_config(settings_path: Path) -> GalleryConfig:
     model._yaml_settings_file = settings_path
 
     # Pydantic-settings will automatically load YAML and merge with env vars
-    return GalleryConfig()
+    return GalleryConfig()  # type: ignore[call-arg]
 
 
 def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
@@ -195,7 +195,7 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
         autoescape=True,
         extensions=["jinja2.ext.i18n"],
     )
-    env.install_gettext_translations(translations)
+    env.install_gettext_translations(translations)  # type: ignore[attr-defined]
     template = env.get_template("index.html.j2")
 
     # CSS sources
