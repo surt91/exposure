@@ -84,10 +84,21 @@ jobs:
     - name: Install dependencies
       run: uv sync --all-extras
 
-    - name: Create settings file
+    - name: Setup test environment
       run: |
+        # Create directories
         mkdir -p config content
-        cat > config/settings.yaml << EOF
+
+        # Create gallery.yaml
+        cat > config/gallery.yaml << 'EOF'
+        categories:
+          - TestCategory
+          - Uncategorized
+        images: []
+        EOF
+
+        # Create settings.yaml
+        cat > config/settings.yaml << 'EOF'
         content_dir: content
         gallery_yaml_path: config/gallery.yaml
         default_category: Uncategorized
@@ -95,8 +106,6 @@ jobs:
         output_dir: dist
         EOF
 
-    - name: Create sample images for testing
-      run: |
         # Create minimal JPEG files for testing
         printf '\xff\xd8\xff\xe0\x00\x10JFIF' > content/test1.jpg
         printf '\xff\xd8\xff\xe0\x00\x10JFIF' > content/test2.jpg
