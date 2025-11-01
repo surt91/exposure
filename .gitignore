@@ -34,6 +34,10 @@ htmlcov/
 .tox/
 .hypothesis/
 
+# Type checking
+.mypy_cache/
+.ty_cache/
+
 # IDEs
 .vscode/
 .idea/

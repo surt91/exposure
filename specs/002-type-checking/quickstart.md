@@ -2,7 +2,7 @@
 
 This guide helps developers quickly start using type checking with **ty** from Astral in the fotoview project.
 
-**⚠️ Note**: ty is a new tool from Astral. This guide uses expected command patterns based on Astral's other tools (ruff, uv). Commands will be validated during implementation.
+**✅ Note**: ty 0.0.1-alpha.25 is installed and working. This guide reflects actual ty commands and behavior.
 
 ## Prerequisites
 
