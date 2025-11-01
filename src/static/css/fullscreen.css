@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-normal, 250ms) ease;
 }
 
 .modal.visible {
@@ -51,19 +51,19 @@
 }
 
 .modal-metadata h2 {
-  font-size: 1.5rem;
+  font-size: var(--font-size-h2, 1.5rem);
   margin-bottom: 0.5rem;
   font-weight: 500;
 }
 
 .modal-metadata p {
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: var(--font-size-body, 1rem);
+  line-height: var(--line-height-base, 1.65);
   margin: 0.5rem 0;
 }
 
 .modal-category {
-  font-size: 0.875rem;
+  font-size: var(--font-size-caption, 0.875rem);
   opacity: 0.8;
   font-style: italic;
 }
@@ -95,7 +95,7 @@
 }
 
 .modal-close:focus {
-  outline: 2px solid white;
+  outline: 2px solid var(--color-accent, #0066cc);
   outline-offset: 2px;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .modal-nav:focus {
-  outline: 2px solid white;
+  outline: 2px solid var(--color-accent, #0066cc);
   outline-offset: 2px;
 }
 
@@ -167,11 +167,11 @@
   }
 
   .modal-metadata h2 {
-    font-size: 1.25rem;
+    font-size: calc(var(--font-size-h2, 1.5rem) * 0.83);
   }
 
   .modal-metadata p {
-    font-size: 0.875rem;
+    font-size: var(--font-size-caption, 0.875rem);
   }
 }
 
