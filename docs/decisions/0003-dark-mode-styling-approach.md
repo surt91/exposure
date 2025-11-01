@@ -1,8 +1,8 @@
 # ADR 0003: Dark Mode Styling Approach
 
-**Date**: 2025-11-01  
-**Status**: Accepted  
-**Deciders**: Development Team  
+**Date**: 2025-11-01
+**Status**: Accepted
+**Deciders**: Development Team
 **Related**: [ADR 0001 - Templating](./0001-templating.md), [ADR 0002 - Type Checking](./0002-type-checking.md)
 
 ## Context
@@ -80,17 +80,17 @@ All colors verified to meet WCAG 2.1 AA contrast ratios (≥4.5:1 for text).
 
 ### Positive
 
-✅ **Budget Compliance**: CSS grew from 6.7KB → 16KB (36% under 25KB limit)  
-✅ **No JS Changes**: Zero impact on JS budget  
-✅ **Accessibility**: All contrast ratios pass WCAG 2.1 AA (verified by axe-core)  
-✅ **Performance**: No runtime overhead, instant switching  
-✅ **Maintainability**: Variables centralized, easy to adjust colors  
-✅ **User Experience**: Respects system preference (OS integration)  
+✅ **Budget Compliance**: CSS grew from 6.7KB → 16KB (36% under 25KB limit)
+✅ **No JS Changes**: Zero impact on JS budget
+✅ **Accessibility**: All contrast ratios pass WCAG 2.1 AA (verified by axe-core)
+✅ **Performance**: No runtime overhead, instant switching
+✅ **Maintainability**: Variables centralized, easy to adjust colors
+✅ **User Experience**: Respects system preference (OS integration)
 ✅ **Future-Proof**: Easy to add manual toggle later if needed
 
 ### Negative
 
-⚠️ **No Manual Toggle**: Users cannot override system preference (not requested, can add later)  
+⚠️ **No Manual Toggle**: Users cannot override system preference (not requested, can add later)
 ⚠️ **Old Browser Support**: IE11 and very old browsers lack `prefers-color-scheme` (acceptable tradeoff - get light mode)
 
 ### Neutral
@@ -126,23 +126,23 @@ All colors verified to meet WCAG 2.1 AA contrast ratios (≥4.5:1 for text).
 ## Alternatives Considered
 
 ### 1. Tailwind CSS with Dark Mode
-**Pros:** Popular framework, good dark mode utilities, rapid development  
-**Cons:** 10-15KB even with PurgeCSS, build complexity, vendor lock-in  
+**Pros:** Popular framework, good dark mode utilities, rapid development
+**Cons:** 10-15KB even with PurgeCSS, build complexity, vendor lock-in
 **Verdict:** Rejected - budget risk and unnecessary abstraction
 
 ### 2. CSS-in-JS (styled-components, emotion)
-**Pros:** Dynamic theming, component-scoped styles  
-**Cons:** Requires JS runtime, violates static-first principle, JS budget breach  
+**Pros:** Dynamic theming, component-scoped styles
+**Cons:** Requires JS runtime, violates static-first principle, JS budget breach
 **Verdict:** Rejected - constitutional violation
 
 ### 3. Separate Dark Mode CSS File
-**Pros:** Clear separation of concerns  
-**Cons:** Extra HTTP request, duplicate CSS rules, cache complexity  
+**Pros:** Clear separation of concerns
+**Cons:** Extra HTTP request, duplicate CSS rules, cache complexity
 **Verdict:** Rejected - CSS variables more maintainable
 
 ### 4. JavaScript Toggle with localStorage
-**Pros:** User control, remembers preference  
-**Cons:** Adds JS complexity, requires UI design, localStorage privacy concerns  
+**Pros:** User control, remembers preference
+**Cons:** Adds JS complexity, requires UI design, localStorage privacy concerns
 **Verdict:** Deferred - can add later if user demand emerges
 
 ## Related Decisions
