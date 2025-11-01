@@ -6,6 +6,19 @@ from pydantic import ValidationError
 from src.generator.model import Category, GalleryConfig, Image, YamlEntry
 
 
+@pytest.fixture(autouse=True)
+def isolated_yaml_settings(tmp_path, monkeypatch):
+    """Isolate tests from the default settings.yaml file.
+
+    This fixture ensures that GalleryConfig doesn't load settings from
+    the project's config/settings.yaml, which would interfere with tests.
+    """
+    import src.generator.model as model_module
+
+    # Point to a non-existent file so tests only use explicitly provided values
+    monkeypatch.setattr(model_module, "_yaml_settings_file", tmp_path / "test_settings.yaml")
+
+
 class TestImage:
     """Tests for Image model."""
 

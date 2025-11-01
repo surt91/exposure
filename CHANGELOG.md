@@ -25,8 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `locale` configuration field in settings.yaml
 - Automatic fallback to English for unsupported locales
 - Translation infrastructure with pybabel workflow
+- **Pydantic v2 data models** for automatic validation and type safety
+- **Jinja2 templating** replacing string concatenation for HTML generation
+- **Standard Python logging** replacing print() statements with configurable levels
+- **Pydantic Settings** for enhanced configuration management
+- Environment variable support for all settings (FOTOVIEW_* prefix)
+- Architecture decision record for library modernization (ADR 0005)
 
 ### Changed
+- Migrated all dataclass models to Pydantic BaseModel (Image, Category, YamlEntry, GalleryConfig)
+- Replaced HTML string building with Jinja2 templates
+- Replaced print() statements with logger calls throughout codebase
+- Configuration now supports environment variable overrides with validation
+- Improved error messages for configuration validation failures
 
 ### Deprecated
 

@@ -52,10 +52,10 @@ Single project structure: `src/`, `tests/` at repository root
 
 ### Pydantic Model Migration
 
-- [ ] T008 [P] [US1] Migrate Image dataclass to Pydantic BaseModel in src/generator/model.py
-- [ ] T009 [P] [US1] Migrate Category dataclass to Pydantic BaseModel in src/generator/model.py
-- [ ] T010 [P] [US1] Migrate YamlEntry dataclass to Pydantic BaseModel in src/generator/model.py
-- [ ] T011 [P] [US1] Migrate GalleryConfig dataclass to Pydantic BaseModel in src/generator/model.py
+- [x] T008 [P] [US1] Migrate Image dataclass to Pydantic BaseModel in src/generator/model.py
+- [x] T009 [P] [US1] Migrate Category dataclass to Pydantic BaseModel in src/generator/model.py
+- [x] T010 [P] [US1] Migrate YamlEntry dataclass to Pydantic BaseModel in src/generator/model.py
+- [x] T011 [P] [US1] Migrate GalleryConfig dataclass to Pydantic BaseModel in src/generator/model.py
 #### T012: Update yaml_sync.py to use Pydantic methods
 - [x] Change `YamlEntry.from_dict()` to `YamlEntry.model_validate()`
 - [x] Change `to_dict()` to `model_dump()` for YAML serialization
@@ -174,15 +174,15 @@ Single project structure: `src/`, `tests/` at repository root
 
 **Purpose**: Documentation, cleanup, and final validation
 
-- [ ] T064 [P] Update README.md with new dependencies and quickstart instructions
-- [ ] T065 [P] Update CHANGELOG.md with all changes from this refactor
-- [ ] T066 [P] Add i18n workflow documentation (extract/translate/compile) to docs/
-- [ ] T067 Code review and cleanup of any TODO comments
-- [ ] T068 Verify all constitution gates pass (performance, accessibility, asset sizes)
-- [ ] T069 Run full test suite with coverage report
-- [ ] T070 [P] Update .github/copilot-instructions.md with new libraries
-- [ ] T071 Final build test with both English and German locales
-- [ ] T072 Verify generated HTML output meets success criteria (SC-002: 30% complexity reduction)
+- [x] T064 [P] Update README.md with new dependencies and quickstart instructions
+- [x] T065 [P] Update CHANGELOG.md with all changes from this refactor
+- [x] T066 [P] Add i18n workflow documentation (extract/translate/compile) to docs/
+- [x] T067 Code review and cleanup of any TODO comments
+- [x] T068 Verify all constitution gates pass (performance, accessibility, asset sizes)
+- [x] T069 Run full test suite with coverage report
+- [x] T070 [P] Update .github/copilot-instructions.md with new libraries
+- [x] T071 Final build test with both English and German locales
+- [x] T072 Verify generated HTML output meets success criteria (SC-002: 30% complexity reduction)
 
 ---
 
