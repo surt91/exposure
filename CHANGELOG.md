@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic README and quickstart documentation
 - Configuration system (settings.yaml, gallery.yaml)
 - MIT License
+- **Dark mode support** with automatic system preference detection
+- CSS custom properties for theming (18 variables: 7 colors, 4 timing, 7 typography)
+- Smooth color transitions and visual flourishes
+- Reduced motion support via `prefers-reduced-motion` media query
+- Enhanced accessibility with WCAG 2.1 AA compliant contrast ratios
+- Browser color scheme integration via `<meta name="color-scheme">`
+- Architecture decision record for dark mode approach (ADR 0003)
 
 ### Changed
 
