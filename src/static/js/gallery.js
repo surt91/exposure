@@ -31,6 +31,8 @@
       // Native lazy loading is supported
       images.forEach(img => {
         img.setAttribute('loading', 'lazy');
+        // Add async decoding hint for better performance
+        img.setAttribute('decoding', 'async');
       });
     } else {
       // Fallback: Use IntersectionObserver

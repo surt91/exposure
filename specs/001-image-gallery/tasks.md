@@ -128,10 +128,10 @@ description: "Task list for Modern Image Gallery implementation"
 
 - [X] T042 [P] Add hashing integration for static assets in `src/generator/assets.py` (inject hashed names into HTML)
 - [X] T043 Add reproducibility check script `tests/integration/test_reproducibility.py` (two builds identical hashes)
-- [ ] T044 [P] Add CSP documentation file `docs/hosting.md` with header config
-- [ ] T045 Add ADR 0001 for templating decision in `docs/decisions/0001-templating.md`
-- [ ] T046 Performance optimization pass (evaluate image decoding hints) in `src/static/js/gallery.js`
-- [ ] T047 [P] Add keyboard navigation tests for arrow keys in `tests/integration/test_fullscreen.py`
+- [X] T044 [P] Add CSP documentation file `docs/hosting.md` with header config
+- [X] T045 Add ADR 0001 for templating decision in `docs/decisions/0001-templating.md`
+- [X] T046 Performance optimization pass (evaluate image decoding hints) in `src/static/js/gallery.js`
+- [X] T047 [P] Add keyboard navigation tests for arrow keys in `tests/integration/test_fullscreen.py`
 - [ ] T048 Add README section for accessibility & performance budgets
 - [ ] T049 Security review checklist update `docs/decisions/0002-security-baseline.md`
 - [ ] T050 [P] Add optional Pillow thumbnail generation path in `src/generator/scan.py` & config flag integration
