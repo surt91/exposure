@@ -10,7 +10,7 @@ dependencies = [
     "pillow>=10.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
@@ -19,6 +19,9 @@ dev = [
     "playwright>=1.40",
     "pytest-playwright>=0.4.4",
     "axe-playwright-python>=0.1.4",
+    "ty",
+    "types-PyYAML>=6.0",
+    "types-Pillow>=10.0",
 ]
 
 [build-system]
@@ -63,3 +66,8 @@ skip_covered = false
 
 [tool.coverage.html]
 directory = "htmlcov"
+
+[tool.ty]
+# Python version and environment configuration
+[tool.ty.environment]
+python-version = "3.11"

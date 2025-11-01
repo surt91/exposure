@@ -47,12 +47,24 @@ uv run pytest
 # Run with coverage
 uv run pytest --cov=src --cov-report=html
 
+# Type check
+uv run ty check src/
+
 # Lint code
 uv run ruff check .
 
 # Format code
 uv run ruff format .
 ```
+
+### Type Checking
+
+Fotoview uses [ty](https://github.com/astral-sh/ty) from Astral for fast, strict type checking:
+
+- All source code is fully type-annotated
+- Type checking enforced in CI pipeline
+- Rust-based performance (<5 second feedback)
+- See [ADR 0002](/docs/decisions/0002-type-checking.md) for tool choice rationale
 
 ## Configuration
 
