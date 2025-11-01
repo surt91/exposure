@@ -48,6 +48,8 @@ body {
   color: var(--color-text);
   background-color: var(--color-bg);
   padding: var(--spacing-unit);
+  transition: background-color var(--transition-normal) var(--easing-smooth),
+              color var(--transition-normal) var(--easing-smooth);
 }
 
 /* Header */
@@ -136,6 +138,7 @@ header h1 {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: filter var(--transition-normal) var(--easing-smooth);
 }
 
 /* Lazy loading support */
@@ -195,6 +198,15 @@ header h1 {
   .image-item img {
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05),
                 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Enhanced hover effect for dark mode */
+  .image-item:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .image-item:hover img {
+    filter: brightness(1.05);
   }
 }
 

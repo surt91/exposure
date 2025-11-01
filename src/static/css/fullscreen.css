@@ -82,7 +82,8 @@
   line-height: 1;
   cursor: pointer;
   border-radius: 50%;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: background var(--transition-fast, 150ms) var(--easing-smooth, ease),
+              transform var(--transition-fast, 150ms) var(--easing-smooth, ease);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -112,7 +113,8 @@
   font-size: 2rem;
   cursor: pointer;
   border-radius: 50%;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: background var(--transition-fast, 150ms) var(--easing-smooth, ease),
+              transform var(--transition-fast, 150ms) var(--easing-smooth, ease);
   display: flex;
   align-items: center;
   justify-content: center;
