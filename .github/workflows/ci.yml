@@ -84,6 +84,17 @@ jobs:
     - name: Install dependencies
       run: uv sync --all-extras
 
+    - name: Create settings file
+      run: |
+        mkdir -p config
+        cat > config/settings.yaml << EOF
+        content_dir: content
+        gallery_yaml_path: config/gallery.yaml
+        default_category: Uncategorized
+        enable_thumbnails: false
+        output_dir: dist
+        EOF
+
     - name: Build site
       run: uv run python -m src.generator.build_html
 
