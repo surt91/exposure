@@ -109,13 +109,15 @@
 
 **Purpose**: Final validation and documentation
 
-- [ ] T027 Verify LICENSE file is properly formatted and complete
-- [ ] T028 Run manual verification checklist from specs/004-apache-license/quickstart.md
-- [ ] T029 Optional: Run `licensee detect .` if licensee gem installed (should output "Apache-2.0")
-- [ ] T030 Create pull request to merge 004-apache-license branch to main
-- [ ] T031 Review PR for completeness (all files modified, no unexpected changes)
-- [ ] T032 Merge PR to main branch
-- [ ] T033 Verify GitHub license detection on main branch (may take up to 24 hours)
+- [x] T027 Verify LICENSE file is properly formatted and complete - ✓ 204 lines, Apache 2.0 identified
+- [x] T028 Run manual verification checklist from specs/004-apache-license/quickstart.md - ✓ All 5 items passed
+- [SKIP] T029 Optional: Run `licensee detect .` if licensee gem installed (should output "Apache-2.0") - Not installed
+- [MANUAL] T030 Create pull request to merge 004-apache-license branch to main - User action: https://github.com/surt91/fotoview/pull/new/004-apache-license
+- [MANUAL] T031 Review PR for completeness (all files modified, no unexpected changes) - User review required
+- [MANUAL] T032 Merge PR to main branch - User action
+- [MANUAL] T033 Verify GitHub license detection on main branch (may take up to 24 hours) - User verification after merge
+
+**Checkpoint**: ✅ All automated implementation complete! Manual steps: Create PR → Review → Merge → Verify GitHub badge (may take 24h after merge).
 
 ---
 
