@@ -1,7 +1,5 @@
 """Tests for data models."""
 
-from pathlib import Path
-
 import pytest
 
 from generator.model import Category, GalleryConfig, Image, YamlEntry

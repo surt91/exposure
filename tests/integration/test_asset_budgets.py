@@ -1,12 +1,8 @@
 """Integration tests for asset budget enforcement."""
 
-from pathlib import Path
-
 import pytest
 
-from generator.build_html import build_gallery, generate_gallery_html
-from generator.model import Category, GalleryConfig, Image
-
+from generator.build_html import build_gallery
 
 # Asset budget thresholds (from constitution)
 MAX_HTML_SIZE = 30 * 1024  # 30KB
@@ -33,7 +29,7 @@ class TestAssetBudgets:
         for i in range(35):
             img_file = content_dir / f"test_image_{i:03d}.jpg"
             # Create fake image data (small file)
-            img_file.write_bytes(b"\xFF\xD8\xFF\xE0" + b"\x00" * 100)
+            img_file.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 100)
             image_files.append(img_file)
 
         # Create gallery.yaml
@@ -91,9 +87,7 @@ class TestAssetBudgets:
         css_size = css_files[0].stat().st_size
         print(f"CSS size: {css_size} bytes ({css_size / 1024:.2f} KB)")
 
-        assert (
-            css_size <= MAX_CSS_SIZE
-        ), f"CSS exceeds budget: {css_size} > {MAX_CSS_SIZE} bytes"
+        assert css_size <= MAX_CSS_SIZE, f"CSS exceeds budget: {css_size} > {MAX_CSS_SIZE} bytes"
 
     def test_js_size_budget(self, test_gallery):
         """Test that JS stays within 75KB budget."""
@@ -106,9 +100,7 @@ class TestAssetBudgets:
         js_size = js_files[0].stat().st_size
         print(f"JS size: {js_size} bytes ({js_size / 1024:.2f} KB)")
 
-        assert (
-            js_size <= MAX_JS_SIZE
-        ), f"JS exceeds budget: {js_size} > {MAX_JS_SIZE} bytes"
+        assert js_size <= MAX_JS_SIZE, f"JS exceeds budget: {js_size} > {MAX_JS_SIZE} bytes"
 
     def test_all_budgets_combined(self, test_gallery):
         """Test all asset budgets in one pass."""
@@ -130,9 +122,13 @@ class TestAssetBudgets:
 
         # Report
         print("\n=== Asset Budget Report ===")
-        print(f"HTML: {html_size:>6} / {MAX_HTML_SIZE:>6} bytes ({html_size/MAX_HTML_SIZE*100:>5.1f}%)")
-        print(f"CSS:  {css_size:>6} / {MAX_CSS_SIZE:>6} bytes ({css_size/MAX_CSS_SIZE*100:>5.1f}%)")
-        print(f"JS:   {js_size:>6} / {MAX_JS_SIZE:>6} bytes ({js_size/MAX_JS_SIZE*100:>5.1f}%)")
+        print(
+            f"HTML: {html_size:>6} / {MAX_HTML_SIZE:>6} bytes ({html_size / MAX_HTML_SIZE * 100:>5.1f}%)"
+        )
+        print(
+            f"CSS:  {css_size:>6} / {MAX_CSS_SIZE:>6} bytes ({css_size / MAX_CSS_SIZE * 100:>5.1f}%)"
+        )
+        print(f"JS:   {js_size:>6} / {MAX_JS_SIZE:>6} bytes ({js_size / MAX_JS_SIZE * 100:>5.1f}%)")
         print("=" * 30)
 
         # Assert all budgets
@@ -161,7 +157,7 @@ class TestAssetBudgets:
         image_files = []
         for i in range(image_count):
             img_file = content_dir / f"img_{i:04d}.jpg"
-            img_file.write_bytes(b"\xFF\xD8\xFF\xE0" + b"\x00" * 50)
+            img_file.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 50)
             image_files.append(img_file)
 
         # Create gallery.yaml
@@ -169,7 +165,7 @@ class TestAssetBudgets:
         yaml_content = "categories:\n  - Category\nimages:\n"
         for img_file in image_files:
             yaml_content += f"  - filename: {img_file.name}\n"
-            yaml_content += f"    category: Category\n"
+            yaml_content += "    category: Category\n"
 
         gallery_yaml.write_text(yaml_content)
 

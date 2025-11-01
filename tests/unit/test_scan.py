@@ -1,7 +1,5 @@
 """Tests for image scanning."""
 
-from pathlib import Path
-
 import pytest
 
 from generator.scan import detect_duplicates, discover_images, filter_valid_images

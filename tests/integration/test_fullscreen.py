@@ -1,7 +1,5 @@
 """Integration tests for fullscreen functionality."""
 
-from pathlib import Path
-
 import pytest
 
 from generator.build_html import build_gallery
@@ -23,7 +21,7 @@ class TestFullscreenIntegration:
         # Create test images
         for i in range(3):
             img_file = content_dir / f"test_{i}.jpg"
-            img_file.write_bytes(b"\xFF\xD8\xFF\xE0" + b"\x00" * 100)
+            img_file.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 100)
 
         # Create gallery.yaml with metadata
         gallery_yaml = config_dir / "gallery.yaml"
@@ -72,8 +70,8 @@ images:
         assert 'role="dialog"' in html_content
         assert 'aria-modal="true"' in html_content
         assert 'class="modal-close"' in html_content
-        assert 'modal-prev' in html_content
-        assert 'modal-next' in html_content
+        assert "modal-prev" in html_content
+        assert "modal-next" in html_content
 
     def test_fullscreen_data_attributes(self, test_gallery):
         """Test that images have correct data attributes for fullscreen."""
@@ -187,10 +185,12 @@ class TestFullscreenLatency:
 
         # Create minimal test
         img_file = content_dir / "test.jpg"
-        img_file.write_bytes(b"\xFF\xD8\xFF\xE0" + b"\x00" * 50)
+        img_file.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 50)
 
         gallery_yaml = config_dir / "gallery.yaml"
-        gallery_yaml.write_text("categories: [Test]\nimages:\n  - filename: test.jpg\n    category: Test\n")
+        gallery_yaml.write_text(
+            "categories: [Test]\nimages:\n  - filename: test.jpg\n    category: Test\n"
+        )
 
         settings_yaml = config_dir / "settings.yaml"
         settings_yaml.write_text(

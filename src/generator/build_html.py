@@ -82,9 +82,7 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
 
     # Append stubs for new images
     filenames = [p.name for p in valid_paths]
-    stubs_added = append_stub_entries(
-        config.gallery_yaml_path, filenames, config.default_category
-    )
+    stubs_added = append_stub_entries(config.gallery_yaml_path, filenames, config.default_category)
     if stubs_added > 0:
         print(f"Added {stubs_added} stub entries to YAML")
         # Reload after stub addition
@@ -130,9 +128,7 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
     return categories, images
 
 
-def organize_by_category(
-    category_names: list[str], images: list[Image]
-) -> list[Category]:
+def organize_by_category(category_names: list[str], images: list[Image]) -> list[Category]:
     """
     Organize images into Category objects.
 
@@ -144,9 +140,7 @@ def organize_by_category(
         List of Category objects with images assigned
     """
     # Create category objects
-    categories = [
-        Category(name=name, order_index=idx) for idx, name in enumerate(category_names)
-    ]
+    categories = [Category(name=name, order_index=idx) for idx, name in enumerate(category_names)]
     category_map = {cat.name: cat for cat in categories}
 
     # Assign images to categories
@@ -221,9 +215,9 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
         if not category.images:
             continue
 
-        section_html = [f'        <section class="category-section">']
-        section_html.append(f'            <h2>{category.name}</h2>')
-        section_html.append(f'            <div class="image-grid">')
+        section_html = ['        <section class="category-section">']
+        section_html.append(f"            <h2>{category.name}</h2>")
+        section_html.append('            <div class="image-grid">')
 
         for image in category.images:
             # Copy image to dist
@@ -232,30 +226,35 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
             alt_text = image.alt_text
 
             # Escape HTML in data attributes
-            title_escaped = image.title.replace('"', '&quot;') if image.title else ''
-            description_escaped = image.description.replace('"', '&quot;') if image.description else ''
+            title_escaped = image.title.replace('"', "&quot;") if image.title else ""
+            desc_escaped = image.description.replace('"', "&quot;") if image.description else ""
 
             # Build image HTML with data attributes for fullscreen
-            img_html = f'                <div class="image-item" data-category="{category.name}" data-filename="{image.filename}"'
+            img_html = (
+                f'                <div class="image-item" '
+                f'data-category="{category.name}" data-filename="{image.filename}"'
+            )
             if title_escaped:
                 img_html += f' data-title="{title_escaped}"'
-            if description_escaped:
-                img_html += f' data-description="{description_escaped}"'
-            img_html += '>'
-            img_html += f'\n                    <img src="{img_href}" alt="{alt_text}" loading="lazy" />'
+            if desc_escaped:
+                img_html += f' data-description="{desc_escaped}"'
+            img_html += ">"
+            img_html += (
+                f'\n                    <img src="{img_href}" alt="{alt_text}" loading="lazy" />'
+            )
 
             # Optional caption overlay
             if image.title:
                 img_html += f'\n                    <div class="image-caption">{image.title}</div>'
 
-            img_html += '\n                </div>'
+            img_html += "\n                </div>"
             section_html.append(img_html)
 
-        section_html.append(f'            </div>')
-        section_html.append(f'        </section>')
-        sections_html.append('\n'.join(section_html))
+        section_html.append("            </div>")
+        section_html.append("        </section>")
+        sections_html.append("\n".join(section_html))
 
-    gallery_sections = '\n'.join(sections_html)
+    gallery_sections = "\n".join(sections_html)
 
     # Fill template
     html = template.format(
@@ -307,7 +306,7 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     for cat in categories:
         print(f"  {cat.name}: {len(cat.images)} images")
 
-    print(f"\n✓ Gallery built successfully!")
+    print("\n✓ Gallery built successfully!")
     print(f"  Output: {config.output_dir.absolute()}")
 
 

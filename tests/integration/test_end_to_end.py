@@ -1,7 +1,5 @@
 """End-to-end integration tests."""
 
-from pathlib import Path
-
 from generator.build_html import build_gallery, load_config, scan_and_sync
 
 
@@ -121,7 +119,7 @@ enable_thumbnails: false
         # Create 30+ images for scrollable content test
         for i in range(35):
             img_file = content_dir / f"image_{i:03d}.jpg"
-            img_file.write_bytes(b"\xFF\xD8\xFF\xE0" + b"\x00" * 100)
+            img_file.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 100)
 
         # Create YAML
         yaml_path = config_dir / "gallery.yaml"

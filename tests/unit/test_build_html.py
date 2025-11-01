@@ -1,7 +1,5 @@
 """Tests for HTML build functionality."""
 
-from pathlib import Path
-
 import pytest
 
 from generator.build_html import generate_gallery_html, organize_by_category
@@ -98,7 +96,7 @@ class TestOrganizeByCategory:
         category_names = ["KnownCategory"]
         images = [img1]
 
-        categories = organize_by_category(category_names, images)
+        organize_by_category(category_names, images)
 
         # Should handle gracefully and warn
         captured = capfd.readouterr()
@@ -270,7 +268,7 @@ class TestGenerateGalleryHTML:
 
         categories = [Category(name="Test", order_index=0, images=images)]
 
-        html = generate_gallery_html(categories, sample_config)
+        generate_gallery_html(categories, sample_config)
 
         # Check images directory exists
         images_dir = sample_config.output_dir / "images"

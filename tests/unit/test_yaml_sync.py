@@ -1,7 +1,5 @@
 """Tests for YAML synchronization."""
 
-from pathlib import Path
-
 import pytest
 
 from generator.model import YamlEntry

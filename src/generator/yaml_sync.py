@@ -63,9 +63,7 @@ def load_gallery_yaml(yaml_path: Path) -> tuple[list[str], list[YamlEntry]]:
     return categories, entries
 
 
-def save_gallery_yaml(
-    yaml_path: Path, categories: list[str], entries: list[YamlEntry]
-) -> None:
+def save_gallery_yaml(yaml_path: Path, categories: list[str], entries: list[YamlEntry]) -> None:
     """
     Save categories and images to gallery YAML file.
 
@@ -95,9 +93,7 @@ def save_gallery_yaml(
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
 
-def append_stub_entries(
-    yaml_path: Path, new_filenames: list[str], default_category: str
-) -> int:
+def append_stub_entries(yaml_path: Path, new_filenames: list[str], default_category: str) -> int:
     """
     Append stub entries for new images not in YAML.
 
