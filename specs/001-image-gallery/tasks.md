@@ -94,7 +94,7 @@ description: "Task list for Modern Image Gallery implementation"
 - [X] T032 [US2] Add metadata (filename/category) display mapping inside overlay template part `src/templates/fullscreen.html.part`
 - [X] T033 [US2] Add unit tests for overlay markup generation in `tests/unit/test_build_html.py` (extend existing)
 - [X] T034 [US2] Add integration test for fullscreen open/close behavior (DOM presence) `tests/integration/test_fullscreen.py`
-- [ ] T035 [US2] Add accessibility test case in axe harness referencing overlay `tests/accessibility/axe_runner.sh`
+- [X] T035 [US2] Add accessibility test case using Playwright + axe-core `tests/accessibility/test_axe_a11y.py`
 - [X] T036 [US2] Update performance budget test if overlay assets increase size `tests/integration/test_performance_budget.py`
  - [X] T035a [US2] Add fullscreen latency test `tests/integration/test_fullscreen_latency.py` (overlay visible <300ms average over 5 opens)
 

@@ -98,4 +98,10 @@ jobs:
     - name: Build site
       run: uv run python -m src.generator.build_html
 
-    # TODO: Add axe-core accessibility tests
+    - name: Install Playwright browsers
+      run: uv run playwright install --with-deps chromium
+
+    - name: Run accessibility tests
+      run: |
+        export PYTHONPATH=src
+        uv run pytest tests/accessibility/test_axe_a11y.py -v --tracing=retain-on-failure
