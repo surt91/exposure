@@ -126,8 +126,8 @@ description: "Task list for Modern Image Gallery implementation"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T042 [P] Add hashing integration for static assets in `src/generator/assets.py` (inject hashed names into HTML)
-- [ ] T043 Add reproducibility check script `tests/integration/test_reproducibility.py` (two builds identical hashes)
+- [X] T042 [P] Add hashing integration for static assets in `src/generator/assets.py` (inject hashed names into HTML)
+- [X] T043 Add reproducibility check script `tests/integration/test_reproducibility.py` (two builds identical hashes)
 - [ ] T044 [P] Add CSP documentation file `docs/hosting.md` with header config
 - [ ] T045 Add ADR 0001 for templating decision in `docs/decisions/0001-templating.md`
 - [ ] T046 Performance optimization pass (evaluate image decoding hints) in `src/static/js/gallery.js`
