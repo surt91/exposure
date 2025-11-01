@@ -54,65 +54,29 @@
 
 ---
 
-## Phase 4: User Story 2 - License Declaration in Source Files (Priority: P2)
+## Phase 4: User Story 2 - Project Metadata (Priority: P2)
 
-**Goal**: Add SPDX license headers to all source files so licensing is clear when files are viewed individually
+**Goal**: Add license metadata to project files (pyproject.toml and README.md)
 
-**Independent Test**: All Python, JavaScript, and CSS source files contain "SPDX-License-Identifier: Apache-2.0" header
+**Independent Test**: pyproject.toml contains license field and README.md contains License section
 
-### Implementation for User Story 2 - Python Files
+### Implementation for User Story 2
 
-- [ ] T011 [P] [US2] Add license header to src/__init__.py (2 lines: copyright + SPDX)
-- [ ] T012 [P] [US2] Add license header to src/generator/__init__.py
-- [ ] T013 [P] [US2] Add license header to src/generator/assets.py
-- [ ] T014 [P] [US2] Add license header to src/generator/build_html.py (after shebang if present)
-- [ ] T015 [P] [US2] Add license header to src/generator/model.py
-- [ ] T016 [P] [US2] Add license header to src/generator/scan.py
-- [ ] T017 [P] [US2] Add license header to src/generator/yaml_sync.py
-- [ ] T018 [P] [US2] Add license header to tests/__init__.py
-- [ ] T019 [P] [US2] Add license header to tests/accessibility/__init__.py
-- [ ] T020 [P] [US2] Add license header to tests/accessibility/test_axe_a11y.py
-- [ ] T021 [P] [US2] Add license header to tests/integration/test_asset_budgets.py
-- [ ] T022 [P] [US2] Add license header to tests/integration/test_end_to_end.py
-- [ ] T023 [P] [US2] Add license header to tests/integration/test_fullscreen.py
-- [ ] T024 [P] [US2] Add license header to tests/integration/test_reproducibility.py
-- [ ] T025 [P] [US2] Add license header to tests/unit/test_build_html.py
-- [ ] T026 [P] [US2] Add license header to tests/unit/test_model.py
-- [ ] T027 [P] [US2] Add license header to tests/unit/test_scan.py
-- [ ] T028 [P] [US2] Add license header to tests/unit/test_yaml_sync.py
-
-### Implementation for User Story 2 - JavaScript Files
-
-- [ ] T029 [P] [US2] Add license header to src/static/js/a11y.js (block comment format)
-- [ ] T030 [P] [US2] Add license header to src/static/js/fullscreen.js (block comment format)
-- [ ] T031 [P] [US2] Add license header to src/static/js/gallery.js (block comment format)
-
-### Implementation for User Story 2 - CSS Files
-
-- [ ] T032 [P] [US2] Add license header to src/static/css/gallery.css (block comment format)
-- [ ] T033 [P] [US2] Add license header to src/static/css/fullscreen.css (block comment format)
-
-### Implementation for User Story 2 - Metadata Files
-
-- [ ] T034 [US2] Add license field to pyproject.toml in [project] section: `license = "Apache-2.0"`
-- [ ] T035 [US2] Add License section to README.md with text: "This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details."
+- [ ] T011 [P] [US2] Add license field to pyproject.toml in [project] section: `license = "Apache-2.0"`
+- [ ] T012 [P] [US2] Add License section to README.md with text: "This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details."
 
 ### Verification for User Story 2
 
-- [ ] T036 [US2] Verify all Python files have headers: `find src tests -name "*.py" | xargs grep -L "SPDX-License-Identifier: Apache-2.0"` (should return empty)
-- [ ] T037 [US2] Verify all JavaScript files have headers: `find src/static/js -name "*.js" | xargs grep -L "SPDX-License-Identifier: Apache-2.0"` (should return empty)
-- [ ] T038 [US2] Verify all CSS files have headers: `find src/static/css -name "*.css" | xargs grep -L "SPDX-License-Identifier: Apache-2.0"` (should return empty)
-- [ ] T039 [US2] Verify pyproject.toml contains `license = "Apache-2.0"` using `grep 'license = "Apache-2.0"' pyproject.toml`
-- [ ] T040 [US2] Verify README.md contains License section using `grep "## License" README.md`
-- [ ] T041 [US2] Count total files with headers (should be ~25): `find src tests -name "*.py" -o -name "*.js" -o -name "*.css" | xargs grep -l "SPDX-License-Identifier: Apache-2.0" | wc -l`
+- [ ] T013 [US2] Verify pyproject.toml contains `license = "Apache-2.0"` using `grep 'license = "Apache-2.0"' pyproject.toml`
+- [ ] T014 [US2] Verify README.md contains License section using `grep "## License" README.md`
 
 ### Git Operations for User Story 2
 
-- [ ] T042 [US2] Stage all modified source files: `git add src/ tests/ pyproject.toml README.md`
-- [ ] T043 [US2] Create commit with message: "feat: add Apache 2.0 license headers to all source files\n\n- Add SPDX headers to Python files (src/, tests/)\n- Add SPDX headers to JavaScript files (src/static/js/)\n- Add SPDX headers to CSS files (src/static/css/)\n- Update pyproject.toml with license metadata\n- Add License section to README.md"
-- [ ] T044 [US2] Verify commit using `git show --stat` (should show ~28 files changed)
+- [ ] T015 [US2] Stage modified files: `git add pyproject.toml README.md`
+- [ ] T016 [US2] Create commit with message: "feat: add Apache 2.0 license metadata\n\n- Update pyproject.toml with license field\n- Add License section to README.md"
+- [ ] T017 [US2] Verify commit using `git show --stat` (should show 2 files changed)
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. All source files have license headers.
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. Project metadata includes license information.
 
 ---
 
@@ -124,18 +88,18 @@
 
 ### Implementation for User Story 3
 
-- [ ] T045 [US3] Push all commits to GitHub: `git push origin 004-apache-license`
-- [ ] T046 [US3] Wait 5 minutes for GitHub's initial processing
-- [ ] T047 [US3] Visit repository on GitHub (https://github.com/surt91/fotoview)
-- [ ] T048 [US3] Check repository sidebar shows "License: Apache-2.0"
-- [ ] T049 [US3] Click license badge to verify it links to LICENSE file
-- [ ] T050 [US3] Check repository "About" section displays license badge
+- [ ] T018 [US3] Push all commits to GitHub: `git push origin 004-apache-license`
+- [ ] T019 [US3] Wait 5 minutes for GitHub's initial processing
+- [ ] T020 [US3] Visit repository on GitHub (https://github.com/surt91/fotoview)
+- [ ] T021 [US3] Check repository sidebar shows "License: Apache-2.0"
+- [ ] T022 [US3] Click license badge to verify it links to LICENSE file
+- [ ] T023 [US3] Check repository "About" section displays license badge
 
 ### Optional Enhancement for User Story 3
 
-- [ ] T051 [P] [US3] Add shields.io license badge to README.md: `[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)`
-- [ ] T052 [US3] Commit badge addition: `git add README.md && git commit -m "docs: add license badge to README"`
-- [ ] T053 [US3] Push badge commit: `git push origin 004-apache-license`
+- [ ] T024 [P] [US3] Add shields.io license badge to README.md: `[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)`
+- [ ] T025 [US3] Commit badge addition: `git add README.md && git commit -m "docs: add license badge to README"`
+- [ ] T026 [US3] Push badge commit: `git push origin 004-apache-license`
 
 **Checkpoint**: All user stories should now be independently functional. Repository is fully Apache 2.0 licensed with GitHub recognition.
 
@@ -145,13 +109,13 @@
 
 **Purpose**: Final validation and documentation
 
-- [ ] T054 Verify no license headers in excluded files (config/, docs/, specs/, output/, __pycache__/)
-- [ ] T055 Run manual verification checklist from specs/004-apache-license/quickstart.md
-- [ ] T056 Optional: Run `licensee detect .` if licensee gem installed (should output "Apache-2.0")
-- [ ] T057 Create pull request to merge 004-apache-license branch to main
-- [ ] T058 Review PR for completeness (all files modified, no unexpected changes)
-- [ ] T059 Merge PR to main branch
-- [ ] T060 Verify GitHub license detection on main branch (may take up to 24 hours)
+- [ ] T027 Verify LICENSE file is properly formatted and complete
+- [ ] T028 Run manual verification checklist from specs/004-apache-license/quickstart.md
+- [ ] T029 Optional: Run `licensee detect .` if licensee gem installed (should output "Apache-2.0")
+- [ ] T030 Create pull request to merge 004-apache-license branch to main
+- [ ] T031 Review PR for completeness (all files modified, no unexpected changes)
+- [ ] T032 Merge PR to main branch
+- [ ] T033 Verify GitHub license detection on main branch (may take up to 24 hours)
 
 ---
 
@@ -170,80 +134,35 @@
 ### User Story Dependencies
 
 - **User Story 1 (P1)**: Can complete after Foundational (Phase 2) - Independent (just LICENSE file)
-- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - Independent (source headers) but references LICENSE
-- **User Story 3 (P3)**: MUST have US1 committed and pushed to GitHub - Depends on GitHub detecting LICENSE file
+- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - Independent (metadata files) but references LICENSE
+- **User Story 3 (P3)**: MUST have US1 and US2 committed and pushed to GitHub - Depends on GitHub detecting LICENSE file
 
 ### Within Each User Story
 
 - **User Story 1**: Sequential (T004→T005→T006→T007→T008→T009→T010)
-- **User Story 2**: 
-  - T011-T033: All [P] - can run in parallel (different files)
-  - T034-T035: Sequential after headers (metadata files)
-  - T036-T041: Sequential verification after all additions
-  - T042-T044: Sequential git operations
+- **User Story 2**:
+  - T011-T012: Both [P] - can run in parallel (different files)
+  - T013-T014: Sequential verification after additions
+  - T015-T017: Sequential git operations
 - **User Story 3**: Sequential (must wait for GitHub, then check results)
 
 ### Parallel Opportunities
 
 - **Setup tasks**: T001-T003 can be done quickly in sequence (verification tasks)
 - **Foundational tasks**: T004-T007 sequential (creating/verifying LICENSE)
-- **User Story 2 headers**: T011-T033 ALL [P] - 23 files can be edited in parallel by different team members or tools
-  - Python files: T011-T028 (18 files)
-  - JavaScript files: T029-T031 (3 files)
-  - CSS files: T032-T033 (2 files)
-- **Verification tasks**: T036-T041 can run in parallel (different grep commands)
+- **User Story 2 metadata**: T011-T012 BOTH [P] - 2 files can be edited in parallel
+  - pyproject.toml: T011
+  - README.md: T012
+- **Verification tasks**: T013-T014 can run in parallel (different grep commands)
 
 ---
 
-## Parallel Example: User Story 2 Headers
+## Parallel Example: User Story 2 Metadata
 
 ```bash
-# All Python header additions can happen simultaneously:
-T011: Add header to src/__init__.py
-T012: Add header to src/generator/__init__.py
-T013: Add header to src/generator/assets.py
-T014: Add header to src/generator/build_html.py
-... (all 18 Python files)
-
-# All JavaScript header additions can happen simultaneously:
-T029: Add header to src/static/js/a11y.js
-T030: Add header to src/static/js/fullscreen.js
-T031: Add header to src/static/js/gallery.js
-
-# All CSS header additions can happen simultaneously:
-T032: Add header to src/static/css/gallery.css
-T033: Add header to src/static/css/fullscreen.css
-```
-
-**Bulk Addition Script** (from quickstart.md):
-```bash
-# Python files (for files without shebang/encoding):
-for file in src/**/*.py tests/**/*.py; do
-    echo "# Copyright 2025 fotoview contributors
-# SPDX-License-Identifier: Apache-2.0
-
-$(cat $file)" > $file
-done
-
-# JavaScript files:
-for file in src/static/js/*.js; do
-    echo "/*
- * Copyright 2025 fotoview contributors
- * SPDX-License-Identifier: Apache-2.0
- */
-
-$(cat $file)" > $file
-done
-
-# CSS files:
-for file in src/static/css/*.css; do
-    echo "/*
- * Copyright 2025 fotoview contributors
- * SPDX-License-Identifier: Apache-2.0
- */
-
-$(cat $file)" > $file
-done
+# Both metadata file updates can happen simultaneously:
+T011: Add license field to pyproject.toml
+T012: Add License section to README.md
 ```
 
 ---
@@ -262,9 +181,9 @@ done
 
 1. Complete Setup + Foundational → LICENSE file ready (T001-T007)
 2. Add User Story 1 → LICENSE committed (T008-T010) → Push (MVP!)
-3. Add User Story 2 → All source headers added (T011-T044) → Push
-4. Add User Story 3 → GitHub detection verified (T045-T053) → Complete
-5. Polish → Final validation (T054-T060)
+3. Add User Story 2 → Metadata added (T011-T017) → Push
+4. Add User Story 3 → GitHub detection verified (T018-T026) → Complete
+5. Polish → Final validation (T027-T033)
 
 ### Parallel Team Strategy
 
@@ -272,56 +191,39 @@ With multiple developers:
 
 1. **Phase 1-2**: One developer creates LICENSE file (T001-T007)
 2. **Phase 3**: Same developer commits LICENSE (T008-T010) → Push (MVP)
-3. **Phase 4 (US2)**: Split header additions:
-   - Developer A: Python files in src/ (T011-T017)
-   - Developer B: Python files in tests/ (T018-T028)
-   - Developer C: JavaScript and CSS files (T029-T033)
-   - Developer D: Metadata files (T034-T035)
-4. **Phase 4 verification**: One developer runs all checks (T036-T041)
-5. **Phase 4 git**: One developer commits and pushes (T042-T044)
-6. **Phase 5**: One developer verifies GitHub (T045-T050)
-7. **Phase 6**: Final polish and merge (T054-T060)
+3. **Phase 4 (US2)**: Split metadata additions:
+   - Developer A: pyproject.toml (T011)
+   - Developer B: README.md (T012)
+4. **Phase 4 verification**: One developer runs all checks (T013-T014)
+5. **Phase 4 git**: One developer commits and pushes (T015-T017)
+6. **Phase 5**: One developer verifies GitHub (T018-T023)
+7. **Phase 6**: Final polish and merge (T027-T033)
 
 ### Recommended Approach
 
-**Option 1: Manual + Careful** (safest for first-time license addition):
-- Edit each file individually in editor
-- Verify header format matches contracts/license-header-format.md
-- Handles shebang/encoding edge cases correctly
-- Time: ~30-45 minutes for 25 files
-
-**Option 2: Bulk Script + Review** (faster but requires validation):
-- Use bulk addition scripts from quickstart.md
-- Review all changes in git diff before committing
-- Manually fix any files with shebang/encoding issues
-- Time: ~15-20 minutes + review time
-
-**Option 3: Semi-Automated** (recommended):
-- Use scripts for files without shebang/encoding (most files)
-- Manually edit the few files with shebang/encoding
-- Review all changes in git diff
-- Time: ~20-25 minutes
+**Manual Editing** (simple and straightforward):
+- Edit LICENSE file, pyproject.toml, and README.md individually
+- Verify LICENSE file has exact Apache 2.0 text with copyright notice
+- Add license field to pyproject.toml [project] section
+- Add License section to README.md
+- Time: ~10-15 minutes total
 
 ---
 
 ## File-Specific Notes
 
-### Files Requiring Special Attention
+### Files to Modify
 
-**Python files with shebang** (place header AFTER shebang):
-- Check if any files in src/generator/ start with `#!/usr/bin/env python3`
-- If found, manually edit to place header after shebang line
+**LICENSE** (new file):
+- Download from https://www.apache.org/licenses/LICENSE-2.0.txt
+- Prepend copyright notice: "Copyright 2025 fotoview contributors"
+- Verify 361 lines total
 
-**Python files with encoding** (place header AFTER encoding):
-- Check if any files start with `# -*- coding: utf-8 -*-`
-- If found, manually edit to place header after encoding line
+**pyproject.toml** (modify):
+- Add to [project] section: `license = "Apache-2.0"`
 
-**Files to exclude** (no headers needed):
-- config/gallery.yaml, config/settings.yaml (user configuration)
-- README.md, CHANGELOG.md, LICENSE (documentation)
-- specs/**, docs/** (documentation)
-- output/**, __pycache__/** (generated files)
-- pyproject.toml, pytest.ini (only add metadata field, not header)
+**README.md** (modify):
+- Add License section near end with link to LICENSE file
 
 ### Verification Commands
 
@@ -330,16 +232,11 @@ With multiple developers:
 wc -l LICENSE  # Should be 361
 head -1 LICENSE  # Should be "Copyright 2025 fotoview contributors"
 
-# Find all source files:
-find src tests -name "*.py" -o -name "*.js" -o -name "*.css" | wc -l  # ~25 files
+# Verify pyproject.toml:
+grep 'license = "Apache-2.0"' pyproject.toml  # Should return matching line
 
-# Check for missing headers:
-find src tests -name "*.py" | while read f; do
-    grep -q "SPDX-License-Identifier: Apache-2.0" "$f" || echo "Missing: $f"
-done
-
-# Check header format:
-find src tests -name "*.py" | xargs head -3 | less  # Review first 3 lines of each file
+# Verify README.md:
+grep "## License" README.md  # Should return License section heading
 ```
 
 ---
@@ -349,13 +246,14 @@ find src tests -name "*.py" | xargs head -3 | less  # Review first 3 lines of ea
 - **[P] tasks** = different files, no dependencies, can run in parallel
 - **[Story] label** maps task to specific user story from spec.md
 - **User Story 1 is MVP** - just LICENSE file provides legal clarity
-- **User Story 2 adds headers** - best practice but not strictly required
+- **User Story 2 adds metadata** - pyproject.toml and README.md license information
 - **User Story 3 is automatic** - GitHub detects LICENSE file
+- **No source file headers needed** - LICENSE file at repository root covers all code
 - **No automated tests** - feature specification does not request test tasks
 - Each user story should be independently completable and testable
 - Commit after completing each user story
 - Verify at checkpoints before proceeding
-- Total estimated time: 1-2 hours for complete implementation
+- Total estimated time: 20-30 minutes for complete implementation
 
 ---
 
@@ -364,12 +262,9 @@ find src tests -name "*.py" | xargs head -3 | less  # Review first 3 lines of ea
 From spec.md - verify these at completion:
 
 - ✅ **SC-001**: LICENSE file exists in repository root with exact Apache License 2.0 text (361 lines)
-- ✅ **SC-002**: 100% of Python source files in src/ directory contain valid Apache 2.0 license headers
-- ✅ **SC-003**: 100% of JavaScript and CSS files in src/static/ contain valid Apache 2.0 license headers
-- ✅ **SC-004**: GitHub license detection correctly identifies repository as "Apache-2.0"
-- ✅ **SC-005**: pyproject.toml metadata includes `license = "Apache-2.0"` field
-- ✅ **SC-006**: README.md contains License section with link to LICENSE file
-- ✅ **SC-007**: Automated license scanning tools correctly identify all files as Apache 2.0 (optional)
-- ✅ **SC-008**: No license conflicts exist between project license and dependency licenses
-- ✅ **SC-009**: Copyright year matches current year (2025) in all license notices
-- ✅ **SC-010**: All license headers use consistent format (SPDX identifier + copyright notice)
+- ✅ **SC-002**: GitHub license detection correctly identifies repository as "Apache-2.0"
+- ✅ **SC-003**: pyproject.toml metadata includes `license = "Apache-2.0"` field
+- ✅ **SC-004**: README.md contains License section with link to LICENSE file
+- ✅ **SC-005**: Automated license scanning tools correctly identify repository as Apache 2.0 (optional)
+- ✅ **SC-006**: No license conflicts exist between project license and dependency licenses
+- ✅ **SC-007**: Copyright year matches current year (2025) in LICENSE file

@@ -325,14 +325,14 @@ from pathlib import Path
 def test_license_headers():
     """Verify all source files have Apache 2.0 license headers."""
     source_patterns = ["src/**/*.py", "tests/**/*.py", "src/**/*.js", "src/**/*.css"]
-    
+
     missing = []
     for pattern in source_patterns:
         for file in Path(".").glob(pattern):
             content = file.read_text()
             if "SPDX-License-Identifier: Apache-2.0" not in content:
                 missing.append(str(file))
-    
+
     assert not missing, f"Files missing license headers: {missing}"
 ```
 
