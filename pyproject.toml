@@ -2,7 +2,7 @@
 name = "fotoview"
 version = "0.1.0"
 description = "Static image gallery generator"
-authors = [{name = "fotoview"}]
+authors = [{name = "Hendrik Schawe", email = "hendrik.schawe@gmail.com"}]
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
