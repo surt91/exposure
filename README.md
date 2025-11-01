@@ -94,7 +94,47 @@ gallery_yaml_path: config/gallery.yaml  # Metadata file
 default_category: Uncategorized         # Default for new images
 enable_thumbnails: false               # Enable Pillow metadata
 output_dir: dist                       # Generated site output
+locale: en                             # UI language (en=English, de=German)
+log_level: INFO                        # Logging verbosity (DEBUG, INFO, WARNING, ERROR)
 ```
+
+### Environment Variable Overrides
+
+All configuration values can be overridden using environment variables with the `FOTOVIEW_` prefix. This is useful for CI/CD pipelines, Docker deployments, or testing different configurations without modifying YAML files.
+
+**Precedence (highest to lowest):**
+1. Environment variables (`FOTOVIEW_*`)
+2. `.env` file (if present)
+3. `config/settings.yaml`
+4. Default values
+
+**Examples:**
+
+```bash
+# Override locale for German UI
+FOTOVIEW_LOCALE=de uv run python -m src.generator.build_html
+
+# Enable debug logging
+FOTOVIEW_LOG_LEVEL=DEBUG uv run python -m src.generator.build_html
+
+# Use custom content directory
+FOTOVIEW_CONTENT_DIR=/path/to/images uv run python -m src.generator.build_html
+
+# Multiple overrides
+FOTOVIEW_LOCALE=de FOTOVIEW_OUTPUT_DIR=build uv run python -m src.generator.build_html
+```
+
+**Available Environment Variables:**
+
+- `FOTOVIEW_CONTENT_DIR` - Source images directory
+- `FOTOVIEW_GALLERY_YAML_PATH` - Path to metadata YAML file
+- `FOTOVIEW_DEFAULT_CATEGORY` - Default category for uncategorized images
+- `FOTOVIEW_ENABLE_THUMBNAILS` - Enable thumbnail metadata (true/false)
+- `FOTOVIEW_OUTPUT_DIR` - Generated site output directory
+- `FOTOVIEW_LOCALE` - UI language code (en, de)
+- `FOTOVIEW_LOG_LEVEL` - Logging verbosity (DEBUG, INFO, WARNING, ERROR)
+
+**Note:** Environment variable names are case-insensitive on most systems, but uppercase is recommended for clarity.
 
 ## Image Metadata
 

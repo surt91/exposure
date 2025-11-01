@@ -155,16 +155,16 @@ Single project structure: `src/`, `tests/` at repository root
 
 ### Pydantic Settings Integration
 
-- [ ] T054 [US3] Add pydantic-settings>=2.0 to pyproject.toml dependencies (optional feature)
-- [ ] T055 [US3] Install pydantic-settings with uv sync
-- [ ] T056 [US3] Refactor GalleryConfig in src/generator/model.py to inherit from BaseSettings
-- [ ] T057 [US3] Configure BaseSettings with env_prefix="FOTOVIEW_" for environment variables
-- [ ] T058 [US3] Add field descriptions and examples to GalleryConfig using Field()
-- [ ] T059 [US3] Update load_config() in src/generator/build_html.py to use BaseSettings validation
-- [ ] T060 [US3] Test environment variable overrides (e.g., FOTOVIEW_LOCALE=de)
-- [ ] T061 [US3] Verify validation errors show field names and constraint violations
-- [ ] T062 [US3] Update tests/unit/test_build_html.py to test config validation errors
-- [ ] T063 [US3] Document environment variable configuration in README.md
+- [x] T054 [US3] Add pydantic-settings>=2.0 to pyproject.toml dependencies (optional feature)
+- [x] T055 [US3] Install pydantic-settings with uv sync
+- [x] T056 [US3] Refactor GalleryConfig in src/generator/model.py to inherit from BaseSettings
+- [x] T057 [US3] Configure BaseSettings with env_prefix="FOTOVIEW_" for environment variables
+- [x] T058 [US3] Add field descriptions and examples to GalleryConfig using Field()
+- [x] T059 [US3] Update load_config() in src/generator/build_html.py to use BaseSettings validation
+- [x] T060 [US3] Test environment variable overrides (e.g., FOTOVIEW_LOCALE=de)
+- [x] T061 [US3] Verify validation errors show field names and constraint violations
+- [x] T062 [US3] Update tests/unit/test_build_html.py to test config validation errors
+- [x] T063 [US3] Document environment variable configuration in README.md
 
 **Checkpoint**: User Story 3 complete - Pydantic Settings providing enhanced validation and env var support. Clear error messages on invalid config.
 

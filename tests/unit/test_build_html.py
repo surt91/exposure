@@ -1,8 +1,9 @@
 """Tests for HTML build functionality."""
 
 import pytest
+from pydantic import ValidationError
 
-from src.generator.build_html import generate_gallery_html, organize_by_category
+from src.generator.build_html import generate_gallery_html, load_config, organize_by_category
 from src.generator.model import Category, GalleryConfig, Image
 
 
@@ -120,11 +121,16 @@ class TestGenerateGalleryHTML:
         gallery_yaml = config_dir / "gallery.yaml"
         gallery_yaml.write_text("categories: []\nimages: []")
 
-        return GalleryConfig(
+        # Use model_construct to bypass settings sources and validation
+        # This ensures tests use the exact paths we specify
+        return GalleryConfig.model_construct(
             content_dir=content_dir,
             gallery_yaml_path=gallery_yaml,
             default_category="Uncategorized",
             output_dir=output_dir,
+            locale="en",
+            log_level="INFO",
+            enable_thumbnails=False,
         )
 
     @pytest.fixture
@@ -276,3 +282,110 @@ class TestGenerateGalleryHTML:
         # Check images were copied with hashing
         copied_images = list(images_dir.glob("*.jpg"))
         assert len(copied_images) == len(sample_images)
+
+
+class TestLoadConfig:
+    """Tests for configuration loading with pydantic-settings."""
+
+    @pytest.fixture
+    def settings_file(self, tmp_path):
+        """Create a test settings.yaml file."""
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        gallery_yaml = config_dir / "gallery.yaml"
+        gallery_yaml.write_text("categories: []\nimages: []")
+
+        settings_yaml = config_dir / "settings.yaml"
+        settings_yaml.write_text(f"""
+content_dir: {content_dir}
+gallery_yaml_path: {gallery_yaml}
+default_category: Uncategorized
+enable_thumbnails: false
+output_dir: {tmp_path / "dist"}
+locale: en
+log_level: INFO
+""")
+        return settings_yaml
+
+    def test_load_config_from_yaml(self, settings_file):
+        """Test loading configuration from YAML file."""
+        config = load_config(settings_file)
+
+        assert config.locale == "en"
+        assert config.log_level == "INFO"
+        assert config.default_category == "Uncategorized"
+        assert config.enable_thumbnails is False
+
+    def test_load_config_env_var_override(self, settings_file, monkeypatch):
+        """Test that environment variables override YAML values."""
+        monkeypatch.setenv("FOTOVIEW_LOCALE", "de")
+        monkeypatch.setenv("FOTOVIEW_LOG_LEVEL", "DEBUG")
+
+        config = load_config(settings_file)
+
+        assert config.locale == "de"
+        assert config.log_level == "DEBUG"
+        # Other values should still come from YAML
+        assert config.default_category == "Uncategorized"
+
+    def test_load_config_validation_error_empty_string(self, settings_file, tmp_path):
+        """Test validation error for empty default_category."""
+        # Create invalid settings
+        invalid_settings = tmp_path / "invalid_settings.yaml"
+        invalid_settings.write_text(f"""
+content_dir: {tmp_path / "content"}
+gallery_yaml_path: {settings_file.parent / "gallery.yaml"}
+default_category: ""
+""")
+
+        with pytest.raises(ValidationError) as exc_info:
+            load_config(invalid_settings)
+
+        # Check error message contains field name and constraint
+        error_msg = str(exc_info.value)
+        assert "default_category" in error_msg
+        assert "at least 1 character" in error_msg.lower()
+
+    def test_load_config_validation_error_nonexistent_path(self, tmp_path):
+        """Test validation error for non-existent content_dir."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+
+        gallery_yaml = config_dir / "gallery.yaml"
+        gallery_yaml.write_text("categories: []\nimages: []")
+
+        invalid_settings = config_dir / "settings.yaml"
+        invalid_settings.write_text(f"""
+content_dir: /nonexistent/path
+gallery_yaml_path: {gallery_yaml}
+default_category: Uncategorized
+""")
+
+        with pytest.raises(ValidationError) as exc_info:
+            load_config(invalid_settings)
+
+        error_msg = str(exc_info.value)
+        assert "content_dir does not exist" in error_msg
+
+    def test_load_config_file_not_found(self, tmp_path):
+        """Test error when settings file doesn't exist."""
+        nonexistent = tmp_path / "nonexistent.yaml"
+
+        with pytest.raises(FileNotFoundError) as exc_info:
+            load_config(nonexistent)
+
+        assert "Settings file not found" in str(exc_info.value)
+
+    def test_load_config_env_var_case_insensitive(self, settings_file, monkeypatch):
+        """Test that environment variables are case-insensitive."""
+        # pydantic-settings with case_sensitive=False should handle this
+        monkeypatch.setenv("fotoview_locale", "de")
+
+        config = load_config(settings_file)
+
+        # Should work with lowercase prefix
+        assert config.locale == "de"

@@ -4,8 +4,8 @@ import logging
 import sys
 from pathlib import Path
 
-import yaml
-
+# Import model module to set the yaml file path
+from . import model
 from .i18n import _
 from .model import Category, GalleryConfig, Image
 from .scan import detect_duplicates, discover_images, filter_valid_images, get_image_dimensions
@@ -16,26 +16,38 @@ logger = logging.getLogger("fotoview")
 
 def load_config(settings_path: Path) -> GalleryConfig:
     """
-    Load configuration from settings.yaml.
+    Load configuration from settings.yaml and environment variables.
+
+    Uses pydantic-settings to automatically load and merge configuration from:
+    1. Environment variables (FOTOVIEW_* prefix) - highest priority
+    2. .env file (if present)
+    3. YAML settings file - lowest priority
+
+    Examples:
+        # Override locale via environment variable:
+        FOTOVIEW_LOCALE=de python -m src.generator.build_html
+
+        # Override log level:
+        FOTOVIEW_LOG_LEVEL=DEBUG python -m src.generator.build_html
 
     Args:
         settings_path: Path to settings.yaml file
 
     Returns:
-        GalleryConfig object validated by Pydantic
+        GalleryConfig object with automatic environment variable support.
 
     Raises:
         FileNotFoundError: If settings file doesn't exist
-        ValueError: If configuration is invalid (Pydantic ValidationError)
+        pydantic.ValidationError: If configuration is invalid with detailed field errors
     """
     if not settings_path.exists():
         raise FileNotFoundError(f"Settings file not found: {settings_path}")
 
-    with open(settings_path, "r") as f:
-        settings = yaml.safe_load(f)
+    # Set the module-level YAML file path
+    model._yaml_settings_file = settings_path
 
-    # Pydantic will validate all fields, convert paths, and check existence
-    return GalleryConfig.model_validate(settings)
+    # Pydantic-settings will automatically load YAML and merge with env vars
+    return GalleryConfig()
 
 
 def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
