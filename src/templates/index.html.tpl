@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Image gallery">
+    <meta name="description" content="{description}">
+    <meta name="generator" content="Fotoview">
     <title>{title}</title>
     <link rel="stylesheet" href="{css_href}">
 </head>
@@ -13,10 +14,10 @@
     </header>
 
     <main class="gallery">
-        {gallery_sections}
+{gallery_sections}
     </main>
 
-    {fullscreen_modal}
+{fullscreen_modal}
 
     <script src="{js_href}"></script>
 </body>

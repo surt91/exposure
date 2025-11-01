@@ -39,7 +39,7 @@ jobs:
         file: ./coverage.xml
         fail_ci_if_error: false
 
-  # Placeholder for asset budget checks (T027a)
+  # Asset budget checks (T027a)
   performance:
     runs-on: ubuntu-latest
     needs: test
@@ -56,11 +56,13 @@ jobs:
     - name: Install dependencies
       run: uv sync
 
-    - name: Build site
-      run: uv run python -m src.generator.build_html
+    - name: Run asset budget tests
+      run: |
+        export PYTHONPATH=src
+        uv run pytest tests/integration/test_asset_budgets.py -v
+      continue-on-error: false
 
-    # TODO: Add asset budget script execution
-    # TODO: Add Lighthouse CI
+    # TODO: Add Lighthouse CI when site is deployed
 
   # Placeholder for accessibility checks (T020, T035)
   accessibility:

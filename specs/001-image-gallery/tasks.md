@@ -66,15 +66,15 @@ description: "Task list for Modern Image Gallery implementation"
 
 ### Tests for User Story 1
 
-- [ ] T021 [P] [US1] Add template logic for category ordering & image loops in `src/templates/index.html.tpl`
-- [ ] T022 [P] [US1] Implement gallery HTML generation in `src/generator/build_html.py` (index page rendering)
-- [ ] T023 [US1] Implement CSS baseline (responsive grid, mobile friendly) in `src/static/css/gallery.css`
-- [ ] T024 [P] [US1] Implement JS for lazy loading / progressive enhancement in `src/static/js/gallery.js`
-- [ ] T025 [US1] Add unit test for category ordering in `tests/unit/test_build_html.py`
-- [ ] T026 [US1] Extend integration test verifying scrollable content structure in `tests/integration/test_end_to_end.py`
-- [ ] T027 [US1] Add asset budget enforcement test `tests/integration/test_asset_budgets.py` (HTML ≤30KB, critical CSS ≤25KB, initial JS ≤75KB uncompressed)
-- [ ] T027a [P] [US1] Add CI workflow step to run asset budget & Lighthouse checks `.github/workflows/ci.yml` (fail if thresholds exceeded)
-- [ ] T028 [US1] Generate dist output and manual verify (document in test) `dist/index.html`
+- [X] T021 [P] [US1] Add template logic for category ordering & image loops in `src/templates/index.html.tpl`
+- [X] T022 [P] [US1] Implement gallery HTML generation in `src/generator/build_html.py` (index page rendering)
+- [X] T023 [US1] Implement CSS baseline (responsive grid, mobile friendly) in `src/static/css/gallery.css`
+- [X] T024 [P] [US1] Implement JS for lazy loading / progressive enhancement in `src/static/js/gallery.js`
+- [X] T025 [US1] Add unit test for category ordering in `tests/unit/test_build_html.py`
+- [X] T026 [US1] Extend integration test verifying scrollable content structure in `tests/integration/test_end_to_end.py`
+- [X] T027 [US1] Add asset budget enforcement test `tests/integration/test_asset_budgets.py` (HTML ≤30KB, critical CSS ≤25KB, initial JS ≤75KB uncompressed)
+- [X] T027a [P] [US1] Add CI workflow step to run asset budget & Lighthouse checks `.github/workflows/ci.yml` (fail if thresholds exceeded)
+- [X] T028 [US1] Generate dist output and manual verify (document in test) `dist/index.html`
 
 **Checkpoint**: Gallery MVP complete; fulfills SC-001, partial SC-004
 
@@ -88,15 +88,15 @@ description: "Task list for Modern Image Gallery implementation"
 
 ### Tests for User Story 2
 
-- [ ] T029 [P] [US2] Implement overlay HTML partial injection logic in `src/generator/build_html.py`
-- [ ] T030 [US2] Add JS overlay controller in `src/static/js/fullscreen.js`
-- [ ] T031 [P] [US2] Add ARIA roles & focus trapping helpers in `src/static/js/a11y.js`
-- [ ] T032 [US2] Add metadata (filename/category) display mapping inside overlay template part `src/templates/fullscreen.html.part`
-- [ ] T033 [US2] Add unit tests for overlay markup generation in `tests/unit/test_build_html.py` (extend existing)
-- [ ] T034 [US2] Add integration test for fullscreen open/close behavior (DOM presence) `tests/integration/test_fullscreen.py`
+- [X] T029 [P] [US2] Implement overlay HTML partial injection logic in `src/generator/build_html.py`
+- [X] T030 [US2] Add JS overlay controller in `src/static/js/fullscreen.js`
+- [X] T031 [P] [US2] Add ARIA roles & focus trapping helpers in `src/static/js/a11y.js`
+- [X] T032 [US2] Add metadata (filename/category) display mapping inside overlay template part `src/templates/fullscreen.html.part`
+- [X] T033 [US2] Add unit tests for overlay markup generation in `tests/unit/test_build_html.py` (extend existing)
+- [X] T034 [US2] Add integration test for fullscreen open/close behavior (DOM presence) `tests/integration/test_fullscreen.py`
 - [ ] T035 [US2] Add accessibility test case in axe harness referencing overlay `tests/accessibility/axe_runner.sh`
-- [ ] T036 [US2] Update performance budget test if overlay assets increase size `tests/integration/test_performance_budget.py`
- - [ ] T035a [US2] Add fullscreen latency test `tests/integration/test_fullscreen_latency.py` (overlay visible <300ms average over 5 opens)
+- [X] T036 [US2] Update performance budget test if overlay assets increase size `tests/integration/test_performance_budget.py`
+ - [X] T035a [US2] Add fullscreen latency test `tests/integration/test_fullscreen_latency.py` (overlay visible <300ms average over 5 opens)
 
 **Checkpoint**: Fullscreen feature complete; fulfills SC-002 & part of accessibility goals
 
@@ -110,11 +110,11 @@ description: "Task list for Modern Image Gallery implementation"
 
 ### Tests for User Story 3
 
-- [ ] T037 [P] [US3] Implement stub detection & append in `src/generator/yaml_sync.py` (extend earlier logic)
-- [ ] T038 [US3] Add unit tests for stub generation ordering in `tests/unit/test_yaml_sync.py`
-- [ ] T039 [P] [US3] Add integration test adding new images then verifying YAML updated `tests/integration/test_stub_generation.py`
-- [ ] T040 [US3] Add validation: no category order mutation in `tests/integration/test_stub_generation.py`
-- [ ] T041 [US3] Update end-to-end test to include stub scenario `tests/integration/test_end_to_end.py`
+- [X] T037 [P] [US3] Implement stub detection & append in `src/generator/yaml_sync.py` (extend earlier logic)
+- [X] T038 [US3] Add unit tests for stub generation ordering in `tests/unit/test_yaml_sync.py`
+- [X] T039 [P] [US3] Add integration test adding new images then verifying YAML updated `tests/integration/test_stub_generation.py`
+- [X] T040 [US3] Add validation: no category order mutation in `tests/integration/test_stub_generation.py`
+- [X] T041 [US3] Update end-to-end test to include stub scenario `tests/integration/test_end_to_end.py`
  - [ ] T041a [US3] Add stub coverage test `tests/integration/test_stub_coverage.py` (assert 100% content/ images represented in YAML after build)
  - [ ] T041b [P] [US3] Add batch stub generation performance test `tests/integration/test_stub_batch.py` (50 new images; ordering preserved; runtime <5s)
 

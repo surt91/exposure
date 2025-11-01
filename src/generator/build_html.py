@@ -164,6 +164,112 @@ def organize_by_category(
     return categories
 
 
+def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> str:
+    """
+    Generate HTML for the gallery from categories.
+
+    Args:
+        categories: List of Category objects with images
+        config: Gallery configuration
+
+    Returns:
+        Generated HTML string
+    """
+    from .assets import copy_with_hash, write_with_hash
+
+    # Read templates
+    template_path = Path(__file__).parent.parent / "templates" / "index.html.tpl"
+    fullscreen_path = Path(__file__).parent.parent / "templates" / "fullscreen.html.part"
+
+    # CSS sources
+    gallery_css = Path(__file__).parent.parent / "static" / "css" / "gallery.css"
+    fullscreen_css = Path(__file__).parent.parent / "static" / "css" / "fullscreen.css"
+
+    # JS sources
+    gallery_js = Path(__file__).parent.parent / "static" / "js" / "gallery.js"
+    a11y_js = Path(__file__).parent.parent / "static" / "js" / "a11y.js"
+    fullscreen_js = Path(__file__).parent.parent / "static" / "js" / "fullscreen.js"
+
+    with open(template_path, "r") as f:
+        template = f.read()
+    with open(fullscreen_path, "r") as f:
+        fullscreen_modal = f.read()
+
+    # Combine CSS files
+    css_content = gallery_css.read_text(encoding="utf-8")
+    css_content += "\n\n/* Fullscreen Modal */\n"
+    css_content += fullscreen_css.read_text(encoding="utf-8")
+
+    # Combine JS files
+    js_content = gallery_js.read_text(encoding="utf-8")
+    js_content += "\n\n// Accessibility helpers\n"
+    js_content += a11y_js.read_text(encoding="utf-8")
+    js_content += "\n\n// Fullscreen controller\n"
+    js_content += fullscreen_js.read_text(encoding="utf-8")
+
+    # Write combined files with hashing
+    css_output = write_with_hash(css_content, "gallery.css", config.output_dir)
+    js_output = write_with_hash(js_content, "gallery.js", config.output_dir)
+
+    css_href = css_output.name
+    js_href = js_output.name
+
+    # Build gallery sections HTML
+    sections_html = []
+    for category in categories:
+        # Skip empty categories
+        if not category.images:
+            continue
+
+        section_html = [f'        <section class="category-section">']
+        section_html.append(f'            <h2>{category.name}</h2>')
+        section_html.append(f'            <div class="image-grid">')
+
+        for image in category.images:
+            # Copy image to dist
+            img_dest = copy_with_hash(image.file_path, config.output_dir / "images")
+            img_href = f"images/{img_dest.name}"
+            alt_text = image.alt_text
+
+            # Escape HTML in data attributes
+            title_escaped = image.title.replace('"', '&quot;') if image.title else ''
+            description_escaped = image.description.replace('"', '&quot;') if image.description else ''
+
+            # Build image HTML with data attributes for fullscreen
+            img_html = f'                <div class="image-item" data-category="{category.name}" data-filename="{image.filename}"'
+            if title_escaped:
+                img_html += f' data-title="{title_escaped}"'
+            if description_escaped:
+                img_html += f' data-description="{description_escaped}"'
+            img_html += '>'
+            img_html += f'\n                    <img src="{img_href}" alt="{alt_text}" loading="lazy" />'
+
+            # Optional caption overlay
+            if image.title:
+                img_html += f'\n                    <div class="image-caption">{image.title}</div>'
+
+            img_html += '\n                </div>'
+            section_html.append(img_html)
+
+        section_html.append(f'            </div>')
+        section_html.append(f'        </section>')
+        sections_html.append('\n'.join(section_html))
+
+    gallery_sections = '\n'.join(sections_html)
+
+    # Fill template
+    html = template.format(
+        title="Image Gallery",
+        description="Modern responsive image gallery",
+        css_href=css_href,
+        js_href=js_href,
+        gallery_sections=gallery_sections,
+        fullscreen_modal=fullscreen_modal if fullscreen_modal.strip() else "",
+    )
+
+    return html
+
+
 def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     """
     Main entry point for building the gallery.
@@ -185,17 +291,24 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     # Organize by category
     categories = organize_by_category(category_names, images)
 
-    # TODO: Generate HTML (Phase 3)
-    # TODO: Generate CSS (Phase 3)
-    # TODO: Generate JS (Phase 3)
-    # TODO: Copy images to dist with hashing (Phase 3)
+    # Generate HTML
+    print("\nGenerating gallery HTML...")
+    html = generate_gallery_html(categories, config)
+
+    # Write index.html
+    output_path = config.output_dir / "index.html"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(html, encoding="utf-8")
+
+    print(f"✓ Generated {output_path}")
+    print(f"  HTML size: {len(html)} bytes")
 
     print("\nCategories:")
     for cat in categories:
         print(f"  {cat.name}: {len(cat.images)} images")
 
-    print("\n✓ Scan and sync complete")
-    print("  (HTML generation coming in Phase 3)")
+    print(f"\n✓ Gallery built successfully!")
+    print(f"  Output: {config.output_dir.absolute()}")
 
 
 def main() -> None:
