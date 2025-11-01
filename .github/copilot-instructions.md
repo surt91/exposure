@@ -8,6 +8,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-31
 - PyYAML (YAML parsing), Pillow (image metadata), axe-core (accessibility testing)
 - Static file generation - no runtime storage
 - Git repository (LICENSE file, source file headers tracked in version control)
+- Python 3.11+ + PyYAML 6.0+, Pillow 10.0+, Pydantic 2.0+, Jinja2 3.1+, Babel 2.13+, pydantic-settings 2.0+ (006-tool-rename-cli)
+- File-based (YAML configuration, static assets, no database) (006-tool-rename-cli)
 
 ## Project Structure
 
@@ -42,10 +44,9 @@ uv run pybabel compile -d locales
 Python 3.11: Follow standard conventions
 
 ## Recent Changes
+- 006-tool-rename-cli: Added Python 3.11+ + PyYAML 6.0+, Pillow 10.0+, Pydantic 2.0+, Jinja2 3.1+, Babel 2.13+, pydantic-settings 2.0+
 - 005-library-refactor-i18n: Migrated to Pydantic v2 data models, Jinja2 templating, standard Python logging, Babel i18n support, pydantic-settings for configuration management
 - 004-apache-license: Added Apache 2.0 license with SPDX headers
-- 003-dark-mode-ui-polish: Added dark mode support with CSS custom properties
-- 002-type-checking: Added type checking with ty
 
 
 <!-- MANUAL ADDITIONS START -->

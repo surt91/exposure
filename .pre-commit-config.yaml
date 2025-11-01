@@ -13,3 +13,9 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: ty-check
+        name: ty check (via uv)
+        entry: uv run ty check src/
+        language: system
+        types: [python]
+        pass_filenames: false
