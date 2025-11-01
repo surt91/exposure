@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install dependencies
+      run: uv sync --all-extras
+
+    - name: Run linter
+      run: uv run ruff check .
+
+    - name: Check formatting
+      run: uv run ruff format --check .
+
+    - name: Run tests
+      run: |
+        export PYTHONPATH=src
+        uv run pytest --cov=generator --cov-report=xml --cov-report=term --ignore=tests/accessibility
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  # Asset budget checks (T027a)
+  performance:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install dependencies
+      run: uv sync --all-extras
+
+    - name: Run asset budget tests
+      run: |
+        export PYTHONPATH=src
+        uv run pytest tests/integration/test_asset_budgets.py -v
+      continue-on-error: false
+
+    # TODO: Add Lighthouse CI when site is deployed
+
+  # Placeholder for accessibility checks (T020, T035)
+  accessibility:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install dependencies
+      run: uv sync --all-extras
+
+    - name: Setup test environment
+      run: |
+        # Create directories
+        mkdir -p config content
+
+        # Create gallery.yaml
+        cat > config/gallery.yaml << 'EOF'
+        categories:
+          - TestCategory
+          - Uncategorized
+        images: []
+        EOF
+
+        # Create settings.yaml
+        cat > config/settings.yaml << 'EOF'
+        content_dir: content
+        gallery_yaml_path: config/gallery.yaml
+        default_category: Uncategorized
+        enable_thumbnails: false
+        output_dir: dist
+        EOF
+
+        # Create minimal JPEG files for testing
+        printf '\xff\xd8\xff\xe0\x00\x10JFIF' > content/test1.jpg
+        printf '\xff\xd8\xff\xe0\x00\x10JFIF' > content/test2.jpg
+        printf '\xff\xd8\xff\xe0\x00\x10JFIF' > content/test3.jpg
+
+    - name: Build site
+      run: uv run python -m src.generator.build_html
+
+    - name: Install Playwright system dependencies
+      run: uv run playwright install-deps chromium
+
+    - name: Install Playwright browsers
+      run: uv run playwright install chromium
+
+    - name: Run accessibility tests
+      run: |
+        export PYTHONPATH=src
+        uv run pytest tests/accessibility/test_axe_a11y.py -v --tracing=retain-on-failure
