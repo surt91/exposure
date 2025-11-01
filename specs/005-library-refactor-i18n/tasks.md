@@ -114,34 +114,34 @@ Single project structure: `src/`, `tests/` at repository root
 
 ### i18n Infrastructure Setup
 
-- [ ] T035 [US2] Create locales/ directory in project root
-- [ ] T036 [US2] Add locale field (default: "en") to settings.yaml
-- [ ] T037 [US2] Create src/generator/i18n.py with setup_i18n() and _() functions
-- [ ] T038 [US2] Update Jinja2 Environment in src/generator/build_html.py to load i18n extension
-- [ ] T039 [US2] Configure Jinja2 to use Babel translations via install_gettext_translations()
+- [x] T035 [US2] Create locales/ directory in project root
+- [x] T036 [US2] Add locale field (default: "en") to settings.yaml
+- [x] T037 [US2] Create src/generator/i18n.py with setup_i18n() and _() functions
+- [x] T038 [US2] Update Jinja2 Environment in src/generator/build_html.py to load i18n extension
+- [x] T039 [US2] Configure Jinja2 to use Babel translations via install_gettext_translations()
 
 ### Mark Translatable Strings
 
-- [ ] T040 [P] [US2] Wrap UI strings in Jinja2 templates with _() translation function
-- [ ] T041 [P] [US2] Wrap log messages in src/generator/build_html.py with _() function
-- [ ] T042 [P] [US2] Wrap log messages in src/generator/yaml_sync.py with _() function
-- [ ] T043 [P] [US2] Wrap log messages in src/generator/scan.py with _() function
+- [x] T040 [P] [US2] Wrap UI strings in Jinja2 templates with _() translation function
+- [x] T041 [P] [US2] Wrap log messages in src/generator/build_html.py with _() function
+- [x] T042 [P] [US2] Wrap log messages in src/generator/yaml_sync.py with _() function
+- [x] T043 [P] [US2] Wrap log messages in src/generator/scan.py with _() function
 
 ### Extract and Translate
 
-- [ ] T044 [US2] Run pybabel extract to generate locales/messages.pot template
-- [ ] T045 [US2] Run pybabel init to create locales/de/LC_MESSAGES/messages.po
-- [ ] T046 [US2] Translate all strings in locales/de/LC_MESSAGES/messages.po to German
-- [ ] T047 [US2] Run pybabel compile to generate locales/de/LC_MESSAGES/messages.mo binary
-- [ ] T048 [US2] Call setup_i18n() in src/generator/build_html.py main() with config.locale
+- [x] T044 [US2] Run pybabel extract to generate locales/messages.pot template
+- [x] T045 [US2] Run pybabel init to create locales/de/LC_MESSAGES/messages.po
+- [x] T046 [US2] Translate all strings in locales/de/LC_MESSAGES/messages.po to German
+- [x] T047 [US2] Run pybabel compile to generate locales/de/LC_MESSAGES/messages.mo binary
+- [x] T048 [US2] Call setup_i18n() in src/generator/build_html.py main() with config.locale
 
 ### Testing
 
-- [ ] T049 [US2] Create tests/unit/test_i18n.py to verify translation loading and fallback
-- [ ] T050 [US2] Test with locale="en" - verify English strings used
-- [ ] T051 [US2] Test with locale="de" - verify German strings appear in HTML
-- [ ] T052 [US2] Test with locale="fr" (non-existent) - verify fallback to English
-- [ ] T053 [US2] Update CHANGELOG.md with i18n feature and German locale support
+- [x] T049 [US2] Create tests/unit/test_i18n.py to verify translation loading and fallback
+- [x] T050 [US2] Test with locale="en" - verify English strings used
+- [x] T051 [US2] Test with locale="de" - verify German strings appear in HTML
+- [x] T052 [US2] Test with locale="fr" (non-existent) - verify fallback to English
+- [x] T053 [US2] Update CHANGELOG.md with i18n feature and German locale support
 
 **Checkpoint**: User Story 2 complete - i18n working with English and German. Can switch language via settings.yaml. Tests passing.
 

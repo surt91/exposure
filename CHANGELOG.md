@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced accessibility with WCAG 2.1 AA compliant contrast ratios
 - Browser color scheme integration via `<meta name="color-scheme">`
 - Architecture decision record for dark mode approach (ADR 0003)
+- **Internationalization (i18n) support** with Babel/gettext
+- German locale (de) translations for all UI strings
+- `locale` configuration field in settings.yaml
+- Automatic fallback to English for unsupported locales
+- Translation infrastructure with pybabel workflow
 
 ### Changed
 

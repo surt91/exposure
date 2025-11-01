@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from .i18n import _
 from .model import Category, GalleryConfig, Image
 from .scan import detect_duplicates, discover_images, filter_valid_images, get_image_dimensions
 from .yaml_sync import append_stub_entries, get_entry_map, load_gallery_yaml
@@ -58,22 +59,22 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
         ValueError: If duplicate filenames found or other validation errors
     """
     # Discover images
-    logger.info(f"Scanning images in {config.content_dir}...")
+    logger.info(_("Scanning images in %s..."), config.content_dir)
     image_paths = discover_images(config.content_dir)
-    logger.info(f"Found {len(image_paths)} image files")
+    logger.info(_("Found %d image files"), len(image_paths))
 
     # Filter valid images
     valid_paths = filter_valid_images(image_paths)
     if len(valid_paths) < len(image_paths):
-        logger.warning(f"{len(image_paths) - len(valid_paths)} invalid images skipped")
+        logger.warning(_("%d invalid images skipped"), len(image_paths) - len(valid_paths))
 
     # Check for duplicates
     duplicates = detect_duplicates(valid_paths)
     if duplicates:
-        logger.error("Duplicate filenames detected:")
+        logger.error(_("Duplicate filenames detected:"))
         for filename, paths in duplicates.items():
-            logger.error(f"  {filename}: {', '.join(str(p) for p in paths)}")
-        raise ValueError("Cannot proceed with duplicate filenames")
+            logger.error("  %s: %s", filename, ", ".join(str(p) for p in paths))
+        raise ValueError(_("Cannot proceed with duplicate filenames"))
 
     # Load YAML
     categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
@@ -82,7 +83,7 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
     filenames = [p.name for p in valid_paths]
     stubs_added = append_stub_entries(config.gallery_yaml_path, filenames, config.default_category)
     if stubs_added > 0:
-        logger.info(f"Added {stubs_added} stub entries to YAML")
+        logger.info(_("Added %d stub entries to YAML"), stubs_added)
         # Reload after stub addition
         categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
 
@@ -96,7 +97,7 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
 
         if entry is None:
             # This shouldn't happen after stub generation, but handle gracefully
-            logger.warning(f"No YAML entry for {filename}, using defaults")
+            logger.warning(_("No YAML entry for %s, using defaults"), filename)
             entry_category = config.default_category
             entry_title = ""
             entry_description = ""
@@ -146,7 +147,7 @@ def organize_by_category(category_names: list[str], images: list[Image]) -> list
         cat = category_map.get(image.category)
         if cat is None:
             # This shouldn't happen if YAML is valid, but handle gracefully
-            logger.warning(f"Unknown category '{image.category}' for {image.filename}")
+            logger.warning(_("Unknown category '%s' for %s"), image.category, image.filename)
             continue
         cat.add_image(image)
 
@@ -170,10 +171,19 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     from jinja2 import Environment, FileSystemLoader
 
     from .assets import copy_with_hash, write_with_hash
+    from .i18n import setup_i18n
 
-    # Setup Jinja2 environment
+    # Setup internationalization
+    translations = setup_i18n(config.locale)
+
+    # Setup Jinja2 environment with i18n extension
     templates_dir = Path(__file__).parent.parent / "templates"
-    env = Environment(loader=FileSystemLoader(templates_dir), autoescape=True)
+    env = Environment(
+        loader=FileSystemLoader(templates_dir),
+        autoescape=True,
+        extensions=["jinja2.ext.i18n"],
+    )
+    env.install_gettext_translations(translations)
     template = env.get_template("index.html.j2")
 
     # CSS sources
@@ -249,7 +259,7 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
         config_path: Path to settings.yaml configuration file
     """
     logger.info("=" * 60)
-    logger.info("Fotoview Gallery Generator")
+    logger.info(_("Fotoview Gallery Generator"))
     logger.info("=" * 60)
 
     # Load configuration
@@ -257,13 +267,13 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
 
     # Scan and sync
     category_names, images = scan_and_sync(config)
-    logger.info(f"Loaded {len(images)} images across {len(category_names)} categories")
+    logger.info(_("Loaded %d images across %d categories"), len(images), len(category_names))
 
     # Organize by category
     categories = organize_by_category(category_names, images)
 
     # Generate HTML
-    logger.info("Generating gallery HTML...")
+    logger.info(_("Generating gallery HTML..."))
     html = generate_gallery_html(categories, config)
 
     # Write index.html
@@ -271,15 +281,15 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
 
-    logger.info(f"✓ Generated {output_path}")
-    logger.info(f"  HTML size: {len(html)} bytes")
+    logger.info(_("✓ Generated %s"), output_path)
+    logger.info(_("  HTML size: %d bytes"), len(html))
 
-    logger.info("Categories:")
+    logger.info(_("Categories:"))
     for cat in categories:
-        logger.info(f"  {cat.name}: {len(cat.images)} images")
+        logger.info("  %s: %s", cat.name, _("%d images") % len(cat.images))
 
-    logger.info("✓ Gallery built successfully!")
-    logger.info(f"  Output: {config.output_dir.absolute()}")
+    logger.info(_("✓ Gallery built successfully!"))
+    logger.info(_("  Output: %s"), config.output_dir.absolute())
 
 
 def main() -> None:
@@ -296,7 +306,7 @@ def main() -> None:
     try:
         build_gallery(config_path)
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(_("Error: %s"), e)
         sys.exit(1)
 
 

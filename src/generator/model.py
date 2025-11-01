@@ -50,6 +50,7 @@ class GalleryConfig(BaseModel):
     default_category: str = Field(min_length=1)
     enable_thumbnails: bool = False
     output_dir: Path = Path("dist")
+    locale: str = "en"
     log_level: str = "INFO"
 
     model_config = {"arbitrary_types_allowed": True}
