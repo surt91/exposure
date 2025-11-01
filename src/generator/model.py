@@ -1,28 +1,23 @@
 """Data models for the image gallery generator."""
 
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-@dataclass
-class Image:
+
+class Image(BaseModel):
     """Represents a single image in the gallery."""
 
-    filename: str
+    filename: str = Field(min_length=1)
     file_path: Path
-    category: str
+    category: str = Field(min_length=1)
     width: Optional[int] = None
     height: Optional[int] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: str = ""
+    description: str = ""
 
-    def __post_init__(self):
-        """Validate image data."""
-        if not self.filename:
-            raise ValueError("filename cannot be empty")
-        if not self.category:
-            raise ValueError("category cannot be empty")
+    model_config = {"arbitrary_types_allowed": True}
 
     @property
     def alt_text(self) -> str:
@@ -33,20 +28,12 @@ class Image:
         return Path(self.filename).stem.replace("_", " ").replace("-", " ").title()
 
 
-@dataclass
-class Category:
+class Category(BaseModel):
     """Represents a category grouping images."""
 
-    name: str
-    order_index: int
-    images: list[Image] = field(default_factory=list)
-
-    def __post_init__(self):
-        """Validate category data."""
-        if not self.name:
-            raise ValueError("name cannot be empty")
-        if self.order_index < 0:
-            raise ValueError("order_index must be non-negative")
+    name: str = Field(min_length=1)
+    order_index: int = Field(ge=0)
+    images: list[Image] = Field(default_factory=list)
 
     def add_image(self, image: Image) -> None:
         """Add an image to this category."""
@@ -55,61 +42,38 @@ class Category:
         self.images.append(image)
 
 
-@dataclass
-class GalleryConfig:
+class GalleryConfig(BaseModel):
     """Configuration for the gallery generator."""
 
     content_dir: Path
     gallery_yaml_path: Path
-    default_category: str
+    default_category: str = Field(min_length=1)
     enable_thumbnails: bool = False
     output_dir: Path = Path("dist")
+    log_level: str = "INFO"
 
-    def __post_init__(self):
-        """Validate configuration."""
-        self.content_dir = Path(self.content_dir)
-        self.gallery_yaml_path = Path(self.gallery_yaml_path)
-        self.output_dir = Path(self.output_dir)
+    model_config = {"arbitrary_types_allowed": True}
 
+    @field_validator("content_dir", "gallery_yaml_path", "output_dir", mode="before")
+    @classmethod
+    def convert_to_path(cls, v):
+        """Convert string paths to Path objects."""
+        return Path(v) if not isinstance(v, Path) else v
+
+    @model_validator(mode="after")
+    def validate_paths(self):
+        """Validate that required paths exist."""
         if not self.content_dir.exists():
             raise ValueError(f"content_dir does not exist: {self.content_dir}")
         if not self.gallery_yaml_path.exists():
             raise ValueError(f"gallery_yaml_path does not exist: {self.gallery_yaml_path}")
-        if not self.default_category:
-            raise ValueError("default_category cannot be empty")
+        return self
 
 
-@dataclass
-class YamlEntry:
+class YamlEntry(BaseModel):
     """Represents a single entry in the gallery YAML file."""
 
-    filename: str
-    category: str
+    filename: str = Field(min_length=1)
+    category: str = Field(min_length=1)
     title: str = ""
     description: str = ""
-
-    def __post_init__(self):
-        """Validate YAML entry."""
-        if not self.filename:
-            raise ValueError("filename cannot be empty")
-        if not self.category:
-            raise ValueError("category cannot be empty")
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary for YAML serialization."""
-        return {
-            "filename": self.filename,
-            "category": self.category,
-            "title": self.title,
-            "description": self.description,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "YamlEntry":
-        """Create from dictionary loaded from YAML."""
-        return cls(
-            filename=data["filename"],
-            category=data["category"],
-            title=data.get("title", ""),
-            description=data.get("description", ""),
-        )

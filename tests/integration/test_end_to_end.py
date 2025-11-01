@@ -1,6 +1,6 @@
 """End-to-end integration tests."""
 
-from generator.build_html import build_gallery, load_config, scan_and_sync
+from src.generator.build_html import build_gallery, load_config, scan_and_sync
 
 
 class TestEndToEnd:
@@ -162,7 +162,7 @@ output_dir: {output_dir}
         assert html_content.index("Landscapes") < html_content.index("Portraits")
 
         # Check for multiple images (scrollable content)
-        assert html_content.count('<div class="image-item"') == 35
+        assert html_content.count('class="image-item"') == 35
 
         # Check for lazy loading
         assert 'loading="lazy"' in html_content

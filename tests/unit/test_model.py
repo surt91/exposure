@@ -1,8 +1,9 @@
 """Tests for data models."""
 
 import pytest
+from pydantic import ValidationError
 
-from generator.model import Category, GalleryConfig, Image, YamlEntry
+from src.generator.model import Category, GalleryConfig, Image, YamlEntry
 
 
 class TestImage:
@@ -25,13 +26,13 @@ class TestImage:
         assert img.title == "Test Image"
 
     def test_empty_filename_raises(self, tmp_path):
-        """Test that empty filename raises ValueError."""
-        with pytest.raises(ValueError, match="filename cannot be empty"):
+        """Test that empty filename raises ValidationError (Pydantic)."""
+        with pytest.raises(ValidationError, match="filename"):
             Image(filename="", file_path=tmp_path / "test.jpg", category="Test")
 
     def test_empty_category_raises(self, tmp_path):
-        """Test that empty category raises ValueError."""
-        with pytest.raises(ValueError, match="category cannot be empty"):
+        """Test that empty category raises ValidationError (Pydantic)."""
+        with pytest.raises(ValidationError, match="category"):
             Image(filename="test.jpg", file_path=tmp_path / "test.jpg", category="")
 
     def test_alt_text_from_title(self, tmp_path):
@@ -65,13 +66,13 @@ class TestCategory:
         assert len(cat.images) == 0
 
     def test_empty_name_raises(self):
-        """Test that empty name raises ValueError."""
-        with pytest.raises(ValueError, match="name cannot be empty"):
+        """Test that empty name raises ValidationError (Pydantic)."""
+        with pytest.raises(ValidationError, match="name"):
             Category(name="", order_index=0)
 
     def test_negative_order_raises(self):
-        """Test that negative order_index raises ValueError."""
-        with pytest.raises(ValueError, match="order_index must be non-negative"):
+        """Test that negative order_index raises ValidationError (Pydantic)."""
+        with pytest.raises(ValidationError, match="order_index"):
             Category(name="Test", order_index=-1)
 
     def test_add_image(self, tmp_path):
@@ -122,11 +123,11 @@ class TestGalleryConfig:
         assert config.default_category == "Uncategorized"
 
     def test_nonexistent_content_dir_raises(self, tmp_path):
-        """Test that non-existent content_dir raises error."""
+        """Test that non-existent content_dir raises ValidationError (Pydantic)."""
         yaml_path = tmp_path / "gallery.yaml"
         yaml_path.write_text("categories: []")
 
-        with pytest.raises(ValueError, match="content_dir does not exist"):
+        with pytest.raises(ValidationError, match="content_dir does not exist"):
             GalleryConfig(
                 content_dir=tmp_path / "nonexistent",
                 gallery_yaml_path=yaml_path,
@@ -134,11 +135,11 @@ class TestGalleryConfig:
             )
 
     def test_nonexistent_yaml_raises(self, tmp_path):
-        """Test that non-existent YAML path raises error."""
+        """Test that non-existent YAML path raises ValidationError (Pydantic)."""
         content_dir = tmp_path / "content"
         content_dir.mkdir()
 
-        with pytest.raises(ValueError, match="gallery_yaml_path does not exist"):
+        with pytest.raises(ValidationError, match="gallery_yaml_path does not exist"):
             GalleryConfig(
                 content_dir=content_dir,
                 gallery_yaml_path=tmp_path / "nonexistent.yaml",
@@ -161,20 +162,20 @@ class TestYamlEntry:
         assert entry.filename == "test.jpg"
         assert entry.category == "Landscapes"
 
-    def test_to_dict(self):
-        """Test conversion to dictionary."""
+    def test_model_dump(self):
+        """Test conversion to dictionary using Pydantic model_dump()."""
         entry = YamlEntry(
             filename="test.jpg", category="Landscapes", title="Test", description="Desc"
         )
 
-        data = entry.to_dict()
+        data = entry.model_dump()
         assert data["filename"] == "test.jpg"
         assert data["category"] == "Landscapes"
         assert data["title"] == "Test"
         assert data["description"] == "Desc"
 
-    def test_from_dict(self):
-        """Test creation from dictionary."""
+    def test_model_validate(self):
+        """Test creation from dictionary using Pydantic model_validate()."""
         data = {
             "filename": "test.jpg",
             "category": "Landscapes",
@@ -182,6 +183,6 @@ class TestYamlEntry:
             "description": "Desc",
         }
 
-        entry = YamlEntry.from_dict(data)
+        entry = YamlEntry.model_validate(data)
         assert entry.filename == "test.jpg"
         assert entry.category == "Landscapes"

@@ -2,8 +2,8 @@
 
 import pytest
 
-from generator.build_html import generate_gallery_html, organize_by_category
-from generator.model import Category, GalleryConfig, Image
+from src.generator.build_html import generate_gallery_html, organize_by_category
+from src.generator.model import Category, GalleryConfig, Image
 
 
 class TestOrganizeByCategory:
@@ -85,7 +85,7 @@ class TestOrganizeByCategory:
         assert len(categories) == 1
         assert categories[0].name == "HasImages"
 
-    def test_unknown_category_warning(self, tmp_path, capfd):
+    def test_unknown_category_warning(self, tmp_path, caplog):
         """Test handling of images with unknown categories."""
         img1 = Image(
             filename="img1.jpg",
@@ -99,9 +99,8 @@ class TestOrganizeByCategory:
         organize_by_category(category_names, images)
 
         # Should handle gracefully and warn
-        captured = capfd.readouterr()
-        assert "Unknown category" in captured.out
-        assert "UnknownCategory" in captured.out
+        assert "Unknown category" in caplog.text
+        assert "UnknownCategory" in caplog.text
 
 
 class TestGenerateGalleryHTML:

@@ -2,7 +2,7 @@
 
 import pytest
 
-from generator.build_html import build_gallery
+from src.generator.build_html import build_gallery
 
 # Asset budget thresholds (from constitution)
 MAX_HTML_SIZE = 30 * 1024  # 30KB

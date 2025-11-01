@@ -58,7 +58,7 @@ def load_gallery_yaml(yaml_path: Path) -> tuple[list[str], list[YamlEntry]]:
             raise ValueError(f"Duplicate filename in YAML: {filename}")
         filenames_seen.add(filename)
 
-        entries.append(YamlEntry.from_dict(img_data))
+        entries.append(YamlEntry.model_validate(img_data))
 
     return categories, entries
 
@@ -84,7 +84,7 @@ def save_gallery_yaml(yaml_path: Path, categories: list[str], entries: list[Yaml
     if len(filenames) != len(set(filenames)):
         raise ValueError("Duplicate filenames in entries")
 
-    data = {"categories": categories, "images": [e.to_dict() for e in entries]}
+    data = {"categories": categories, "images": [e.model_dump() for e in entries]}
 
     # Ensure parent directory exists
     yaml_path.parent.mkdir(parents=True, exist_ok=True)

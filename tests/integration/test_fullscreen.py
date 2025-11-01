@@ -2,7 +2,7 @@
 
 import pytest
 
-from generator.build_html import build_gallery
+from src.generator.build_html import build_gallery
 
 
 class TestFullscreenIntegration:

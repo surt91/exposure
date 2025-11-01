@@ -2,7 +2,7 @@
 
 import pytest
 
-from generator.scan import detect_duplicates, discover_images, filter_valid_images
+from src.generator.scan import detect_duplicates, discover_images, filter_valid_images
 
 
 class TestDiscoverImages:

@@ -2,8 +2,8 @@
 
 import pytest
 
-from generator.model import YamlEntry
-from generator.yaml_sync import (
+from src.generator.model import YamlEntry
+from src.generator.yaml_sync import (
     append_stub_entries,
     get_entry_map,
     load_gallery_yaml,
@@ -98,8 +98,12 @@ class TestSaveGalleryYaml:
 
         categories = ["Landscapes", "Portraits"]
         entries = [
-            YamlEntry("img1.jpg", "Landscapes", "Mountain", "Peaks"),
-            YamlEntry("img2.jpg", "Portraits", "Portrait", "Person"),
+            YamlEntry(
+                filename="img1.jpg", category="Landscapes", title="Mountain", description="Peaks"
+            ),
+            YamlEntry(
+                filename="img2.jpg", category="Portraits", title="Portrait", description="Person"
+            ),
         ]
 
         save_gallery_yaml(yaml_path, categories, entries)
@@ -124,8 +128,8 @@ class TestSaveGalleryYaml:
         """Test that saving duplicate filenames raises error."""
         yaml_path = tmp_path / "gallery.yaml"
         entries = [
-            YamlEntry("test.jpg", "Cat1"),
-            YamlEntry("test.jpg", "Cat2"),
+            YamlEntry(filename="test.jpg", category="Cat1"),
+            YamlEntry(filename="test.jpg", category="Cat2"),
         ]
 
         with pytest.raises(ValueError, match="Duplicate filenames"):
@@ -189,8 +193,8 @@ class TestGetEntryMap:
     def test_create_entry_map(self):
         """Test creating filename to entry mapping."""
         entries = [
-            YamlEntry("img1.jpg", "Cat1"),
-            YamlEntry("img2.jpg", "Cat2"),
+            YamlEntry(filename="img1.jpg", category="Cat1"),
+            YamlEntry(filename="img2.jpg", category="Cat2"),
         ]
 
         entry_map = get_entry_map(entries)
