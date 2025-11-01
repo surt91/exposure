@@ -115,8 +115,8 @@ description: "Task list for Modern Image Gallery implementation"
 - [X] T039 [P] [US3] Add integration test adding new images then verifying YAML updated `tests/integration/test_stub_generation.py`
 - [X] T040 [US3] Add validation: no category order mutation in `tests/integration/test_stub_generation.py`
 - [X] T041 [US3] Update end-to-end test to include stub scenario `tests/integration/test_end_to_end.py`
- - [ ] T041a [US3] Add stub coverage test `tests/integration/test_stub_coverage.py` (assert 100% content/ images represented in YAML after build)
- - [ ] T041b [P] [US3] Add batch stub generation performance test `tests/integration/test_stub_batch.py` (50 new images; ordering preserved; runtime <5s)
+ - [X] T041a [US3] Add stub coverage test `tests/integration/test_stub_coverage.py` (assert 100% content/ images represented in YAML after build)
+ - [X] T041b [P] [US3] Add batch stub generation performance test `tests/integration/test_stub_batch.py` (50 new images; ordering preserved; runtime <5s)
 
 **Checkpoint**: Auto-stub functionality complete; fulfills SC-003 & SC-005
 
