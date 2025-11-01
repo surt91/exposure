@@ -5,11 +5,13 @@ Modern static image gallery generator - build responsive, accessible galleries f
 ## Features
 
 - 📸 Scrollable image gallery with category organization
+- 🌙 **Dark mode** - Automatic theme switching based on system preference
 - 🔍 Fullscreen image viewer with keyboard navigation
 - 🔄 Automatic YAML stub generation for new images
-- ♿ Accessibility-first design (semantic HTML, ARIA, keyboard support)
+- ♿ Accessibility-first design (semantic HTML, ARIA, keyboard support, WCAG 2.1 AA)
 - ⚡ Performance-optimized (strict asset budgets)
 - 🔒 Security-focused (no third-party scripts, CSP ready)
+- ✨ Smooth transitions and subtle visual flourishes
 
 ## Quick Start
 
@@ -65,6 +67,22 @@ Fotoview uses [ty](https://github.com/astral-sh/ty) from Astral for fast, strict
 - Type checking enforced in CI pipeline
 - Rust-based performance (<5 second feedback)
 - See [ADR 0002](/docs/decisions/0002-type-checking.md) for tool choice rationale
+
+## Dark Mode
+
+Fotoview automatically adapts to your system's dark mode preference:
+
+- **Light mode** (default): Clean white background, optimal for bright environments
+- **Dark mode** (automatic): Near-black background (#0f0f0f) reduces eye strain
+- **System integration**: Respects OS-level dark mode setting (macOS, Windows, Linux, iOS, Android)
+- **WCAG 2.1 AA compliant**: All text meets 4.5:1 contrast ratio
+- **Smooth transitions**: Color changes animate smoothly when toggling system preference
+- **Reduced motion support**: Respects `prefers-reduced-motion` accessibility setting
+- **Zero JavaScript**: Pure CSS implementation, works without JS enabled
+
+**Browser Support:** Chrome 76+, Firefox 67+, Safari 12.1+, Edge 79+ (2019+)
+
+For implementation details, see [ADR 0003](/docs/decisions/0003-dark-mode-styling-approach.md)
 
 ## Configuration
 
