@@ -72,9 +72,9 @@ class TestAssetBudgets:
         html_size = index_html.stat().st_size
         print(f"HTML size: {html_size} bytes ({html_size / 1024:.2f} KB)")
 
-        assert (
-            html_size <= MAX_HTML_SIZE
-        ), f"HTML exceeds budget: {html_size} > {MAX_HTML_SIZE} bytes"
+        assert html_size <= MAX_HTML_SIZE, (
+            f"HTML exceeds budget: {html_size} > {MAX_HTML_SIZE} bytes"
+        )
 
     def test_css_size_budget(self, test_gallery):
         """Test that CSS stays within 25KB budget."""
