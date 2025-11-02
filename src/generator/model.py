@@ -1,5 +1,6 @@
 """Data models for the image gallery generator."""
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -18,6 +19,7 @@ class Image(BaseModel):
     height: Optional[int] = None
     title: str = ""
     description: str = ""
+    thumbnail: Optional["ThumbnailImage"] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -35,6 +37,174 @@ class Image(BaseModel):
         if self.width and self.height:
             return self.width / self.height
         return None
+
+    @property
+    def image_url(self) -> str:
+        """Get relative URL to original image for HTML templates."""
+        return f"images/originals/{self.filename}"
+
+    @property
+    def thumbnail_url(self) -> str:
+        """Get relative URL to thumbnail WebP for HTML templates."""
+        if self.thumbnail:
+            return f"images/thumbnails/{self.thumbnail.webp_path.name}"
+        return self.image_url  # Fallback to original
+
+    @property
+    def thumbnail_fallback_url(self) -> str:
+        """Get relative URL to JPEG fallback thumbnail."""
+        if self.thumbnail:
+            return f"images/thumbnails/{self.thumbnail.jpeg_path.name}"
+        return self.image_url  # Fallback to original
+
+
+class ThumbnailConfig(BaseModel):
+    """
+    Configuration for thumbnail generation.
+
+    All fields have sensible defaults based on research findings.
+    Configuration loaded from YAML or environment variables.
+    """
+
+    max_dimension: int = Field(
+        default=800, ge=100, le=4000, description="Maximum width or height for thumbnails in pixels"
+    )
+
+    webp_quality: int = Field(
+        default=85,
+        ge=1,
+        le=100,
+        description="WebP compression quality (1-100, higher = better quality)",
+    )
+
+    jpeg_quality: int = Field(
+        default=90,
+        ge=1,
+        le=100,
+        description="JPEG fallback compression quality (1-100, higher = better quality)",
+    )
+
+    output_dir: Path = Field(
+        default=Path("build/images/thumbnails"),
+        description="Directory for generated thumbnail files",
+    )
+
+    enable_cache: bool = Field(
+        default=True, description="Enable incremental build caching to skip unchanged images"
+    )
+
+    cache_file: Path = Field(
+        default=Path("build/.build-cache.json"), description="Path to build cache JSON file"
+    )
+
+    resampling_filter: str = Field(
+        default="LANCZOS",
+        pattern="^(LANCZOS|BICUBIC|BILINEAR|NEAREST)$",
+        description="PIL resampling filter for thumbnail generation",
+    )
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @field_validator("output_dir", "cache_file", mode="before")
+    @classmethod
+    def convert_to_path(cls, v):
+        """Convert string paths to Path objects."""
+        return Path(v) if not isinstance(v, Path) else v
+
+
+class ThumbnailImage(BaseModel):
+    """Represents a generated thumbnail with both WebP and JPEG fallback formats."""
+
+    source_filename: str = Field(min_length=1)
+    source_path: Path
+    webp_path: Path
+    jpeg_path: Path
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    webp_size_bytes: int = Field(gt=0)
+    jpeg_size_bytes: int = Field(gt=0)
+    source_size_bytes: int = Field(gt=0)
+    content_hash: str = Field(min_length=8, max_length=8)
+    generated_at: datetime
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @property
+    def size_reduction_percent(self) -> float:
+        """Calculate percentage reduction in file size (WebP vs original)."""
+        return ((self.source_size_bytes - self.webp_size_bytes) / self.source_size_bytes) * 100
+
+    @property
+    def webp_savings_percent(self) -> float:
+        """Calculate percentage savings of WebP vs JPEG fallback."""
+        return ((self.jpeg_size_bytes - self.webp_size_bytes) / self.jpeg_size_bytes) * 100
+
+    @property
+    def aspect_ratio(self) -> float:
+        """Calculate thumbnail aspect ratio."""
+        return self.width / self.height
+
+
+class ImageMetadata(BaseModel):
+    """Extended metadata extracted from source images during thumbnail generation."""
+
+    filename: str = Field(min_length=1)
+    file_path: Path
+    format: str
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    file_size_bytes: int = Field(gt=0)
+    color_mode: str
+    has_transparency: bool
+    exif_orientation: Optional[int] = Field(default=None, ge=1, le=8)
+    is_animated: bool = False
+    frame_count: int = Field(default=1, ge=1)
+    dpi: Optional[tuple[int, int]] = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class CacheEntry(BaseModel):
+    """Single entry in the build cache for incremental builds."""
+
+    source_path: str
+    source_mtime: float
+    webp_path: str
+    jpeg_path: str
+    content_hash: str
+    thumbnail_generated_at: datetime
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class BuildCache(BaseModel):
+    """Tracks processed images and their modification times for incremental builds."""
+
+    entries: dict[str, CacheEntry] = Field(default_factory=dict)
+    cache_version: str = Field(default="1.0")
+    last_updated: datetime = Field(default_factory=datetime.now)
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    def should_regenerate(self, source_path: Path) -> bool:
+        """Check if thumbnail needs regeneration based on mtime."""
+        entry = self.entries.get(str(source_path))
+        if entry is None:
+            return True
+        current_mtime = source_path.stat().st_mtime
+        return current_mtime > entry.source_mtime
+
+    def update_entry(self, source_path: Path, thumbnail: ThumbnailImage) -> None:
+        """Update or add cache entry for processed image."""
+        self.entries[str(source_path)] = CacheEntry(
+            source_path=str(source_path),
+            source_mtime=source_path.stat().st_mtime,
+            webp_path=str(thumbnail.webp_path),
+            jpeg_path=str(thumbnail.jpeg_path),
+            content_hash=thumbnail.content_hash,
+            thumbnail_generated_at=thumbnail.generated_at,
+        )
+        self.last_updated = datetime.now()
 
 
 class Category(BaseModel):
@@ -102,8 +272,8 @@ class GalleryConfig(BaseSettings):
         description="Default category for images without explicit category assignment",
         examples=["Uncategorized", "General"],
     )
-    enable_thumbnails: bool = Field(
-        default=False, description="Whether to generate thumbnail images (not yet implemented)"
+    thumbnail_config: ThumbnailConfig = Field(
+        default_factory=ThumbnailConfig, description="Thumbnail generation configuration"
     )
     output_dir: Path = Field(
         default=Path("dist"),

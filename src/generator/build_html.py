@@ -244,9 +244,23 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     for category in categories:
         template_images = []
         for image in category.images:
-            # Copy image and get hashed filename
-            img_dest = copy_with_hash(image.file_path, config.output_dir / "images")
-            img_href = f"images/{img_dest.name}"
+            # Copy original image to originals directory
+            originals_dir = config.output_dir / "images" / "originals"
+            img_dest = copy_with_hash(image.file_path, originals_dir)
+            img_href = f"images/originals/{img_dest.name}"
+
+            # Prepare thumbnail info if available
+            thumbnail_webp_href = None
+            thumbnail_jpeg_href = None
+            thumbnail_width = None
+            thumbnail_height = None
+
+            if image.thumbnail:
+                # Thumbnails already exist in the output directory from generation
+                thumbnail_webp_href = f"images/thumbnails/{image.thumbnail.webp_path.name}"
+                thumbnail_jpeg_href = f"images/thumbnails/{image.thumbnail.jpeg_path.name}"
+                thumbnail_width = image.thumbnail.width
+                thumbnail_height = image.thumbnail.height
 
             # Create image dict with hashed path for template
             template_images.append(
@@ -259,6 +273,11 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
                     "alt_text": image.alt_text,
                     "width": image.width,
                     "height": image.height,
+                    "thumbnail": image.thumbnail,
+                    "thumbnail_webp_href": thumbnail_webp_href,
+                    "thumbnail_jpeg_href": thumbnail_jpeg_href,
+                    "thumbnail_width": thumbnail_width,
+                    "thumbnail_height": thumbnail_height,
                 }
             )
 
@@ -303,7 +322,22 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     category_names, images = scan_and_sync(config)
     logger.info(_("Loaded %d images across %d categories"), len(images), len(category_names))
 
-    # Organize by category
+    # Generate thumbnails (always enabled)
+    from .thumbnails import ThumbnailGenerator
+
+    logger.info(_("Generating thumbnails..."))
+    thumb_gen = ThumbnailGenerator(config.thumbnail_config, logger)
+
+    # Extract image paths
+    image_paths = [img.file_path for img in images]
+
+    # Generate thumbnails
+    successful, failed = thumb_gen.generate_batch(image_paths)
+
+    # Attach thumbnails to Image objects
+    thumbnail_map = {str(t.source_path): t for t in successful}
+    for img in images:
+        img.thumbnail = thumbnail_map.get(str(img.file_path))  # Organize by category
     categories = organize_by_category(category_names, images)
 
     # Generate HTML

@@ -6,7 +6,7 @@
 
 ## Overview
 
-This guide helps you enable and use the image preprocessing feature to generate optimized WebP thumbnails for your gallery. Thumbnails dramatically improve page load times while preserving full-resolution images for detailed viewing.
+This guide explains the image preprocessing feature that automatically generates optimized WebP thumbnails for your gallery. Thumbnails are **always generated** during the build process to ensure optimal performance.
 
 **Benefits**:
 - ⚡ 85%+ reduction in bandwidth for gallery pages
@@ -16,26 +16,15 @@ This guide helps you enable and use the image preprocessing feature to generate 
 
 ---
 
-## Quick Enable
+## Quick Start
 
-Enable thumbnails with default settings (recommended for most users):
-
-### 1. Update Configuration
-
-Edit `config/settings.yaml`:
-
-```yaml
-# Add this line
-enable_thumbnails: true
-```
-
-### 2. Build Gallery
+Build your gallery with automatic thumbnail generation:
 
 ```bash
 uv run exposure
 ```
 
-That's it! Thumbnails will be generated automatically during the build.
+That's it! Thumbnails are automatically generated during every build.
 
 ---
 
@@ -219,12 +208,7 @@ Expected results with default settings (800px, quality 85/90):
 
 ### Problem: Thumbnails not generated
 
-**Check 1**: Verify `enable_thumbnails` is `true`
-```bash
-grep enable_thumbnails config/settings.yaml
-```
-
-**Check 2**: Look for errors in build output
+**Check 1**: Look for errors in build output
 ```bash
 uv run exposure 2>&1 | grep -i error
 ```
@@ -238,18 +222,12 @@ uv run python -c "from PIL import Image; print('Pillow OK')"
 
 ### Problem: Build is slow
 
-**Check 1**: Is caching enabled?
-```bash
-grep enable_cache config/settings.yaml
-# Should show: enable_cache: true (or omitted for default)
-```
-
-**Check 2**: Does cache file exist?
+**Check**: Does cache file exist?
 ```bash
 ls -lh build/.build-cache.json
 ```
 
-**Solution**: Ensure cache not deleted between builds
+**Solution**: Ensure cache not deleted between builds. The cache at `build/.build-cache.json` tracks file modification times to skip unchanged images
 
 ---
 
@@ -304,13 +282,6 @@ WARNING: Failed to process IMG_1234.jpg: cannot identify image file
 ---
 
 ## Advanced Usage
-
-### Disable Thumbnails for Specific Build
-
-```bash
-# One-time build without thumbnails (ignore config)
-EXPOSURE_ENABLE_THUMBNAILS=false uv run exposure
-```
 
 ### Check Thumbnail Metrics
 
@@ -450,9 +421,9 @@ thumbnail_config:
 
 ## Summary
 
-**To enable thumbnails**:
-1. Add `enable_thumbnails: true` to `config/settings.yaml`
-2. Run `uv run exposure`
+**Thumbnails are always generated automatically**:
+1. Run `uv run exposure` to build your gallery
+2. Thumbnails are created during every build
 3. Deploy the `build/` directory
 
 **Key benefits**:
@@ -461,4 +432,4 @@ thumbnail_config:
 - Original quality preserved in modal view
 - Incremental builds save time
 
-**Default settings work great** - only customize if you have specific needs!
+**Default settings work great** - only customize quality/size if you have specific needs!
