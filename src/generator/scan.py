@@ -8,9 +8,8 @@ try:
 except ImportError:
     PILImage = None  # type: ignore
 
-
-# Supported image formats
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+from .constants import IMAGE_EXTENSIONS
+from .utils import validate_directory_exists
 
 
 def discover_images(content_dir: Path) -> list[Path]:
@@ -26,10 +25,7 @@ def discover_images(content_dir: Path) -> list[Path]:
     Raises:
         ValueError: If content_dir doesn't exist or isn't a directory
     """
-    if not content_dir.exists():
-        raise ValueError(f"Content directory does not exist: {content_dir}")
-    if not content_dir.is_dir():
-        raise ValueError(f"Content path is not a directory: {content_dir}")
+    validate_directory_exists(content_dir, "Content directory")
 
     image_files = []
     for ext in IMAGE_EXTENSIONS:

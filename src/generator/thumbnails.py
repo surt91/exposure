@@ -10,7 +10,9 @@ from typing import Callable, Optional
 from PIL import Image as PILImage
 from PIL import ImageOps
 
+from src.generator.constants import CACHE_VERSION, CONTENT_HASH_LENGTH, EXIF_ORIENTATION_TAG
 from src.generator.model import ImageMetadata, ThumbnailConfig, ThumbnailImage
+from src.generator.utils import ensure_directory, validate_file_exists
 
 
 class ThumbnailGenerator:
@@ -37,10 +39,60 @@ class ThumbnailGenerator:
         self.logger = logger or logging.getLogger(__name__)
 
         # Create output directory if it doesn't exist
-        self.config.output_dir.mkdir(parents=True, exist_ok=True)
+        ensure_directory(self.config.output_dir)
 
         # Load build cache
         self.cache = self.load_cache()
+
+    def _load_from_cache(self, source_path: Path) -> Optional[ThumbnailImage]:
+        """
+        Attempt to load thumbnail info from cache.
+
+        Args:
+            source_path: Path to source image file
+
+        Returns:
+            ThumbnailImage if cache valid and files exist, None otherwise
+        """
+        cache_entry = self.cache.entries.get(str(source_path))
+        if not cache_entry:
+            return None
+
+        webp_path = Path(cache_entry.webp_path)
+        jpeg_path = Path(cache_entry.jpeg_path)
+
+        # Verify files exist
+        if not (webp_path.exists() and jpeg_path.exists()):
+            return None
+
+        # Get file sizes
+        webp_size = webp_path.stat().st_size
+        jpeg_size = jpeg_path.stat().st_size
+
+        # Extract dimensions from WebP file
+        try:
+            with PILImage.open(webp_path) as thumb:
+                thumb_width = thumb.width
+                thumb_height = thumb.height
+        except Exception:
+            # If we can't open the thumbnail, invalidate cache
+            self.logger.warning(f"Cached thumbnail unreadable, regenerating: {source_path.name}")
+            return None
+
+        # Return cached thumbnail info
+        return ThumbnailImage(
+            source_filename=source_path.name,
+            source_path=source_path,
+            webp_path=webp_path,
+            jpeg_path=jpeg_path,
+            width=thumb_width,
+            height=thumb_height,
+            webp_size_bytes=webp_size,
+            jpeg_size_bytes=jpeg_size,
+            source_size_bytes=source_path.stat().st_size,
+            content_hash=cache_entry.content_hash,
+            generated_at=cache_entry.thumbnail_generated_at,
+        )
 
     def generate_thumbnail(
         self, source_path: Path, metadata: Optional[ImageMetadata] = None
@@ -64,53 +116,15 @@ class ThumbnailGenerator:
             ValueError: If source_path is not a supported image format
             OSError: If thumbnail files cannot be written
         """
-        if not source_path.exists():
-            raise FileNotFoundError(f"Source image not found: {source_path}")
+        validate_file_exists(source_path, "Source image")
 
         # Check cache if enabled
         if self.config.enable_cache and not self.cache.should_regenerate(source_path):
-            self.logger.debug(f"Skipping {source_path.name} (cached, unchanged)")
-
-            # Reconstruct ThumbnailImage from cache entry
-            cache_entry = self.cache.entries.get(str(source_path))
-            if cache_entry:
-                webp_path = Path(cache_entry.webp_path)
-                jpeg_path = Path(cache_entry.jpeg_path)
-
-                # Get file sizes and dimensions
-                if webp_path.exists() and jpeg_path.exists():
-                    webp_size = webp_path.stat().st_size
-                    jpeg_size = jpeg_path.stat().st_size
-
-                    # Extract dimensions from WebP file
-                    try:
-                        with PILImage.open(webp_path) as thumb:
-                            thumb_width = thumb.width
-                            thumb_height = thumb.height
-                    except Exception:
-                        # If we can't open the thumbnail, skip cache hit
-                        self.logger.warning(
-                            f"Cached thumbnail unreadable, regenerating: {source_path.name}"
-                        )
-                        # Fall through to regeneration
-                    else:
-                        # Return cached thumbnail info
-                        return ThumbnailImage(
-                            source_filename=source_path.name,
-                            source_path=source_path,
-                            webp_path=webp_path,
-                            jpeg_path=jpeg_path,
-                            width=thumb_width,
-                            height=thumb_height,
-                            webp_size_bytes=webp_size,
-                            jpeg_size_bytes=jpeg_size,
-                            source_size_bytes=source_path.stat().st_size,
-                            content_hash=cache_entry.content_hash,
-                            generated_at=cache_entry.thumbnail_generated_at,
-                        )
-
+            cached_thumbnail = self._load_from_cache(source_path)
+            if cached_thumbnail:
+                self.logger.debug(f"Skipping {source_path.name} (cached, unchanged)")
+                return cached_thumbnail
             # If cache entry missing or files don't exist, fall through to regeneration
-            return None
 
         try:
             # Extract metadata if not provided
@@ -282,7 +296,7 @@ class ThumbnailGenerator:
             cache_data = json.loads(cache_file.read_text())
 
             # Validate cache version
-            if cache_data.get("cache_version") != "1.0":
+            if cache_data.get("cache_version") != CACHE_VERSION:
                 self.logger.warning("Cache version mismatch, regenerating all thumbnails")
                 return BuildCache()
 
@@ -303,7 +317,7 @@ class ThumbnailGenerator:
         cache_file = self.config.cache_file
 
         # Ensure parent directory exists
-        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        ensure_directory(cache_file.parent)
 
         # Update timestamp
         self.cache.last_updated = datetime.now()
@@ -331,8 +345,7 @@ class ThumbnailGenerator:
             FileNotFoundError: If source_path does not exist
             PIL.UnidentifiedImageError: If file is not a valid image
         """
-        if not source_path.exists():
-            raise FileNotFoundError(f"Image file not found: {source_path}")
+        validate_file_exists(source_path, "Image file")
 
         with PILImage.open(source_path) as img:
             # Extract EXIF orientation if available
@@ -340,8 +353,7 @@ class ThumbnailGenerator:
             try:
                 exif = img.getexif()
                 if exif:
-                    # EXIF orientation tag is 274
-                    exif_orientation = exif.get(274)
+                    exif_orientation = exif.get(EXIF_ORIENTATION_TAG)
             except Exception:
                 # Ignore EXIF errors
                 pass
@@ -415,7 +427,7 @@ def calculate_thumbnail_dimensions(
 
 def generate_content_hash(image_bytes: bytes) -> str:
     """
-    Generate 8-character hash from image content.
+    Generate hash from image content.
 
     Uses SHA-256 for reproducibility and collision resistance.
 
@@ -423,14 +435,14 @@ def generate_content_hash(image_bytes: bytes) -> str:
         image_bytes: Raw image file bytes
 
     Returns:
-        First 8 characters of SHA-256 hex digest
+        First CONTENT_HASH_LENGTH characters of SHA-256 hex digest
 
     Examples:
         >>> generate_content_hash(Path("photo.jpg").read_bytes())
         'a1b2c3d4'
     """
     hash_obj = hashlib.sha256(image_bytes)
-    return hash_obj.hexdigest()[:8]
+    return hash_obj.hexdigest()[:CONTENT_HASH_LENGTH]
 
 
 def apply_exif_orientation(image: PILImage.Image) -> PILImage.Image:

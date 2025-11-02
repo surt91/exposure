@@ -170,6 +170,90 @@ def organize_by_category(category_names: list[str], images: list[Image]) -> list
     return categories
 
 
+def _get_static_dir() -> Path:
+    """Get the path to the static directory."""
+    return Path(__file__).parent.parent / "static"
+
+
+def _combine_css_files() -> str:
+    """
+    Combine all CSS files into a single string.
+
+    Returns:
+        Combined CSS content
+    """
+    static_dir = _get_static_dir()
+    gallery_css = static_dir / "css" / "gallery.css"
+    fullscreen_css = static_dir / "css" / "fullscreen.css"
+
+    css_content = gallery_css.read_text(encoding="utf-8")
+    css_content += "\n\n/* Fullscreen Modal */\n"
+    css_content += fullscreen_css.read_text(encoding="utf-8")
+
+    return css_content
+
+
+def _combine_js_files() -> str:
+    """
+    Combine all JavaScript files into a single string.
+
+    Order matters: justified-layout library must come first.
+
+    Returns:
+        Combined JavaScript content
+    """
+    static_dir = _get_static_dir()
+
+    js_files = [
+        (
+            "vendor/justified-layout.js",
+            "justified-layout library (v4.1.0) - vendored\n"
+            "// Source: https://github.com/flickr/justified-layout\n"
+            "// License: MIT (see src/static/js/vendor/justified-layout.LICENSE)",
+        ),
+        ("gallery.js", "Gallery functionality"),
+        ("a11y.js", "Accessibility helpers"),
+        ("layout.js", "Flexible layout"),
+        ("fullscreen.js", "Fullscreen controller"),
+    ]
+
+    js_parts = []
+    for filename, comment in js_files:
+        js_path = static_dir / "js" / filename
+        js_parts.append(f"// {comment}")
+        js_parts.append(js_path.read_text(encoding="utf-8"))
+        js_parts.append("")  # Empty line separator
+
+    return "\n".join(js_parts)
+
+
+def _setup_jinja_environment(locale: str):
+    """
+    Setup Jinja2 environment with i18n support.
+
+    Args:
+        locale: Locale for translations
+
+    Returns:
+        Configured Jinja2 Environment
+    """
+    from jinja2 import Environment, FileSystemLoader
+
+    from .i18n import setup_i18n
+
+    translations = setup_i18n(locale)
+    templates_dir = Path(__file__).parent.parent / "templates"
+
+    env = Environment(
+        loader=FileSystemLoader(templates_dir),
+        autoescape=True,
+        extensions=["jinja2.ext.i18n"],
+    )
+    env.install_gettext_translations(translations)  # type: ignore[attr-defined]
+
+    return env
+
+
 def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> str:
     """
     Generate HTML for the gallery from categories using Jinja2 templates.
@@ -181,57 +265,16 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     Returns:
         Generated HTML string
     """
-    from jinja2 import Environment, FileSystemLoader
-
     from .assets import copy_with_hash, write_with_hash
-    from .i18n import setup_i18n
 
-    # Setup internationalization
-    translations = setup_i18n(config.locale)
-
-    # Setup Jinja2 environment with i18n extension
-    templates_dir = Path(__file__).parent.parent / "templates"
-    env = Environment(
-        loader=FileSystemLoader(templates_dir),
-        autoescape=True,
-        extensions=["jinja2.ext.i18n"],
-    )
-    env.install_gettext_translations(translations)  # type: ignore[attr-defined]
+    # Setup Jinja2 environment
+    env = _setup_jinja_environment(config.locale)
     template = env.get_template("index.html.j2")
 
-    # CSS sources
-    gallery_css = Path(__file__).parent.parent / "static" / "css" / "gallery.css"
-    fullscreen_css = Path(__file__).parent.parent / "static" / "css" / "fullscreen.css"
+    # Combine and write assets
+    css_content = _combine_css_files()
+    js_content = _combine_js_files()
 
-    # JS sources
-    justified_layout_js = (
-        Path(__file__).parent.parent / "static" / "js" / "vendor" / "justified-layout.js"
-    )
-    gallery_js = Path(__file__).parent.parent / "static" / "js" / "gallery.js"
-    a11y_js = Path(__file__).parent.parent / "static" / "js" / "a11y.js"
-    fullscreen_js = Path(__file__).parent.parent / "static" / "js" / "fullscreen.js"
-    layout_js = Path(__file__).parent.parent / "static" / "js" / "layout.js"
-
-    # Combine CSS files
-    css_content = gallery_css.read_text(encoding="utf-8")
-    css_content += "\n\n/* Fullscreen Modal */\n"
-    css_content += fullscreen_css.read_text(encoding="utf-8")
-
-    # Combine JS files (justified-layout library must come first)
-    js_content = "// justified-layout library (v4.1.0) - vendored\n"
-    js_content += "// Source: https://github.com/flickr/justified-layout\n"
-    js_content += "// License: MIT (see src/static/js/vendor/justified-layout.LICENSE)\n"
-    js_content += justified_layout_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Gallery functionality\n"
-    js_content += gallery_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Accessibility helpers\n"
-    js_content += a11y_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Flexible layout\n"
-    js_content += layout_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Fullscreen controller\n"
-    js_content += fullscreen_js.read_text(encoding="utf-8")
-
-    # Write combined files with hashing
     css_output = write_with_hash(css_content, "gallery.css", config.output_dir)
     js_output = write_with_hash(js_content, "gallery.js", config.output_dir)
 

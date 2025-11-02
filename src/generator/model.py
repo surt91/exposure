@@ -8,6 +8,19 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
+from .constants import (
+    CACHE_VERSION,
+    DEFAULT_CACHE_FILE,
+    DEFAULT_JPEG_QUALITY,
+    DEFAULT_LOCALE,
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_OUTPUT_DIR,
+    DEFAULT_THUMBNAIL_DIR,
+    DEFAULT_THUMBNAIL_MAX_DIMENSION,
+    DEFAULT_WEBP_QUALITY,
+    RESAMPLING_FILTERS,
+)
+
 
 class Image(BaseModel):
     """Represents a single image in the gallery."""
@@ -67,25 +80,28 @@ class ThumbnailConfig(BaseModel):
     """
 
     max_dimension: int = Field(
-        default=800, ge=100, le=4000, description="Maximum width or height for thumbnails in pixels"
+        default=DEFAULT_THUMBNAIL_MAX_DIMENSION,
+        ge=100,
+        le=4000,
+        description="Maximum width or height for thumbnails in pixels",
     )
 
     webp_quality: int = Field(
-        default=85,
+        default=DEFAULT_WEBP_QUALITY,
         ge=1,
         le=100,
         description="WebP compression quality (1-100, higher = better quality)",
     )
 
     jpeg_quality: int = Field(
-        default=90,
+        default=DEFAULT_JPEG_QUALITY,
         ge=1,
         le=100,
         description="JPEG fallback compression quality (1-100, higher = better quality)",
     )
 
     output_dir: Path = Field(
-        default=Path("build/images/thumbnails"),
+        default=DEFAULT_THUMBNAIL_DIR,
         description="Directory for generated thumbnail files",
     )
 
@@ -94,14 +110,21 @@ class ThumbnailConfig(BaseModel):
     )
 
     cache_file: Path = Field(
-        default=Path("build/.build-cache.json"), description="Path to build cache JSON file"
+        default=DEFAULT_CACHE_FILE, description="Path to build cache JSON file"
     )
 
     resampling_filter: str = Field(
         default="LANCZOS",
-        pattern="^(LANCZOS|BICUBIC|BILINEAR|NEAREST)$",
         description="PIL resampling filter for thumbnail generation",
     )
+
+    @field_validator("resampling_filter")
+    @classmethod
+    def validate_resampling_filter(cls, v: str) -> str:
+        """Validate resampling filter is supported."""
+        if v not in RESAMPLING_FILTERS:
+            raise ValueError(f"Invalid resampling filter. Must be one of: {RESAMPLING_FILTERS}")
+        return v
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -181,7 +204,7 @@ class BuildCache(BaseModel):
     """Tracks processed images and their modification times for incremental builds."""
 
     entries: dict[str, CacheEntry] = Field(default_factory=dict)
-    cache_version: str = Field(default="1.0")
+    cache_version: str = Field(default=CACHE_VERSION)
     last_updated: datetime = Field(default_factory=datetime.now)
 
     model_config = {"arbitrary_types_allowed": True}
@@ -276,17 +299,17 @@ class GalleryConfig(BaseSettings):
         default_factory=ThumbnailConfig, description="Thumbnail generation configuration"
     )
     output_dir: Path = Field(
-        default=Path("dist"),
+        default=DEFAULT_OUTPUT_DIR,
         description="Output directory for generated gallery files",
         examples=["dist/", "build/", "public/"],
     )
     locale: str = Field(
-        default="en",
+        default=DEFAULT_LOCALE,
         description="Locale for UI strings (en=English, de=German)",
         examples=["en", "de"],
     )
     log_level: str = Field(
-        default="INFO",
+        default=DEFAULT_LOG_LEVEL,
         description="Logging level (DEBUG, INFO, WARNING, ERROR)",
         examples=["INFO", "DEBUG", "WARNING"],
     )
