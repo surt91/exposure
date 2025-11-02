@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Gallery banner and title** - Optional full-width banner image with styled title overlay
+- Banner image displayed at top of gallery spanning full viewport width
+- Responsive banner height: 40vh (desktop), 30vh (tablet), 25vh (mobile)
+- Gallery title with enhanced typography: 3rem font, 700 weight, text shadow for readability
+- Title overlay on banner with gradient background for contrast
+- CSS custom properties for banner height customization
+- Backward compatible - galleries without banner/title show simple header
+- Banner validation: verifies image exists at build time
+- Title validation: 1-200 characters, no empty/whitespace-only
+- Support for relative (to content_dir) or absolute banner paths
+- Semantic HTML with proper accessibility (alt text, heading hierarchy)
+- Dark mode compatible - no special handling needed
+- i18n support for default gallery title
 - **Image preprocessing with optimized thumbnails** - Always generate WebP and JPEG thumbnails at build time
 - Thumbnail generation scales images to 800px maximum dimension with aspect ratio preservation
 - WebP format with JPEG fallback using HTML `<picture>` element for automatic browser selection

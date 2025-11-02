@@ -264,3 +264,100 @@ header h1 {
     break-inside: avoid;
   }
 }
+
+/* ============================================
+   Gallery Banner and Title
+   ============================================ */
+
+/* CSS Custom Properties for Banner */
+:root {
+  --banner-height-desktop: 40vh;
+  --banner-height-tablet: 30vh;
+  --banner-height-mobile: 25vh;
+}
+
+.gallery-banner {
+  position: relative;
+  width: calc(100% + 2 * var(--spacing-unit));
+  overflow: hidden;
+  margin-left: calc(-1 * var(--spacing-unit));
+  margin-right: calc(-1 * var(--spacing-unit));
+  margin-bottom: calc(var(--spacing-unit) * 2);
+}
+
+.banner-image {
+  display: block;
+  width: 100%;
+  height: var(--banner-height-desktop);
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* Gradient overlay for title readability */
+.gallery-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.banner-title {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  right: 2rem;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  margin: 0;
+  z-index: 2;
+}
+
+/* Responsive breakpoints for banner */
+@media (max-width: 1024px) {
+  .banner-image {
+    height: var(--banner-height-tablet);
+  }
+
+  .banner-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .banner-image {
+    height: var(--banner-height-mobile);
+  }
+
+  .banner-title {
+    font-size: 2rem;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* Header with banner no longer needs extra padding/border */
+header:has(.gallery-banner) {
+  padding: 0;
+  border-bottom: none;
+  margin-bottom: 0;
+  margin-left: calc(-1 * var(--spacing-unit));
+  margin-right: calc(-1 * var(--spacing-unit));
+  margin-top: calc(-1 * var(--spacing-unit));
+}
+
+/* Dark mode: Banner works well in both themes, no changes needed */

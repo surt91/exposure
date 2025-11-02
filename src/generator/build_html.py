@@ -216,6 +216,47 @@ def organize_by_category(category_names: list[str], images: list[Image]) -> list
     return categories
 
 
+def get_default_title() -> str:
+    """
+    Get default gallery title from i18n translations.
+
+    Returns:
+        Localized default title (e.g., "Gallery" or "Galerie")
+    """
+    return _("Gallery")
+
+
+def copy_banner_image(config: GalleryConfig) -> str | None:
+    """
+    Copy banner image to output directory.
+
+    Args:
+        config: Gallery configuration with optional banner_image
+
+    Returns:
+        Relative URL to banner image, or None if no banner configured
+    """
+    if not config.banner_image:
+        return None
+
+    from .utils import ensure_directory
+
+    # Create banner output directory
+    banner_output_dir = config.output_dir / "images" / "banner"
+    ensure_directory(banner_output_dir)
+
+    # Copy banner to output
+    import shutil
+
+    dest_path = banner_output_dir / config.banner_image.name
+    shutil.copy2(config.banner_image, dest_path)
+
+    logger.info("Copied banner image: %s", config.banner_image.name)
+
+    # Return relative URL for template
+    return f"images/banner/{config.banner_image.name}"
+
+
 def _get_static_dir() -> Path:
     """Get the path to the static directory."""
     return Path(__file__).parent.parent / "static"
@@ -416,9 +457,15 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     # Prepare template data
     template_categories = _prepare_template_categories(categories, config.output_dir)
 
+    # Prepare banner and title data
+    banner_image_url = copy_banner_image(config)
+    default_title = get_default_title()
+
     # Render template with data
     html = template.render(
-        gallery_title="Image Gallery",
+        banner_image=banner_image_url,
+        gallery_title=config.gallery_title,
+        default_title=default_title,
         categories=template_categories,
         css_href=css_href,
         js_href=js_href,

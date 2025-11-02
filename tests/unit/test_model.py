@@ -269,6 +269,140 @@ class TestGalleryConfig:
                 default_category="Test",
             )
 
+    def test_banner_image_none(self, tmp_path):
+        """Test that banner_image can be None."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            banner_image=None,
+        )
+        assert config.banner_image is None
+
+    def test_banner_image_absolute_path(self, tmp_path):
+        """Test banner_image with absolute path."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        banner_file = tmp_path / "banner.jpg"
+        banner_file.touch()
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            banner_image=banner_file,
+        )
+        assert config.banner_image == banner_file
+
+    def test_banner_image_relative_path(self, tmp_path):
+        """Test banner_image with path relative to content_dir."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        banner_file = content_dir / "banner.jpg"
+        banner_file.touch()
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            banner_image=Path("banner.jpg"),
+        )
+        assert config.banner_image == banner_file
+
+    def test_banner_image_not_found(self, tmp_path):
+        """Test validation error when banner image doesn't exist."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        with pytest.raises(ValidationError, match="Banner image not found"):
+            GalleryConfig(
+                content_dir=content_dir,
+                gallery_yaml_path=yaml_path,
+                default_category="Test",
+                banner_image=Path("nonexistent.jpg"),
+            )
+
+    def test_gallery_title_valid(self, tmp_path):
+        """Test gallery_title with valid string."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            gallery_title="My Gallery",
+        )
+        assert config.gallery_title == "My Gallery"
+
+    def test_gallery_title_none(self, tmp_path):
+        """Test that gallery_title can be None."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            gallery_title=None,
+        )
+        assert config.gallery_title is None
+
+    def test_gallery_title_empty(self, tmp_path):
+        """Test validation error for empty gallery_title."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        with pytest.raises(ValidationError, match="cannot be empty"):
+            GalleryConfig(
+                content_dir=content_dir,
+                gallery_yaml_path=yaml_path,
+                default_category="Test",
+                gallery_title="   ",
+            )
+
+    def test_gallery_title_too_long(self, tmp_path):
+        """Test validation error for too long gallery_title."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        with pytest.raises(ValidationError, match="200 characters"):
+            GalleryConfig(
+                content_dir=content_dir,
+                gallery_yaml_path=yaml_path,
+                default_category="Test",
+                gallery_title="x" * 201,
+            )
+
 
 class TestYamlEntry:
     """Tests for YamlEntry model."""

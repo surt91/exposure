@@ -10,8 +10,24 @@
     <link rel="stylesheet" href="{{ css_href }}">
 </head>
 <body>
-    <header>
-        <h1>{{ gallery_title }}</h1>
+    <header role="banner">
+{% if banner_image %}
+        {# Banner present: render banner section #}
+        <div class="gallery-banner">
+            <img
+                src="{{ banner_image }}"
+                alt="{% if gallery_title %}Banner for {{ gallery_title }}{% else %}{{ default_title }} banner{% endif %}"
+                class="banner-image"
+            >
+{% if gallery_title %}
+            {# Title as overlay on banner #}
+            <h1 class="banner-title">{{ gallery_title }}</h1>
+{% endif %}
+        </div>
+{% else %}
+        {# No banner: simple header with title #}
+        <h1>{{ gallery_title if gallery_title else default_title }}</h1>
+{% endif %}
     </header>
 
     <main class="gallery">

@@ -5,6 +5,7 @@ Modern static image gallery generator - build responsive, accessible galleries f
 ## Features
 
 - 📸 Scrollable image gallery with category organization
+- 🎨 **Banner & Title** - Optional full-width banner image with styled title overlay
 - 🖼️ **Flexible layout** - Images displayed at original aspect ratios without cropping
 - 🖼️ **Smart thumbnails** - Optimized WebP thumbnails with JPEG fallback for 90%+ file size reduction
 - 🌙 **Dark mode** - Automatic theme switching based on system preference
@@ -86,6 +87,33 @@ Exposure automatically adapts to your system's dark mode preference:
 
 For implementation details, see [ADR 0003](/docs/decisions/0003-dark-mode-styling-approach.md)
 
+## Banner & Gallery Title
+
+Optionally add a full-width banner image and custom title to personalize your gallery:
+
+- **Banner image**: Spans full viewport width with responsive height (40vh desktop, 25vh mobile)
+- **Title overlay**: Large, styled text overlaid on banner with gradient for readability
+- **Responsive design**: Banner and title automatically adjust to screen size
+- **Backward compatible**: Galleries without banner show simple header
+- **CSS-only cropping**: Banner images use `object-fit: cover` for center-crop (no server processing)
+- **Accessible**: Semantic HTML with proper alt text and heading hierarchy
+
+**Configuration example:**
+
+```yaml
+# config/settings.yaml
+banner_image: banner.jpg           # Relative to content_dir or absolute path
+gallery_title: My 3D Printing Gallery
+```
+
+**Features:**
+- Title can be used without banner (simple styled header)
+- Banner validates on build (missing files fail with clear error)
+- Title limited to 200 characters for reasonable display
+- Works seamlessly with dark mode
+
+For implementation details and design decisions, see `specs/009-gallery-banner/`
+
 ## Flexible Layout
 
 Exposure uses a justified layout algorithm that displays images at their original aspect ratios without cropping. Images are arranged in rows with consistent heights, creating a visually balanced and space-efficient gallery.
@@ -120,6 +148,10 @@ default_category: Uncategorized         # Default for new images
 output_dir: dist                       # Generated site output
 locale: en                             # UI language (en=English, de=German)
 log_level: INFO                        # Logging verbosity (DEBUG, INFO, WARNING, ERROR)
+
+# Optional: Gallery banner and title
+banner_image: banner.jpg               # Path to banner image (relative to content_dir or absolute)
+gallery_title: My Gallery              # Gallery title displayed prominently in banner or header
 ```
 
 ### Thumbnail Generation

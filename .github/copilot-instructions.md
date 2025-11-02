@@ -13,6 +13,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-02
 - Python 3.11+ (build tooling), HTML5/CSS3/ES Modules (delivery assets) + Pydantic v2 (data models), Jinja2 (templating), Pillow (image metadata), PyYAML (config), Babel (i18n) (007-flexible-layout)
 - Python 3.11 + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), Jinja2 3.1+ (HTML templating), PyYAML 6.0+ (config) (008-image-preprocessing)
 - File-based (source images, generated thumbnails, build cache for incremental builds) (008-image-preprocessing)
+- Python 3.11 + Pydantic 2.0+ (data models), Jinja2 3.1+ (templates), Pillow 10.0+ (image metadata), PyYAML 6.0+ (config), Babel 2.13+ (i18n) (009-gallery-banner)
+- File-based (YAML configuration files, static image assets) (009-gallery-banner)
 
 ## Project Structure
 
@@ -47,9 +49,9 @@ uv run pybabel compile -d locales
 Python 3.11: Follow standard conventions
 
 ## Recent Changes
+- 009-gallery-banner: Added Python 3.11 + Pydantic 2.0+ (data models), Jinja2 3.1+ (templates), Pillow 10.0+ (image metadata), PyYAML 6.0+ (config), Babel 2.13+ (i18n)
 - 008-image-preprocessing: Added Python 3.11 + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), Jinja2 3.1+ (HTML templating), PyYAML 6.0+ (config)
 - 007-flexible-layout: Added Python 3.11+ (build tooling), HTML5/CSS3/ES Modules (delivery assets) + Pydantic v2 (data models), Jinja2 (templating), Pillow (image metadata), PyYAML (config), Babel (i18n)
-- 006-tool-rename-cli: Added Python 3.11+ + PyYAML 6.0+, Pillow 10.0+, Pydantic 2.0+, Jinja2 3.1+, Babel 2.13+, pydantic-settings 2.0+
 
 
 <!-- MANUAL ADDITIONS START -->

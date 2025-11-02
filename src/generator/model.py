@@ -269,6 +269,20 @@ class GalleryConfig(BaseSettings):
         description="Logging level (DEBUG, INFO, WARNING, ERROR)",
         examples=["INFO", "DEBUG", "WARNING"],
     )
+    banner_image: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to banner image displayed at top of gallery (relative to content_dir or absolute)"
+        ),
+        examples=["banner.jpg", "/path/to/banner.jpg"],
+    )
+    gallery_title: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+        description="Gallery title displayed prominently in banner or header",
+        examples=["My 3D Printing Gallery", "Nature Photography"],
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="EXPOSURE_",
@@ -306,6 +320,50 @@ class GalleryConfig(BaseSettings):
     def convert_to_path(cls, v):
         """Convert string paths to Path objects."""
         return Path(v) if not isinstance(v, Path) else v
+
+    @field_validator("banner_image", mode="before")
+    @classmethod
+    def validate_banner_image(cls, v, info):
+        """Validate banner image path exists if provided."""
+        if v is None:
+            return None
+
+        path = Path(v) if not isinstance(v, Path) else v
+
+        # Check absolute path
+        if path.is_absolute():
+            if not path.exists():
+                raise ValueError(f"Banner image not found: {path}")
+            if not path.is_file():
+                raise ValueError(f"Banner image path is not a file: {path}")
+            return path
+
+        # Try relative to content_dir
+        content_dir = info.data.get("content_dir")
+        if content_dir:
+            full_path = Path(content_dir) / path
+            if full_path.exists() and full_path.is_file():
+                return full_path
+
+        raise ValueError(
+            f"Banner image not found: {v}. Provide absolute path or path relative to content_dir."
+        )
+
+    @field_validator("gallery_title", mode="before")
+    @classmethod
+    def validate_gallery_title(cls, v):
+        """Validate gallery title if provided."""
+        if v is None:
+            return None
+
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                raise ValueError("Gallery title cannot be empty or whitespace-only")
+            if len(v) > 200:
+                raise ValueError("Gallery title must be 200 characters or less")
+
+        return v
 
     @model_validator(mode="after")
     def validate_paths(self):
