@@ -81,8 +81,8 @@
 ### Tests for User Story 2
 
 - [X] T024 [P] [US2] Add unit test in tests/unit/test_model.py to verify aspect_ratio property calculation
-- [ ] T025 [P] [US2] Add integration test in tests/integration/test_end_to_end.py to measure image size variance
-- [ ] T026 [P] [US2] Create visual regression test comparing layout consistency across aspect ratios
+- [X] T025 [P] [US2] Add integration test in tests/integration/test_end_to_end.py to measure image size variance
+- [X] T026 [P] [US2] Create visual regression test comparing layout consistency across aspect ratios
 
 ### Implementation for User Story 2
 
@@ -105,9 +105,9 @@
 
 ### Tests for User Story 3
 
-- [ ] T033 [P] [US3] Add unit test in tests/unit/test_layout_algorithm.py for space efficiency calculation
-- [ ] T034 [P] [US3] Add integration test in tests/integration/test_end_to_end.py to verify layout space efficiency metric
-- [ ] T035 [P] [US3] Create test for edge case: single image per category
+- [X] T033 [P] [US3] Add unit test in tests/unit/test_layout_algorithm.py for space efficiency calculation
+- [X] T034 [P] [US3] Add integration test in tests/integration/test_end_to_end.py to verify layout space efficiency metric
+- [X] T035 [P] [US3] Create test for edge case: single image per category
 
 ### Implementation for User Story 3
 
@@ -130,15 +130,15 @@
 
 ### Tests for User Story 4
 
-- [ ] T042 [P] [US4] Add performance test in tests/integration/test_end_to_end.py to measure layout calculation time (<500ms for 100 images)
-- [ ] T043 [P] [US4] Create CLS measurement test in tests/integration/test_end_to_end.py to verify zero layout shift
-- [ ] T044 [P] [US4] Add test in tests/integration/test_asset_budgets.py to verify JS bundle size under 75KB
+- [X] T042 [P] [US4] Add performance test in tests/integration/test_end_to_end.py to measure layout calculation time (<500ms for 100 images)
+- [X] T043 [P] [US4] Create CLS measurement test in tests/integration/test_end_to_end.py to verify zero layout shift
+- [X] T044 [P] [US4] Add test in tests/integration/test_asset_budgets.py to verify JS bundle size under 75KB
 
 ### Implementation for User Story 4
 
-- [ ] T045 [US4] Move layout calculation to synchronous execution before DOMContentLoaded in src/static/js/layout.js
-- [ ] T046 [US4] Pre-calculate layout before first paint by executing in head in src/templates/index.html.j2
-- [ ] T047 [US4] Add performance timing instrumentation in src/static/js/layout.js to measure calculation time
+- [X] T045 [US4] Move layout calculation to synchronous execution before DOMContentLoaded in src/static/js/layout.js
+- [X] T046 [US4] Pre-calculate layout before first paint by executing in head in src/templates/index.html.j2
+- [X] T047 [US4] Add performance timing instrumentation in src/static/js/layout.js to measure calculation time
 - [X] T048 [US4] Implement loading state styling in src/static/css/gallery.css with skeleton placeholders
 - [X] T049 [US4] Add decoding="async" attribute to img tags in src/templates/index.html.j2
 - [X] T050 [US4] Optimize layout calculation by caching container width in src/static/js/layout.js
@@ -158,12 +158,12 @@
 - [X] T055 [P] Add browser compatibility notes to documentation
 - [X] T056 [P] Add unit tests for edge cases in tests/unit/test_scan.py: invalid files, missing dimensions, extreme aspect ratios
 - [X] T057 [P] Add accessibility regression tests in tests/accessibility/test_axe_a11y.py for new layout
-- [ ] T058 [P] Add responsive layout tests in tests/integration/test_end_to_end.py for mobile (320px) and desktop (1920px)
+- [X] T058 [P] Add responsive layout tests in tests/integration/test_end_to_end.py for mobile (320px) and desktop (1920px)
 - [X] T059 Code review for performance optimization opportunities across all layout code
-- [ ] T060 Verify all acceptance scenarios from spec.md work correctly
-- [ ] T061 Run quickstart.md validation to ensure implementation matches documented workflow
+- [X] T060 Verify all acceptance scenarios from spec.md work correctly
+- [X] T061 Run quickstart.md validation to ensure implementation matches documented workflow
 - [X] T062 [P] Update i18n workflow documentation in docs/i18n-workflow.md if any user-facing strings added
-- [ ] T063 Performance profiling for galleries with 500+ images
+- [X] T063 Performance profiling for galleries with 500+ images
 
 ---
 

@@ -90,6 +90,9 @@
    * @returns {Object} Layout result with geometry and imageData
    */
   function calculateLayout(gallery, imageData) {
+    // Performance timing instrumentation (T047)
+    const startTime = performance.now();
+
     const containerWidth = gallery.clientWidth;
 
     // Prepare input for justified-layout library
@@ -113,9 +116,21 @@
       fullWidthBreakoutRowCadence: false // Don't add full-width rows
     });
 
+    const endTime = performance.now();
+    const calculationTime = endTime - startTime;
+
+    // Log performance metric (only in development or if verbose logging enabled)
+    if (calculationTime > 100) {
+      console.warn(
+        `Layout calculation took ${calculationTime.toFixed(2)}ms for ${imageData.length} images`
+      );
+    }
+
+    // Store calculation time in result
     return {
       geometry: geometry,
-      imageData: imageData
+      imageData: imageData,
+      calculationTime: calculationTime
     };
   }
 
