@@ -4,7 +4,7 @@
 
 ## Overview
 
-This feature extends the existing thumbnail generation data model to track metadata stripping and enhance progress logging. No new top-level entities are introduced; instead, we enhance existing models and add utility structures.
+This feature extends the existing thumbnail generation data model to track metadata stripping and enhance progress logging. Uses `piexif` library for robust EXIF manipulation instead of Pillow's basic support. No new top-level entities are introduced; instead, we enhance existing models and add utility structures.
 
 ## Entity: SensitiveMetadataFields
 
@@ -12,77 +12,64 @@ This feature extends the existing thumbnail generation data model to track metad
 
 **Type**: Constants/Configuration (not a runtime model)
 
-**Structure**:
+**Structure** (using piexif constants):
 
 ```python
-# src/generator/constants.py
+# src/generator/metadata_filter.py
+import piexif
 
 # EXIF tags to REMOVE (privacy-sensitive)
+# Using piexif named constants instead of magic numbers
+
+# Sensitive tags in Exif IFD
 SENSITIVE_EXIF_TAGS: set[int] = {
-    # GPS tags (IFD GPS)
-    0x0000,  # GPSVersionID
-    0x0001,  # GPSLatitudeRef
-    0x0002,  # GPSLatitude
-    0x0003,  # GPSLongitudeRef
-    0x0004,  # GPSLongitude
-    0x0005,  # GPSAltitudeRef
-    0x0006,  # GPSAltitude
-    0x0007,  # GPSTimeStamp
-    # ... (all GPS tags 0x0000-0x001F)
-
-    # Camera/lens serial numbers
-    0xA431,  # BodySerialNumber
-    0xA435,  # LensSerialNumber
-    0xFDE8,  # LensInfo (may contain serial)
-
-    # Creator/copyright information
-    0x013B,  # Artist
-    0x8298,  # Copyright
-    0x9C9D,  # XPAuthor
-    0x9C9E,  # XPComment
-
-    # Software/editing metadata
-    0x0131,  # Software
-    0x000B,  # ProcessingSoftware
-
-    # Embedded thumbnails
-    0x0201,  # JPEGInterchangeFormat (thumbnail offset)
-    0x0202,  # JPEGInterchangeFormatLength (thumbnail length)
-    0x0103,  # Compression (thumbnail)
+    piexif.ExifIFD.BodySerialNumber,    # 0xA431
+    piexif.ExifIFD.LensSerialNumber,    # 0xA435
+    piexif.ExifIFD.ImageUniqueID,       # 0xA420
 }
 
-# EXIF tags to PRESERVE (display-critical or useful)
+# Sensitive tags in 0th IFD (main image)
+SENSITIVE_0TH_TAGS: set[int] = {
+    piexif.ImageIFD.Artist,              # 0x013B
+    piexif.ImageIFD.Copyright,           # 0x8298
+    piexif.ImageIFD.Software,            # 0x0131
+    piexif.ImageIFD.HostComputer,        # 0x013C
+    piexif.ImageIFD.XPAuthor,            # 0x9C9D
+    piexif.ImageIFD.XPComment,           # 0x9C9C
+}
+
+# GPS IFD removed entirely (don't preserve any GPS tags)
+
+# Safe tags to PRESERVE in 0th IFD
+SAFE_0TH_TAGS: set[int] = {
+    piexif.ImageIFD.Orientation,         # 0x0112
+    piexif.ImageIFD.Make,                # 0x010F
+    piexif.ImageIFD.Model,               # 0x0110
+    piexif.ImageIFD.DateTime,            # 0x0132
+    piexif.ImageIFD.XResolution,         # 0x011A
+    piexif.ImageIFD.YResolution,         # 0x011B
+    piexif.ImageIFD.ResolutionUnit,      # 0x0128
+}
+
+# Safe tags to PRESERVE in Exif IFD
 SAFE_EXIF_TAGS: set[int] = {
-    # Orientation
-    0x0112,  # Orientation
-
-    # Color management
-    0xA001,  # ColorSpace
-    # ICC profile preserved via Pillow's info dict
-
-    # Timestamps (non-sensitive, useful for display)
-    0x9003,  # DateTimeOriginal
-    0x9004,  # DateTimeDigitized
-    0x0132,  # DateTime (modification)
-
-    # Camera/lens information (per FR-008a)
-    0x010F,  # Make
-    0x0110,  # Model
-    0xA434,  # LensModel
-    0xA433,  # LensMake
-
-    # Image properties
-    0xA002,  # PixelXDimension
-    0xA003,  # PixelYDimension
-    0xA210,  # FocalPlaneResolutionUnit
-
-    # Exposure information (useful, non-identifying)
-    0x829D,  # FNumber
-    0x829A,  # ExposureTime
-    0x8827,  # ISO
-    0x920A,  # FocalLength
+    piexif.ExifIFD.DateTimeOriginal,     # 0x9003
+    piexif.ExifIFD.DateTimeDigitized,    # 0x9004
+    piexif.ExifIFD.LensModel,            # 0xA434
+    piexif.ExifIFD.LensMake,             # 0xA433
+    piexif.ExifIFD.FNumber,              # 0x829D
+    piexif.ExifIFD.ExposureTime,         # 0x829A
+    piexif.ExifIFD.ISOSpeedRatings,      # 0x8827
+    piexif.ExifIFD.FocalLength,          # 0x920A
+    piexif.ExifIFD.ColorSpace,           # 0xA001
 }
 ```
+
+**Advantages of piexif approach**:
+- Named constants (no magic numbers)
+- Works with piexif's dict structure (separate IFDs: "GPS", "Exif", "0th", "1st")
+- Built-in validation when using piexif.dump()
+- GPS removal: just `exif_dict.pop("GPS", None)`
 
 **Validation Rules**:
 - Sets must be disjoint (no tag in both SENSITIVE and SAFE)
@@ -302,25 +289,50 @@ class CacheEntry(BaseModel):
 10. Log progress (filename + size reduction)  [ENHANCED]
 ```
 
-### Metadata Stripping Process
+### Full-Size Original Copying with Metadata Stripping
 
 ```
-1. _strip_metadata(img)
+1. _prepare_template_image(image, output_dir)
    ↓
-2. Extract EXIF: img.getexif()
+2. copy_with_hash(image.file_path, originals_dir, strip_metadata=True)  [ENHANCED]
    ↓
-3. Filter tags:
-   - Keep tags in SAFE_EXIF_TAGS
+3. Detect image file format (.jpg, .jpeg, .png, .gif, .webp)
+   ↓
+4. If image format:
+   ↓
+5. metadata_filter.strip_and_save(src_path, dest_path)  [NEW]
+   ├─ Load EXIF: piexif.load()
+   ├─ Filter sensitive tags
+   ├─ Dump EXIF: piexif.dump()
+   ├─ Open with Pillow, save with cleaned EXIF
+   ↓
+6. If stripping fails: fallback to shutil.copy2()
+   ↓
+7. Return dest_path with hashed filename
+```
+
+### Metadata Stripping Process (using piexif)
+
+```
+1. filter_metadata(source_path)
+   ↓
+2. Load EXIF: exif_dict = piexif.load(str(source_path))
+   ↓
+3. Remove GPS IFD entirely: exif_dict.pop("GPS", None)
+   ↓
+4. Filter Exif IFD:
    - Remove tags in SENSITIVE_EXIF_TAGS
-   - Remove all other tags (default deny)
+   - Keep tags in SAFE_EXIF_TAGS or remove
    ↓
-4. Create new EXIF: Image.Exif()
+5. Filter 0th IFD:
+   - Remove tags in SENSITIVE_0TH_TAGS
+   - Keep tags in SAFE_0TH_TAGS or remove
    ↓
-5. Populate with safe tags only
+6. Remove embedded thumbnail: exif_dict["thumbnail"] = None
    ↓
-6. Return MetadataStripResult
-   - success=True if no errors
-   - success=False if exception
+7. Dump to bytes: exif_bytes = piexif.dump(exif_dict)
+   ↓
+8. Return exif_bytes or None on error
 ```
 
 ---

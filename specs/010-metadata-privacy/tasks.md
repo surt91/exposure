@@ -12,6 +12,10 @@
 
 **Organization**: Tasks grouped by user story to enable independent implementation and testing.
 
+**Scope**: Metadata stripping applies to BOTH thumbnails AND full-size original images (shown in modal/lightbox view).
+
+**Library**: Uses piexif 1.1+ for EXIF manipulation with named constants (e.g., piexif.ExifIFD.BodySerialNumber instead of 0xA431).
+
 **Tests**: No test tasks included - feature specification does not request test-driven development approach. Tests will be added during implementation as needed for validation.
 
 ---
@@ -26,71 +30,89 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Define metadata field constants and prepare infrastructure
+**Purpose**: Install piexif library and create shared metadata filtering module
 
-- [ ] T001 Define `SENSITIVE_EXIF_TAGS` constant set in `src/generator/constants.py` (GPS tags 0x0000-0x001F, serial numbers 0xA431/0xA435, creator tags 0x013B/0x8298/0x9C9D, software tags 0x0131/0x000B, embedded thumbnails 0x0201/0x0202/0x0103)
-- [ ] T002 Define `SAFE_EXIF_TAGS` constant set in `src/generator/constants.py` (orientation 0x0112, color 0xA001, timestamps 0x9003/0x9004/0x0132, camera/lens 0x010F/0x0110/0xA434/0xA433, exposure 0x829D/0x829A/0x8827/0x920A)
-- [ ] T003 Validate tag set disjointness in `src/generator/constants.py` (ensure no tag appears in both SENSITIVE and SAFE sets)
+- [ ] T001 Install piexif dependency by adding `piexif = "^1.1.3"` to `pyproject.toml` under `[project.dependencies]`
+- [ ] T002 Create `src/generator/metadata_filter.py` module with piexif imports
+- [ ] T003 Define `SENSITIVE_EXIF_TAGS` constant set in `src/generator/metadata_filter.py` using piexif named constants (piexif.ExifIFD.BodySerialNumber, piexif.ExifIFD.LensSerialNumber, piexif.ImageIFD.Artist, piexif.ImageIFD.Copyright, piexif.ImageIFD.XPAuthor, piexif.ImageIFD.Software, piexif.ImageIFD.ProcessingSoftware)
+- [ ] T004 Define `SENSITIVE_0TH_TAGS` constant set in `src/generator/metadata_filter.py` for thumbnail-related tags (piexif.ImageIFD.JPEGInterchangeFormat, piexif.ImageIFD.JPEGInterchangeFormatLength, piexif.ImageIFD.Compression for thumbnails)
+- [ ] T005 Define `SAFE_EXIF_TAGS` constant set in `src/generator/metadata_filter.py` using piexif named constants (piexif.ImageIFD.Orientation, piexif.ExifIFD.ColorSpace, piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized, piexif.ImageIFD.DateTime, piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ExifIFD.LensModel, piexif.ExifIFD.LensMake)
+- [ ] T006 Define `SAFE_0TH_TAGS` constant set in `src/generator/metadata_filter.py` for display-critical fields
 
 ---
 
-## Phase 2: Foundational (Blocking Prerequisites)
+## Phase 2: Core Metadata Filtering Logic
 
-**Purpose**: Core data model enhancements that all user stories depend on
+**Purpose**: Implement shared metadata filtering functions used by both thumbnails and full-size images
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+- [ ] T007 Implement `filter_metadata(source_path: Path) -> Optional[bytes]` function in `src/generator/metadata_filter.py` that loads EXIF with piexif.load(), removes GPS IFD via exif_dict.pop("GPS", None), filters sensitive tags, returns cleaned EXIF bytes via piexif.dump()
+- [ ] T008 Implement `_remove_sensitive_tags(exif_dict: dict) -> dict` helper function in `src/generator/metadata_filter.py` to filter EXIF/0th IFDs using SENSITIVE_EXIF_TAGS and SENSITIVE_0TH_TAGS constants
+- [ ] T009 Implement error handling in `filter_metadata()` to catch piexif.InvalidImageDataError and return None on failure with logging
+- [ ] T010 Implement `strip_and_save(src_path: Path, dest_path: Path) -> bool` function in `src/generator/metadata_filter.py` that calls filter_metadata(), opens image with Pillow, saves with cleaned EXIF, returns success status
+- [ ] T011 Add logging in `strip_and_save()` to log warnings with "⚠ WARNING:" prefix when metadata stripping fails
 
-- [ ] T004 Add `metadata_stripped: bool = True` field to `ThumbnailImage` model in `src/generator/model.py`
-- [ ] T005 Add `metadata_strip_warning: Optional[str] = None` field to `ThumbnailImage` model in `src/generator/model.py`
-- [ ] T006 Add `metadata_stripped: bool = True` field to `CacheEntry` model in `src/generator/cache.py`
-- [ ] T007 Create `MetadataStripResult` dataclass in `src/generator/thumbnails.py` with fields: success, image, warning, sensitive_fields_removed, safe_fields_preserved
-- [ ] T008 Bump `CACHE_VERSION` to "2.0" in `src/generator/constants.py` to force rebuild with metadata stripping
+## Phase 3: Data Model Enhancements
+
+**Purpose**: Update data models to track metadata stripping status
+
+- [ ] T012 Add `metadata_stripped: bool = True` field to `ThumbnailImage` model in `src/generator/model.py`
+- [ ] T013 Add `metadata_strip_warning: Optional[str] = None` field to `ThumbnailImage` model in `src/generator/model.py`
+- [ ] T014 Add `metadata_stripped: bool = True` field to `CacheEntry` model in `src/generator/cache.py`
+- [ ] T015 Bump `CACHE_VERSION` in `src/generator/cache.py` to force rebuild with metadata stripping
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
 ---
 
-## Phase 3: User Story 1 - Location Privacy Protection (Priority: P1) 🎯 MVP
+## Phase 4: User Story 1 - Location Privacy Protection (Priority: P1) 🎯 MVP
 
-**Goal**: Automatically remove GPS coordinates and location metadata from thumbnails to protect photographer locations
+**Goal**: Automatically remove GPS coordinates and location metadata from BOTH thumbnails AND full-size images to protect photographer locations
 
-**Independent Test**: Build gallery with GPS-tagged images, inspect generated thumbnails with exiftool or Pillow, verify GPS coordinates completely removed
+**Independent Test**: Build gallery with GPS-tagged images, inspect generated thumbnails AND full-size originals with exiftool or Pillow, verify GPS coordinates completely removed from both
 
-### Implementation for User Story 1
+### Implementation for User Story 1 - Thumbnails
 
-- [ ] T009 [US1] Implement `_strip_metadata()` method in `src/generator/thumbnails.py` to extract EXIF data using `img.getexif()`
-- [ ] T010 [US1] Implement tag filtering logic in `_strip_metadata()` method in `src/generator/thumbnails.py` to create new EXIF with only `SAFE_EXIF_TAGS` fields
-- [ ] T011 [US1] Implement error handling in `_strip_metadata()` method in `src/generator/thumbnails.py` to return `MetadataStripResult` with success/failure status
-- [ ] T012 [US1] Integrate `_strip_metadata()` call into `generate_thumbnail()` method in `src/generator/thumbnails.py` after thumbnail creation, before save
-- [ ] T013 [US1] Update `_save_thumbnails()` method in `src/generator/thumbnails.py` to save images with stripped metadata for both WebP and JPEG formats
-- [ ] T014 [US1] Populate `ThumbnailImage.metadata_stripped` and `metadata_strip_warning` fields in `generate_thumbnail()` method in `src/generator/thumbnails.py` based on `MetadataStripResult`
+- [ ] T016 [US1] Import `filter_metadata` from `src/generator/metadata_filter` in `src/generator/thumbnails.py`
+- [ ] T017 [US1] Call `filter_metadata(source_path)` in `generate_thumbnail()` method in `src/generator/thumbnails.py` after reading source image
+- [ ] T018 [US1] Update `_save_thumbnails()` method in `src/generator/thumbnails.py` to save WebP with cleaned EXIF bytes via `exif=cleaned_exif` parameter
+- [ ] T019 [US1] Update `_save_thumbnails()` method in `src/generator/thumbnails.py` to save JPEG with cleaned EXIF bytes via `exif=cleaned_exif` parameter
+- [ ] T020 [US1] Populate `ThumbnailImage.metadata_stripped` and `metadata_strip_warning` fields in `generate_thumbnail()` method in `src/generator/thumbnails.py` based on filter_metadata() result
 
-**Checkpoint**: At this point, GPS and location data should be completely removed from all generated thumbnails
+### Implementation for User Story 1 - Full-Size Originals
+
+- [ ] T021 [US1] Import `strip_and_save` from `src/generator/metadata_filter` in `src/generator/assets.py`
+- [ ] T022 [US1] Add `strip_metadata: bool = False` parameter to `copy_with_hash()` function in `src/generator/assets.py`
+- [ ] T023 [US1] Add image format detection in `copy_with_hash()` in `src/generator/assets.py` (check if extension in ['.jpg', '.jpeg', '.png', '.gif', '.webp'])
+- [ ] T024 [US1] Call `strip_and_save(src, dest)` for image files when `strip_metadata=True` in `copy_with_hash()` in `src/generator/assets.py`
+- [ ] T025 [US1] Add fallback to `shutil.copy2()` if `strip_and_save()` fails with warning log in `copy_with_hash()` in `src/generator/assets.py`
+- [ ] T026 [US1] Update call sites in `src/generator/build_html.py` to pass `strip_metadata=True` when copying full-size original images
+
+**Checkpoint**: At this point, GPS and location data should be completely removed from all generated thumbnails AND full-size originals
 
 ---
 
-## Phase 4: User Story 2 - Comprehensive Sensitive Metadata Removal (Priority: P1)
+## Phase 5: User Story 2 - Comprehensive Sensitive Metadata Removal (Priority: P1)
 
 **Goal**: Remove camera serial numbers, personal information, and software metadata while preserving display-critical fields
 
-**Independent Test**: Process images with extensive EXIF/IPTC/XMP metadata, inspect thumbnails to verify personal identifiers removed while basic display properties remain
+**Independent Test**: Process images with extensive EXIF/IPTC/XMP metadata, inspect thumbnails AND full-size originals to verify personal identifiers removed while basic display properties remain
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Verify `SENSITIVE_EXIF_TAGS` includes camera serial numbers (0xA431 BodySerialNumber, 0xA435 LensSerialNumber) in `src/generator/constants.py`
-- [ ] T016 [US2] Verify `SENSITIVE_EXIF_TAGS` includes creator fields (0x013B Artist, 0x8298 Copyright, 0x9C9D XPAuthor) in `src/generator/constants.py`
-- [ ] T017 [US2] Verify `SENSITIVE_EXIF_TAGS` includes software fields (0x0131 Software, 0x000B ProcessingSoftware) in `src/generator/constants.py`
-- [ ] T018 [US2] Verify `SAFE_EXIF_TAGS` includes timestamp fields (0x9003 DateTimeOriginal, 0x9004 DateTimeDigitized, 0x0132 DateTime) in `src/generator/constants.py`
-- [ ] T019 [US2] Verify `SAFE_EXIF_TAGS` includes ICC color profile preservation via Pillow's info dict handling in `_strip_metadata()` method in `src/generator/thumbnails.py`
-- [ ] T020 [US2] Verify `SAFE_EXIF_TAGS` includes orientation metadata (0x0112 Orientation) in `src/generator/constants.py`
-- [ ] T021 [US2] Verify `SAFE_EXIF_TAGS` includes camera/lens information (0x010F Make, 0x0110 Model, 0xA434 LensModel, 0xA433 LensMake) per FR-008a in `src/generator/constants.py`
-- [ ] T022 [US2] Add handling for embedded thumbnail removal (tags 0x0201, 0x0202, 0x0103) in `_strip_metadata()` method in `src/generator/thumbnails.py`
+- [ ] T027 [US2] Verify `SENSITIVE_EXIF_TAGS` includes camera serial numbers (piexif.ExifIFD.BodySerialNumber, piexif.ExifIFD.LensSerialNumber) in `src/generator/metadata_filter.py`
+- [ ] T028 [US2] Verify `SENSITIVE_EXIF_TAGS` includes creator fields (piexif.ImageIFD.Artist, piexif.ImageIFD.Copyright, piexif.ImageIFD.XPAuthor) in `src/generator/metadata_filter.py`
+- [ ] T029 [US2] Verify `SENSITIVE_EXIF_TAGS` includes software fields (piexif.ImageIFD.Software, piexif.ImageIFD.ProcessingSoftware) in `src/generator/metadata_filter.py`
+- [ ] T030 [US2] Verify `SAFE_EXIF_TAGS` includes timestamp fields (piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized, piexif.ImageIFD.DateTime) in `src/generator/metadata_filter.py`
+- [ ] T031 [US2] Verify ICC color profile preservation in `strip_and_save()` method in `src/generator/metadata_filter.py` (Pillow preserves via img.info['icc_profile'])
+- [ ] T032 [US2] Verify `SAFE_EXIF_TAGS` includes orientation metadata (piexif.ImageIFD.Orientation) in `src/generator/metadata_filter.py`
+- [ ] T033 [US2] Verify `SAFE_EXIF_TAGS` includes camera/lens information (piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ExifIFD.LensModel, piexif.ExifIFD.LensMake) per FR-008a in `src/generator/metadata_filter.py`
+- [ ] T034 [US2] Verify `SENSITIVE_0TH_TAGS` includes embedded thumbnail removal (piexif.ImageIFD.JPEGInterchangeFormat, piexif.ImageIFD.JPEGInterchangeFormatLength) in `src/generator/metadata_filter.py`
 
 **Checkpoint**: At this point, all sensitive personal metadata should be removed while display-critical fields are preserved
 
 ---
 
-## Phase 5: User Story 3 - Build Progress Visibility (Priority: P2)
+## Phase 6: User Story 3 - Build Progress Visibility (Priority: P2)
 
 **Goal**: Show real-time progress with filename and file size reduction percentage for each processed image
 
@@ -98,18 +120,18 @@
 
 ### Implementation for User Story 3
 
-- [ ] T023 [P] [US3] Implement `_format_size()` helper method in `src/generator/thumbnails.py` to format bytes as human-readable strings (MB/KB/B with proper precision)
-- [ ] T024 [US3] Add INFO-level progress logging in `generate_thumbnail()` method in `src/generator/thumbnails.py` after successful thumbnail generation
-- [ ] T025 [US3] Format progress log message as "✓ {filename} → {source_size} → {thumb_size} ({reduction_pct}% reduction)" in `generate_thumbnail()` method in `src/generator/thumbnails.py`
-- [ ] T026 [US3] Calculate file size reduction percentage using formula `((original_size - thumbnail_size) / original_size) × 100` in `generate_thumbnail()` method in `src/generator/thumbnails.py`
-- [ ] T027 [US3] Add WARNING-level logging with "⚠ WARNING:" prefix when metadata stripping fails in `generate_thumbnail()` method in `src/generator/thumbnails.py`
-- [ ] T028 [US3] Ensure progress logs appear in real-time (use `logger.info()` immediately after each image, not batched) in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [ ] T035 [P] [US3] Implement `_format_size()` helper method in `src/generator/thumbnails.py` to format bytes as human-readable strings (MB/KB/B with proper precision)
+- [ ] T036 [US3] Add INFO-level progress logging in `generate_thumbnail()` method in `src/generator/thumbnails.py` after successful thumbnail generation
+- [ ] T037 [US3] Format progress log message as "✓ {filename} → {source_size} → {thumb_size} ({reduction_pct}% reduction)" in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [ ] T038 [US3] Calculate file size reduction percentage using formula `((original_size - thumbnail_size) / original_size) × 100` in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [ ] T039 [US3] Add WARNING-level logging with "⚠ WARNING:" prefix when metadata stripping fails in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [ ] T040 [US3] Ensure progress logs appear in real-time (use `logger.info()` immediately after each image, not batched) in `generate_thumbnail()` method in `src/generator/thumbnails.py`
 
 **Checkpoint**: At this point, build process should show clear real-time progress with size reduction stats
 
 ---
 
-## Phase 6: User Story 4 - Selective Metadata Preservation (Priority: P3)
+## Phase 7: User Story 4 - Selective Metadata Preservation (Priority: P3)
 
 **Goal**: Intelligently preserve non-sensitive metadata (orientation, color profiles, timestamps, camera info) while removing privacy-sensitive fields
 
@@ -117,50 +139,50 @@
 
 ### Implementation for User Story 4
 
-- [ ] T029 [US4] Verify orientation preservation by ensuring 0x0112 is in `SAFE_EXIF_TAGS` and never in `SENSITIVE_EXIF_TAGS` in `src/generator/constants.py`
-- [ ] T030 [US4] Verify color profile preservation by ensuring ICC profile handling in `_strip_metadata()` method in `src/generator/thumbnails.py` (preserve via Pillow's info dict)
-- [ ] T031 [US4] Verify timestamp preservation by ensuring date/time tags (0x9003, 0x9004, 0x0132) are in `SAFE_EXIF_TAGS` in `src/generator/constants.py`
-- [ ] T032 [US4] Verify camera/lens info preservation by ensuring Make/Model/LensModel/LensMake tags are in `SAFE_EXIF_TAGS` per FR-008a in `src/generator/constants.py`
-- [ ] T033 [US4] Add validation logic to ensure GPS tags (0x0000-0x001F) are never preserved in `_strip_metadata()` method in `src/generator/thumbnails.py`
+- [ ] T041 [US4] Verify orientation preservation by ensuring piexif.ImageIFD.Orientation is in `SAFE_EXIF_TAGS` and never in `SENSITIVE_EXIF_TAGS` in `src/generator/metadata_filter.py`
+- [ ] T042 [US4] Verify color profile preservation by ensuring ICC profile handling in `strip_and_save()` method in `src/generator/metadata_filter.py` (preserve via Pillow's info dict)
+- [ ] T043 [US4] Verify timestamp preservation by ensuring piexif.ExifIFD.DateTimeOriginal/DateTimeDigitized/DateTime are in `SAFE_EXIF_TAGS` in `src/generator/metadata_filter.py`
+- [ ] T044 [US4] Verify camera/lens info preservation by ensuring Make/Model/LensModel/LensMake tags are in `SAFE_EXIF_TAGS` per FR-008a in `src/generator/metadata_filter.py`
+- [ ] T045 [US4] Verify GPS tags are never preserved by testing that GPS IFD is removed via exif_dict.pop("GPS", None) in `filter_metadata()` in `src/generator/metadata_filter.py`
 
 **Checkpoint**: All user stories should now be independently functional
 
 ---
 
-## Phase 7: Error Handling & Edge Cases
+## Phase 8: Error Handling & Edge Cases
 
 **Purpose**: Graceful handling of failures and edge cases
 
-- [ ] T034 Implement graceful handling for images with no EXIF metadata in `_strip_metadata()` method in `src/generator/thumbnails.py` (return success with 0 fields removed)
-- [ ] T035 Implement graceful handling for corrupted EXIF data in `_strip_metadata()` method in `src/generator/thumbnails.py` (catch exceptions, return failure with warning, continue build)
-- [ ] T036 Implement graceful handling for unsupported image formats in `_strip_metadata()` method in `src/generator/thumbnails.py` (return success with no stripping needed)
-- [ ] T037 Ensure build continues when metadata stripping fails per FR-021 in `generate_thumbnail()` method in `src/generator/thumbnails.py` (return `ThumbnailImage` not `None`)
-- [ ] T038 Verify failed images still included in gallery output per FR-023 in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [ ] T046 Implement graceful handling for images with no EXIF metadata in `filter_metadata()` method in `src/generator/metadata_filter.py` (return None, which means no metadata to strip)
+- [ ] T047 Implement graceful handling for corrupted EXIF data in `filter_metadata()` method in `src/generator/metadata_filter.py` (catch piexif.InvalidImageDataError, log warning, return None, continue build)
+- [ ] T048 Implement graceful handling for unsupported image formats in `filter_metadata()` method in `src/generator/metadata_filter.py` (catch exceptions, return None)
+- [ ] T049 Ensure build continues when metadata stripping fails per FR-021 in `generate_thumbnail()` method in `src/generator/thumbnails.py` (populate metadata_strip_warning but continue)
+- [ ] T050 Verify failed images still included in gallery output per FR-023 in `generate_thumbnail()` method in `src/generator/thumbnails.py`
 
 ---
 
-## Phase 8: Cache Integration
+## Phase 9: Cache Integration
 
 **Purpose**: Ensure incremental builds work correctly with metadata stripping
 
-- [ ] T039 Update cache write logic in `src/generator/cache.py` to save `metadata_stripped` field from `ThumbnailImage` to `CacheEntry`
-- [ ] T040 Verify cache invalidation on `CACHE_VERSION` bump triggers full rebuild with metadata stripping in `src/generator/cache.py`
-- [ ] T041 Test cache hit behavior in `generate_thumbnail()` method in `src/generator/thumbnails.py` to ensure cached thumbnails already have metadata stripped (log at DEBUG level)
+- [ ] T051 Update cache write logic in `src/generator/cache.py` to save `metadata_stripped` field from `ThumbnailImage` to `CacheEntry`
+- [ ] T052 Verify cache invalidation on `CACHE_VERSION` bump triggers full rebuild with metadata stripping in `src/generator/cache.py`
+- [ ] T053 Test cache hit behavior in `generate_thumbnail()` method in `src/generator/thumbnails.py` to ensure cached thumbnails already have metadata stripped (log at DEBUG level)
 
 ---
 
-## Phase 9: Polish & Validation
+## Phase 10: Polish & Validation
 
 **Purpose**: Documentation, validation, and cross-cutting improvements
 
-- [ ] T042 [P] Update README.md to document metadata privacy feature (what's removed, what's preserved, how to verify)
-- [ ] T043 [P] Verify all functional requirements FR-001 through FR-024 are implemented by reviewing code against spec.md
-- [ ] T044 [P] Verify all success criteria SC-001 through SC-010 can be measured by testing with exiftool
-- [ ] T045 [P] Add example to quickstart.md showing how to verify metadata removal with exiftool
-- [ ] T046 Run manual validation per quickstart.md test scenarios (GPS-tagged images, images with serial numbers, images with no metadata)
-- [ ] T047 Verify build time impact is ≤10% increase per performance goal in plan.md
-- [ ] T048 [P] Add inline code comments documenting metadata stripping logic in `src/generator/thumbnails.py`
-- [ ] T049 Verify no console output shows "summary report" of failures per FR-024 (inline warnings only)
+- [ ] T054 [P] Update README.md to document metadata privacy feature (what's removed, what's preserved, how to verify)
+- [ ] T055 [P] Verify all functional requirements FR-001 through FR-024 are implemented by reviewing code against spec.md
+- [ ] T056 [P] Verify all success criteria SC-001 through SC-010 can be measured by testing with exiftool
+- [ ] T057 [P] Add example to quickstart.md showing how to verify metadata removal with exiftool
+- [ ] T058 Run manual validation per quickstart.md test scenarios (GPS-tagged images, images with serial numbers, images with no metadata)
+- [ ] T059 Verify build time impact is ≤15% increase per performance goal in plan.md (updated from 10% to account for full-size processing)
+- [ ] T060 [P] Add inline code comments documenting metadata stripping logic in `src/generator/metadata_filter.py`
+- [ ] T061 Verify no console output shows "summary report" of failures per FR-024 (inline warnings only)
 
 ---
 
@@ -168,92 +190,98 @@
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies - can start immediately
-- **Foundational (Phase 2)**: Depends on Setup (Phase 1) completion - BLOCKS all user stories
-- **User Stories (Phase 3-6)**: All depend on Foundational phase completion
-  - User Story 1 (P1): Can start after Phase 2 - Core metadata stripping
-  - User Story 2 (P1): Can start after Phase 2 - Extends US1 with additional field coverage
-  - User Story 3 (P2): Can start after Phase 2 - Progress logging (independent of metadata stripping)
-  - User Story 4 (P3): Can start after Phase 2 - Validation of selective preservation
-- **Error Handling (Phase 7)**: Should be integrated during US1-US4 implementation
-- **Cache Integration (Phase 8)**: Can start after US1 (core stripping) is complete
-- **Polish (Phase 9)**: Depends on all user stories being complete
+- **Setup (Phase 1)**: No dependencies - can start immediately (T001-T006)
+- **Core Logic (Phase 2)**: Depends on Setup - implements shared metadata filtering module (T007-T011)
+- **Data Models (Phase 3)**: Depends on Setup - updates data models to track metadata status (T012-T015)
+- **User Stories (Phase 4-7)**: All depend on Phase 1-3 completion
+  - User Story 1 (P1 - Phase 4): Core metadata stripping for thumbnails AND full-size (T016-T026)
+  - User Story 2 (P1 - Phase 5): Comprehensive field coverage verification (T027-T034)
+  - User Story 3 (P2 - Phase 6): Progress logging (T035-T040)
+  - User Story 4 (P3 - Phase 7): Validation of selective preservation (T041-T045)
+- **Error Handling (Phase 8)**: Should be integrated during US1-US4 implementation (T046-T050)
+- **Cache Integration (Phase 9)**: Can start after US1 (core stripping) is complete (T051-T053)
+- **Polish (Phase 10)**: Depends on all user stories being complete (T054-T061)
 
 ### User Story Dependencies
 
-- **User Story 1 (P1 - Location Privacy)**: No dependencies on other stories - Core functionality
+- **User Story 1 (P1 - Location Privacy)**: No dependencies on other stories - Core functionality (thumbnails + full-size)
 - **User Story 2 (P1 - Comprehensive Removal)**: Extends US1 but can be developed in parallel (same priority)
 - **User Story 3 (P2 - Progress Logging)**: Independent of US1/US2 - Can be developed in parallel
 - **User Story 4 (P3 - Selective Preservation)**: Validates US1/US2 work - Best done after US1/US2 complete
 
 ### Within Each User Story
 
-- **User Story 1**: T009 → T010 → T011 → T012 → T013 → T014 (sequential - build metadata stripping pipeline)
-- **User Story 2**: All tasks are verification tasks - can run in parallel after US1 complete
-- **User Story 3**: T023 can run in parallel with other tasks; T024-T028 sequential (build logging pipeline)
-- **User Story 4**: All tasks are verification tasks - can run in parallel after US1/US2 complete
+- **User Story 1 (Phase 4)**: T016-T020 (thumbnails) can run in parallel with T021-T026 (full-size originals) since they modify different files
+- **User Story 2 (Phase 5)**: All tasks are verification tasks - can run in parallel after US1 complete
+- **User Story 3 (Phase 6)**: T035 can run in parallel with other tasks; T036-T040 sequential (build logging pipeline)
+- **User Story 4 (Phase 7)**: All tasks are verification tasks - can run in parallel after US1/US2 complete
 
 ### Parallel Opportunities
 
-**Phase 1 (Setup)**: All 3 tasks can be done in one file edit or sequentially (small tasks)
+**Phase 1 (Setup)**: T001-T006 - All constant definitions can be done in one file edit session
 
-**Phase 2 (Foundational)**:
-- T004, T005 (model.py) together
-- T006 (cache.py) in parallel with T004/T005
-- T007 (thumbnails.py dataclass) in parallel with T004/T005/T006
-- T008 (constants.py) in parallel with all above
+**Phase 2 (Core Logic)**: T007-T011 sequential (implement shared metadata_filter.py module)
 
-**Phase 3 (User Story 1)**: Sequential pipeline (each step depends on previous)
+**Phase 3 (Data Models)**:
+- T012, T013 (model.py) together
+- T014, T015 (cache.py) together
+- Both pairs can run in parallel
 
-**Phase 4 (User Story 2)**:
-- T015, T016, T017 (constants.py verification) together
-- T018, T020, T021 (constants.py verification) together
-- T019, T022 (thumbnails.py enhancements) together
+**Phase 4 (User Story 1)**:
+- T016-T020 (thumbnails.py) can run in parallel with T021-T026 (assets.py) - different files
+- Within thumbnails: T016-T020 sequential
+- Within full-size: T021-T026 sequential
 
-**Phase 5 (User Story 3)**:
-- T023 can be written independently in parallel
-- T024-T028 sequential (logging pipeline)
+**Phase 5 (User Story 2)**:
+- T027-T034 all verification tasks - can run in parallel (same file review)
 
-**Phase 6 (User Story 4)**:
-- T029, T031, T032 (constants.py verification) together
-- T030 (ICC profile), T033 (GPS validation) in parallel
+**Phase 6 (User Story 3)**:
+- T035 can be written independently
+- T036-T040 sequential (logging pipeline)
 
-**Phase 7 (Error Handling)**: T034-T038 can be written together in same method
+**Phase 7 (User Story 4)**:
+- T041-T045 all verification tasks - can run in parallel
 
-**Phase 8 (Cache)**: T039-T041 sequential (modify cache logic)
+**Phase 8 (Error Handling)**: T046-T050 can be written together in same method
 
-**Phase 9 (Polish)**: T042, T043, T044, T045, T048 can all run in parallel (different files/activities)
+**Phase 9 (Cache)**: T051-T053 sequential (modify cache logic)
+
+**Phase 10 (Polish)**: T054, T055, T056, T057, T060 can all run in parallel (different files/activities)
 
 ---
 
-## Parallel Example: User Story 1 Core Implementation
+## Parallel Example: User Story 1 - Dual Track Implementation
 
 ```bash
-# Sequential pipeline for metadata stripping:
-T009: Implement _strip_metadata() extraction
-  ↓
-T010: Implement tag filtering logic
-  ↓
-T011: Implement error handling
-  ↓
-T012: Integrate into generate_thumbnail()
-  ↓
-T013: Update _save_thumbnails()
-  ↓
-T014: Populate ThumbnailImage fields
+# Track A (thumbnails.py) and Track B (assets.py) run in parallel:
+
+Track A - Thumbnails:               Track B - Full-Size Originals:
+T016: Import filter_metadata        T021: Import strip_and_save
+  ↓                                   ↓
+T017: Call filter_metadata()        T022: Add strip_metadata parameter
+  ↓                                   ↓
+T018: Save WebP with clean EXIF     T023: Add format detection
+  ↓                                   ↓
+T019: Save JPEG with clean EXIF     T024: Call strip_and_save()
+  ↓                                   ↓
+T020: Populate fields               T025: Add fallback to copy2()
+                                      ↓
+                                    T026: Update call sites
 ```
 
 ## Parallel Example: User Story 2 Verification
 
 ```bash
 # Launch all verification tasks together:
-Task T015: Verify serial number tags
-Task T016: Verify creator field tags
-Task T017: Verify software field tags
-Task T018: Verify timestamp tags
-Task T020: Verify orientation tags
-Task T021: Verify camera/lens tags
-# All examining same constants.py file
+Task T027: Verify serial number tags
+Task T028: Verify creator field tags
+Task T029: Verify software field tags
+Task T030: Verify timestamp tags
+Task T031: Verify ICC profile handling
+Task T032: Verify orientation tags
+Task T033: Verify camera/lens tags
+Task T034: Verify embedded thumbnail removal
+# All examining same metadata_filter.py file
 ```
 
 ---
@@ -262,73 +290,80 @@ Task T021: Verify camera/lens tags
 
 ### MVP First (User Stories 1 & 2 - Both P1)
 
-1. Complete Phase 1: Setup (define metadata field constants)
-2. Complete Phase 2: Foundational (data model enhancements)
-3. Complete Phase 3: User Story 1 (core metadata stripping)
-4. Complete Phase 4: User Story 2 (comprehensive field coverage)
-5. **STOP and VALIDATE**: Test with GPS-tagged images, inspect with exiftool
-6. Deploy/demo if ready
+1. Complete Phase 1: Setup (install piexif, create metadata_filter.py, define constants)
+2. Complete Phase 2: Core Logic (implement filter_metadata and strip_and_save)
+3. Complete Phase 3: Data Models (update ThumbnailImage and CacheEntry)
+4. Complete Phase 4: User Story 1 (integrate stripping for thumbnails AND full-size)
+5. Complete Phase 5: User Story 2 (comprehensive field coverage verification)
+6. **STOP and VALIDATE**: Test with GPS-tagged images, inspect both thumbnails and full-size originals with exiftool
+7. Deploy/demo if ready
 
-**Rationale**: US1 and US2 are both P1 and work together to provide complete metadata privacy. US3 (progress logging) and US4 (validation) are nice-to-have enhancements.
+**Rationale**: US1 and US2 are both P1 and work together to provide complete metadata privacy for BOTH thumbnails and full-size images. US3 (progress logging) and US4 (validation) are nice-to-have enhancements.
 
 ### Incremental Delivery
 
-1. **MVP**: Setup + Foundational + US1 + US2 → Privacy protection complete
+1. **MVP**: Setup + Core Logic + Data Models + US1 + US2 → Privacy protection complete (both thumbnails and full-size)
 2. **Enhanced UX**: Add US3 → Progress visibility for long builds
 3. **Validation**: Add US4 → Verify selective preservation working correctly
-4. **Production Ready**: Add Phase 7 (error handling), Phase 8 (cache), Phase 9 (polish)
+4. **Production Ready**: Add Phase 8 (error handling), Phase 9 (cache), Phase 10 (polish)
 
 ### Parallel Team Strategy
 
 With multiple developers:
 
-1. Team completes Setup + Foundational together
-2. Once Foundational is done:
-   - Developer A: User Story 1 + User Story 2 (same developer, sequential)
-   - Developer B: User Story 3 (progress logging - independent)
-   - Developer C: Documentation and validation prep
-3. After US1/US2 complete:
-   - Developer A: Error handling (Phase 7) and cache integration (Phase 8)
-   - Developer B: User Story 4 validation
-   - Developer C: Polish and documentation (Phase 9)
+1. Team completes Setup + Core Logic + Data Models together
+2. Once Phase 1-3 complete:
+   - Developer A: User Story 1 - Thumbnails (T016-T020)
+   - Developer B: User Story 1 - Full-Size (T021-T026)
+   - Developer C: User Story 3 (progress logging - independent)
+3. After US1 complete:
+   - Developer A: User Story 2 verification (T027-T034)
+   - Developer B: Error handling (Phase 8) and cache integration (Phase 9)
+   - Developer C: User Story 4 validation
+4. Final polish:
+   - All developers: Phase 10 polish tasks in parallel
 
 ---
 
 ## Summary
 
-**Total Tasks**: 49 tasks across 9 phases
+**Total Tasks**: 61 tasks across 10 phases
 
-**Task Distribution by User Story**:
-- Setup: 3 tasks
-- Foundational: 5 tasks (BLOCKING)
-- User Story 1 (P1): 6 tasks (core metadata stripping)
-- User Story 2 (P1): 8 tasks (comprehensive removal)
-- User Story 3 (P2): 6 tasks (progress logging)
-- User Story 4 (P3): 5 tasks (selective preservation validation)
-- Error Handling: 5 tasks
-- Cache Integration: 3 tasks
-- Polish: 8 tasks
+**Task Distribution by Phase**:
+- Phase 1 - Setup: 6 tasks (install piexif, create module, define constants)
+- Phase 2 - Core Logic: 5 tasks (implement shared metadata filtering)
+- Phase 3 - Data Models: 4 tasks (update ThumbnailImage, CacheEntry)
+- Phase 4 - User Story 1 (P1): 11 tasks (core stripping for thumbnails + full-size)
+- Phase 5 - User Story 2 (P1): 8 tasks (comprehensive field coverage)
+- Phase 6 - User Story 3 (P2): 6 tasks (progress logging)
+- Phase 7 - User Story 4 (P3): 5 tasks (selective preservation validation)
+- Phase 8 - Error Handling: 5 tasks (graceful failures)
+- Phase 9 - Cache Integration: 3 tasks (incremental builds)
+- Phase 10 - Polish: 8 tasks (documentation and validation)
 
-**Critical Path**: Phase 1 (Setup) → Phase 2 (Foundational) → Phase 3 (US1) → Phase 4 (US2) → Phase 7 (Error Handling) → Phase 8 (Cache) → Phase 9 (Polish)
+**Critical Path**: Phase 1 (Setup) → Phase 2 (Core Logic) → Phase 3 (Data Models) → Phase 4 (US1) → Phase 5 (US2) → Phase 8 (Error Handling) → Phase 9 (Cache) → Phase 10 (Polish)
 
-**MVP Scope** (Suggested): Phases 1-4 (Setup, Foundational, US1, US2) = 22 tasks
+**MVP Scope** (Suggested): Phases 1-5 (Setup through US2) = 34 tasks
 - Delivers core privacy protection (GPS removal, serial number removal, personal info removal)
+- Applies to BOTH thumbnails AND full-size originals
 - Preserves display-critical metadata (orientation, color, timestamps, camera info)
-- Includes foundational error handling within US1 implementation
+- Uses piexif library for robust EXIF manipulation
 - Can be fully tested and deployed independently
 
 **Parallel Opportunities**:
-- Phase 2 (Foundational): 4 parallel tracks (model.py, cache.py, thumbnails.py, constants.py)
-- Phase 4 (US2): 3 parallel batches of verification tasks
-- Phase 5 (US3): T023 can be written independently
-- Phase 6 (US4): 2 parallel batches of verification tasks
-- Phase 9 (Polish): 5 parallel documentation/validation tasks
+- Phase 1: All 6 constant definitions in one session
+- Phase 3: model.py and cache.py can run in parallel
+- Phase 4: Thumbnails (T016-T020) and Full-Size (T021-T026) can run in parallel
+- Phase 5: All 8 verification tasks can run in parallel
+- Phase 6: T035 independent, T036-T040 sequential
+- Phase 7: All 5 verification tasks can run in parallel
+- Phase 10: 5 parallel documentation/validation tasks
 
 **Independent Testing**:
-- After Phase 3: Test GPS removal with sample GPS-tagged images
-- After Phase 4: Test comprehensive metadata removal with images containing serial numbers, creator info, software metadata
-- After Phase 5: Test progress logging with 20+ image build
-- After Phase 6: Test selective preservation with images containing various metadata types
+- After Phase 4: Test GPS removal from both thumbnails AND full-size originals with sample GPS-tagged images
+- After Phase 5: Test comprehensive metadata removal with images containing serial numbers, creator info, software metadata
+- After Phase 6: Test progress logging with 20+ image build
+- After Phase 7: Test selective preservation with images containing various metadata types
 
 ---
 
@@ -336,9 +371,12 @@ With multiple developers:
 
 - **No test tasks included**: Feature specification does not explicitly request TDD approach. Tests will be added during implementation for validation purposes.
 - **Verification tasks**: US2 and US4 include "verify" tasks to ensure constants are correctly defined - these are code review/validation tasks, not test writing.
-- **Error handling integrated**: Phase 7 error handling should be integrated during US1-US4 implementation rather than as a separate phase.
+- **Error handling integrated**: Phase 8 error handling should be integrated during US1-US4 implementation rather than as a separate phase.
 - **Format compliance**: All tasks follow `- [ ] [ID] [P?] [Story?] Description with file path` format
 - **File paths**: All tasks include exact file paths for implementation
 - **Incremental**: Each user story delivers independently testable value
 - **Constitution compliant**: All tasks align with static-first, privacy-enhancing principles
+- **Scope expansion**: Tasks cover BOTH thumbnails AND full-size originals (not just thumbnails)
+- **Library adoption**: Uses piexif 1.1+ instead of manual EXIF manipulation for reduced complexity
+- **Shared module**: metadata_filter.py provides shared filtering logic for both thumbnails.py and assets.py
 

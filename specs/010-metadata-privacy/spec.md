@@ -5,6 +5,8 @@
 **Status**: Draft
 **Input**: User description: "extend the preprocessing pipeline: 1. During preprocessing we need to strip gps metadata and other sensitive metadata from the images to protect the location of the user. 2. during preprocessing we should show progress. I suppose we just log one line after each conversion which image was converted and how much the saving was in percent."
 
+**Scope Note**: Throughout this specification, "thumbnails" refers to the generated thumbnail images used in the gallery grid view. However, the implementation also applies metadata stripping to full-size original copies used in the modal/lightbox view to ensure comprehensive privacy protection. Both thumbnails and full-size copies in the published gallery have sensitive metadata removed.
+
 ## Clarifications
 
 ### Session 2025-11-02

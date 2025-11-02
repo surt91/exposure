@@ -4,13 +4,14 @@
 
 ## What This Feature Does
 
-When you build your gallery with `exposure`, the thumbnail generation process now:
+When you build your gallery with `exposure`, the build process now:
 
-1. **Strips sensitive metadata** from generated thumbnails (GPS coordinates, camera serial numbers, personal information)
-2. **Preserves useful metadata** that enhances display (color profiles, orientation, timestamps, camera/lens info)
-3. **Shows real-time progress** with size reduction statistics for each image processed
+1. **Strips sensitive metadata** from all published images - both thumbnails (gallery grid) and full-size copies (modal/lightbox view)
+2. **Removes privacy-sensitive data** including GPS coordinates, camera serial numbers, personal information, software metadata
+3. **Preserves useful metadata** that enhances display (color profiles, orientation, timestamps, camera/lens info)
+4. **Shows real-time progress** with size reduction statistics for each image processed
 
-**Your original images remain unchanged** - only the published thumbnails have metadata removed.
+**Your original source images remain unchanged** - only the published copies in the `dist/` directory have metadata removed.
 
 ---
 
@@ -278,14 +279,9 @@ diff source.txt thumb.txt
 
 ### Q: What about the full-size images in modal view?
 
-**A**: Full-size modal images are your original files from `content/`, which retain all metadata. If you want to strip metadata from originals too, you need to process them separately before adding to `content/`.
+**A**: Full-size modal images shown in the lightbox are also automatically stripped of sensitive metadata during the build process. Both thumbnails (gallery grid) and full-size copies (modal view) have privacy protection applied.
 
-**Best practice**: Keep originals with metadata for your records, but if sharing full-size images, process them externally:
-
-```bash
-# Strip all metadata from a copy using exiftool
-exiftool -all= -overwrite_original photo_for_sharing.jpg
-```
+Your original source files in `content/` remain unchanged with all metadata intact for your personal records.
 
 ### Q: Is timestamp removal a privacy concern?
 
@@ -317,9 +313,10 @@ This gives you control over what location info is shared (city-level rather than
 
 Metadata stripping adds minimal overhead:
 
-- **Per image**: ~2-5ms (negligible compared to 50-100ms resize)
-- **Total build**: <10% increase for typical galleries
-- **500 images**: ~1-3 seconds additional time
+- **Per thumbnail**: ~2-8ms for metadata processing (negligible compared to 50-100ms resize)
+- **Per full-size copy**: ~10-20ms for metadata processing (varies with file size)
+- **Total build**: <15% increase for typical galleries
+- **500 images**: ~3-6 seconds additional time
 
 ### Incremental Builds
 
