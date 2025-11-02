@@ -3,6 +3,7 @@
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Import model module to set the yaml file path
 from . import model
@@ -254,6 +255,77 @@ def _setup_jinja_environment(locale: str):
     return env
 
 
+def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
+    """
+    Prepare image data for template rendering.
+
+    Copies original image with hash and prepares thumbnail URLs.
+
+    Args:
+        image: Image object to prepare
+        output_dir: Gallery output directory
+
+    Returns:
+        Dictionary with image data for template
+    """
+    from .assets import copy_with_hash
+
+    # Copy original image to originals directory
+    originals_dir = output_dir / "images" / "originals"
+    img_dest = copy_with_hash(image.file_path, originals_dir)
+    img_href = f"images/originals/{img_dest.name}"
+
+    # Prepare thumbnail info if available
+    thumbnail_webp_href = None
+    thumbnail_jpeg_href = None
+    thumbnail_width = None
+    thumbnail_height = None
+
+    if image.thumbnail:
+        # Thumbnails already exist in the output directory from generation
+        thumbnail_webp_href = f"images/thumbnails/{image.thumbnail.webp_path.name}"
+        thumbnail_jpeg_href = f"images/thumbnails/{image.thumbnail.jpeg_path.name}"
+        thumbnail_width = image.thumbnail.width
+        thumbnail_height = image.thumbnail.height
+
+    return {
+        "filename": image.filename,
+        "src": img_href,
+        "category": image.category,
+        "title": image.title,
+        "description": image.description,
+        "alt_text": image.alt_text,
+        "width": image.width,
+        "height": image.height,
+        "thumbnail": image.thumbnail,
+        "thumbnail_webp_href": thumbnail_webp_href,
+        "thumbnail_jpeg_href": thumbnail_jpeg_href,
+        "thumbnail_width": thumbnail_width,
+        "thumbnail_height": thumbnail_height,
+    }
+
+
+def _prepare_template_categories(
+    categories: list[Category], output_dir: Path
+) -> list[dict[str, Any]]:
+    """
+    Prepare category data for template rendering.
+
+    Args:
+        categories: List of Category objects
+        output_dir: Gallery output directory
+
+    Returns:
+        List of category dictionaries with prepared image data
+    """
+    template_categories = []
+    for category in categories:
+        template_images = [_prepare_template_image(image, output_dir) for image in category.images]
+        template_categories.append({"name": category.name, "images": template_images})
+
+    return template_categories
+
+
 def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> str:
     """
     Generate HTML for the gallery from categories using Jinja2 templates.
@@ -265,7 +337,7 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     Returns:
         Generated HTML string
     """
-    from .assets import copy_with_hash, write_with_hash
+    from .assets import write_with_hash
 
     # Setup Jinja2 environment
     env = _setup_jinja_environment(config.locale)
@@ -281,50 +353,8 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     css_href = css_output.name
     js_href = js_output.name
 
-    # Copy images and build image data for template
-    # We need to create a modified category structure with hashed image paths
-    template_categories = []
-    for category in categories:
-        template_images = []
-        for image in category.images:
-            # Copy original image to originals directory
-            originals_dir = config.output_dir / "images" / "originals"
-            img_dest = copy_with_hash(image.file_path, originals_dir)
-            img_href = f"images/originals/{img_dest.name}"
-
-            # Prepare thumbnail info if available
-            thumbnail_webp_href = None
-            thumbnail_jpeg_href = None
-            thumbnail_width = None
-            thumbnail_height = None
-
-            if image.thumbnail:
-                # Thumbnails already exist in the output directory from generation
-                thumbnail_webp_href = f"images/thumbnails/{image.thumbnail.webp_path.name}"
-                thumbnail_jpeg_href = f"images/thumbnails/{image.thumbnail.jpeg_path.name}"
-                thumbnail_width = image.thumbnail.width
-                thumbnail_height = image.thumbnail.height
-
-            # Create image dict with hashed path for template
-            template_images.append(
-                {
-                    "filename": image.filename,
-                    "src": img_href,
-                    "category": image.category,
-                    "title": image.title,
-                    "description": image.description,
-                    "alt_text": image.alt_text,
-                    "width": image.width,
-                    "height": image.height,
-                    "thumbnail": image.thumbnail,
-                    "thumbnail_webp_href": thumbnail_webp_href,
-                    "thumbnail_jpeg_href": thumbnail_jpeg_href,
-                    "thumbnail_width": thumbnail_width,
-                    "thumbnail_height": thumbnail_height,
-                }
-            )
-
-        template_categories.append({"name": category.name, "images": template_images})
+    # Prepare template data
+    template_categories = _prepare_template_categories(categories, config.output_dir)
 
     # Render template with data
     html = template.render(
@@ -337,22 +367,8 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     return html
 
 
-def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
-    """
-    Main entry point for building the gallery.
-
-    Args:
-        config_path: Path to settings.yaml configuration file
-    """
-    # Load configuration first to get locale
-    config = load_config(config_path)
-
-    # Setup internationalization before any translated messages
-    from .i18n import setup_i18n
-
-    setup_i18n(config.locale)
-
-    # ASCII art banner
+def _print_banner() -> None:
+    """Print the ASCII art banner."""
     logger.info("")
     logger.info("  _____ __  __ ____   ___  ____  _   _ ____  _____ ")
     logger.info(" | ____|\\ \\/ /|  _ \\ / _ \\/ ___|| | | |  _ \\| ____|")
@@ -361,30 +377,101 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     logger.info(" |_____|/_/\\_\\|_|    \\___/|____/ \\___/|_| \\_\\_____|")
     logger.info("")
 
-    # Scan and sync
-    category_names, images = scan_and_sync(config)
-    logger.info(_("Loaded %d images across %d categories"), len(images), len(category_names))
 
-    # Generate thumbnails (always enabled)
+def _generate_thumbnails_for_images(images: list[Image], config: GalleryConfig) -> None:
+    """
+    Generate thumbnails for all images.
+
+    Attaches generated thumbnails to Image objects in-place.
+
+    Args:
+        images: List of Image objects to generate thumbnails for
+        config: Gallery configuration
+    """
     from .thumbnails import ThumbnailGenerator
 
     logger.info(_("Generating thumbnails..."))
-    # Override thumbnail output_dir to be relative to gallery output_dir
+
+    # Configure thumbnail generator with gallery output paths
     thumbnail_config = config.thumbnail_config.model_copy()
     thumbnail_config.output_dir = config.output_dir / "images" / "thumbnails"
     thumbnail_config.cache_file = config.output_dir / ".build-cache.json"
+
     thumb_gen = ThumbnailGenerator(thumbnail_config, logger)
 
-    # Extract image paths
-    image_paths = [img.file_path for img in images]
-
     # Generate thumbnails
+    image_paths = [img.file_path for img in images]
     successful, failed = thumb_gen.generate_batch(image_paths)
 
     # Attach thumbnails to Image objects
     thumbnail_map = {str(t.source_path): t for t in successful}
     for img in images:
         img.thumbnail = thumbnail_map.get(str(img.file_path))
+
+
+def _write_html_output(html: str, output_dir: Path) -> Path:
+    """
+    Write generated HTML to index.html file.
+
+    Args:
+        html: Generated HTML content
+        output_dir: Gallery output directory
+
+    Returns:
+        Path to written HTML file
+    """
+    from .utils import ensure_directory
+
+    output_path = output_dir / "index.html"
+    ensure_directory(output_path.parent)
+    output_path.write_text(html, encoding="utf-8")
+
+    return output_path
+
+
+def _print_build_summary(categories: list[Category], output_path: Path, html_size: int) -> None:
+    """
+    Print build summary with statistics.
+
+    Args:
+        categories: List of built categories
+        output_path: Path to generated HTML file
+        html_size: Size of generated HTML in bytes
+    """
+    logger.info(_("✓ Generated %s"), output_path)
+    logger.info(_("  HTML size: %d bytes"), html_size)
+
+    logger.info(_("Categories:"))
+    for cat in categories:
+        logger.info("  %s: %s", cat.name, _("%d images") % len(cat.images))
+
+    logger.info(_("✓ Gallery built successfully!"))
+    logger.info(_("  Output: %s"), output_path.parent.absolute())
+
+
+def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
+    """
+    Main entry point for building the gallery.
+
+    Args:
+        config_path: Path to settings.yaml configuration file
+    """
+    # Load configuration and setup i18n
+    config = load_config(config_path)
+
+    from .i18n import setup_i18n
+
+    setup_i18n(config.locale)
+
+    # Print banner
+    _print_banner()
+
+    # Scan and sync images with YAML metadata
+    category_names, images = scan_and_sync(config)
+    logger.info(_("Loaded %d images across %d categories"), len(images), len(category_names))
+
+    # Generate thumbnails
+    _generate_thumbnails_for_images(images, config)
 
     # Organize by category
     categories = organize_by_category(category_names, images)
@@ -393,20 +480,11 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     logger.info(_("Generating gallery HTML..."))
     html = generate_gallery_html(categories, config)
 
-    # Write index.html
-    output_path = config.output_dir / "index.html"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(html, encoding="utf-8")
+    # Write output
+    output_path = _write_html_output(html, config.output_dir)
 
-    logger.info(_("✓ Generated %s"), output_path)
-    logger.info(_("  HTML size: %d bytes"), len(html))
-
-    logger.info(_("Categories:"))
-    for cat in categories:
-        logger.info("  %s: %s", cat.name, _("%d images") % len(cat.images))
-
-    logger.info(_("✓ Gallery built successfully!"))
-    logger.info(_("  Output: %s"), config.output_dir.absolute())
+    # Print summary
+    _print_build_summary(categories, output_path, len(html))
 
 
 def main() -> None:

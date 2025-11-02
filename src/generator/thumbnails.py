@@ -1,6 +1,5 @@
 """Thumbnail generation service for image preprocessing."""
 
-import hashlib
 import json
 import logging
 from datetime import datetime
@@ -10,9 +9,9 @@ from typing import Callable, Optional
 from PIL import Image as PILImage
 from PIL import ImageOps
 
-from src.generator.constants import CACHE_VERSION, CONTENT_HASH_LENGTH, EXIF_ORIENTATION_TAG
+from src.generator.constants import CACHE_VERSION, EXIF_ORIENTATION_TAG
 from src.generator.model import ImageMetadata, ThumbnailConfig, ThumbnailImage
-from src.generator.utils import ensure_directory, validate_file_exists
+from src.generator.utils import ensure_directory, hash_bytes, validate_file_exists
 
 
 class ThumbnailGenerator:
@@ -435,14 +434,13 @@ def generate_content_hash(image_bytes: bytes) -> str:
         image_bytes: Raw image file bytes
 
     Returns:
-        First CONTENT_HASH_LENGTH characters of SHA-256 hex digest
+        Hash string of fixed length
 
     Examples:
         >>> generate_content_hash(Path("photo.jpg").read_bytes())
         'a1b2c3d4'
     """
-    hash_obj = hashlib.sha256(image_bytes)
-    return hash_obj.hexdigest()[:CONTENT_HASH_LENGTH]
+    return hash_bytes(image_bytes)
 
 
 def apply_exif_orientation(image: PILImage.Image) -> PILImage.Image:

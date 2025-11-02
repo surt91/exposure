@@ -1,47 +1,9 @@
 """Asset hashing and copying utilities."""
 
-import hashlib
 import shutil
 from pathlib import Path
 
-
-def hash_file(file_path: Path) -> str:
-    """
-    Calculate SHA256 hash of a file.
-
-    Args:
-        file_path: Path to file to hash
-
-    Returns:
-        Hex digest of the file hash (first 8 characters for brevity)
-
-    Raises:
-        FileNotFoundError: If file doesn't exist
-    """
-    if not file_path.exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    sha256 = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            sha256.update(chunk)
-
-    return sha256.hexdigest()[:8]
-
-
-def hash_content(content: str) -> str:
-    """
-    Calculate SHA256 hash of string content.
-
-    Args:
-        content: String content to hash
-
-    Returns:
-        Hex digest of the content hash (first 8 characters)
-    """
-    sha256 = hashlib.sha256()
-    sha256.update(content.encode("utf-8"))
-    return sha256.hexdigest()[:8]
+from .utils import hash_content, hash_file
 
 
 def copy_with_hash(src_path: Path, dest_dir: Path, preserve_name: bool = False) -> Path:
