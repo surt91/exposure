@@ -111,7 +111,9 @@
     }
 
     if (modalCategory) {
-      modalCategory.textContent = `Category: ${currentCategory}`;
+      // Get translated category label from modal data attribute
+      const categoryLabel = modal.dataset.i18nCategory || 'Category:';
+      modalCategory.textContent = `${categoryLabel} ${currentCategory}`;
     }
 
     // Show modal

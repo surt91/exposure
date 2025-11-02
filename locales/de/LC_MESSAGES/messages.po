@@ -54,7 +54,7 @@ msgstr "Kein YAML-Eintrag für %s, verwende Standardwerte"
 #: src/generator/build_html.py:145
 #, python-format
 msgid "Could not extract dimensions for %s"
-msgstr ""
+msgstr "Konnte Dimensionen für %s nicht extrahieren"
 
 #: src/generator/build_html.py:209
 #, python-format
@@ -65,10 +65,13 @@ msgstr "Unbekannte Kategorie '%s' für %s"
 msgid "Gallery"
 msgstr "Galerie"
 
+#: src/generator/build_html.py:473
+msgid "Category:"
+msgstr "Kategorie:"
+
 #: src/generator/build_html.py:500
-#, fuzzy
 msgid "Generating thumbnails..."
-msgstr "Generiere Galerie-HTML..."
+msgstr "Generiere Vorschaubilder..."
 
 #: src/generator/build_html.py:548
 #, python-format
@@ -111,7 +114,3 @@ msgstr "Generiere Galerie-HTML..."
 #, python-format
 msgid "Error: %s"
 msgstr "Fehler: %s"
-
-#~ msgid "Exposure Gallery Generator"
-#~ msgstr "Exposure Galerie-Generator"
-

@@ -470,6 +470,7 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
         categories=template_categories,
         css_href=css_href,
         js_href=js_href,
+        i18n_category_label=_("Category:"),
     )
 
     return html
