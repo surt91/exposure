@@ -53,9 +53,9 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T013 [P] [US1] Create test fixture images with various aspect ratios in tests/fixtures/
-- [ ] T014 [P] [US1] Add integration test in tests/integration/test_end_to_end.py to verify HTML contains dimension attributes
-- [ ] T015 [P] [US1] Add visual verification in tests/integration/test_end_to_end.py that images are not cropped
+- [X] T013 [P] [US1] Create test fixture images with various aspect ratios in tests/fixtures/
+- [X] T014 [P] [US1] Add integration test in tests/integration/test_end_to_end.py to verify HTML contains dimension attributes
+- [X] T015 [P] [US1] Add visual verification in tests/integration/test_end_to_end.py that images are not cropped
 
 ### Implementation for User Story 1
 
@@ -80,7 +80,7 @@
 
 ### Tests for User Story 2
 
-- [ ] T024 [P] [US2] Add unit test in tests/unit/test_model.py to verify aspect_ratio property calculation
+- [X] T024 [P] [US2] Add unit test in tests/unit/test_model.py to verify aspect_ratio property calculation
 - [ ] T025 [P] [US2] Add integration test in tests/integration/test_end_to_end.py to measure image size variance
 - [ ] T026 [P] [US2] Create visual regression test comparing layout consistency across aspect ratios
 
@@ -88,7 +88,7 @@
 
 - [X] T027 [US2] Configure justified-layout options in src/static/js/layout.js with targetRowHeight: 320px
 - [X] T028 [US2] Configure justified-layout options in src/static/js/layout.js with maxRowHeight: 480px
-- [ ] T029 [US2] Add aspect ratio validation in src/static/js/layout.js to clamp extreme ratios (0.25 to 4.0)
+- [X] T029 [US2] Add aspect ratio validation in src/static/js/layout.js to clamp extreme ratios (0.25 to 4.0)
 - [X] T030 [US2] Implement responsive targetRowHeight adjustment in src/static/js/layout.js based on viewport width
 - [X] T031 [US2] Add CSS transitions in src/static/css/gallery.css for smooth layout changes
 - [X] T032 [US2] Test and adjust spacing parameter in src/static/js/layout.js (default: 8px) for optimal visual balance
@@ -114,9 +114,9 @@
 - [X] T036 [US3] Fine-tune boxSpacing parameter in src/static/js/layout.js for optimal space usage
 - [X] T037 [US3] Implement row height calculation optimization in src/static/js/layout.js
 - [X] T038 [US3] Add container padding configuration in src/static/js/layout.js (containerPadding: 0)
-- [ ] T039 [US3] Handle edge case for single image layouts in src/static/js/layout.js
-- [ ] T040 [US3] Update gallery container styles in src/static/css/gallery.css to minimize external margins
-- [ ] T041 [US3] Add handling for partial last row in src/static/js/layout.js (forceLastRow: false)
+- [X] T039 [US3] Handle edge case for single image layouts in src/static/js/layout.js
+- [X] T040 [US3] Update gallery container styles in src/static/css/gallery.css to minimize external margins
+- [X] T041 [US3] Add handling for partial last row in src/static/js/layout.js (forceLastRow: false)
 
 **Checkpoint**: All priority P1 and P2 user stories complete - layout is uncropped, balanced, and space-efficient
 

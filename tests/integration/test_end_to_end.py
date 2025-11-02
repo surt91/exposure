@@ -175,3 +175,134 @@ output_dir: {output_dir}
         # Verify images were copied
         copied_images = list((output_dir / "images").glob("*.jpg"))
         assert len(copied_images) == 35
+
+    def test_html_includes_dimension_attributes(self, tmp_path):
+        """Test that generated HTML includes width/height dimension attributes."""
+        from PIL import Image as PILImage
+
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        # Create real test images with known dimensions
+        test_images = [
+            ("landscape.jpg", 1920, 1080),
+            ("portrait.jpg", 1080, 1920),
+            ("square.jpg", 1000, 1000),
+        ]
+
+        for filename, width, height in test_images:
+            img = PILImage.new("RGB", (width, height), color=(100, 150, 200))
+            img.save(content_dir / filename)
+
+        # Create YAML
+        yaml_path = config_dir / "gallery.yaml"
+        yaml_content = "categories:\n  - Test\nimages:\n"
+        for filename, _, _ in test_images:
+            yaml_content += f"  - filename: {filename}\n"
+            yaml_content += "    category: Test\n"
+            yaml_content += f"    title: {filename}\n"
+
+        yaml_path.write_text(yaml_content)
+
+        # Create settings
+        settings_path = config_dir / "settings.yaml"
+        settings_path.write_text(
+            f"""
+content_dir: {content_dir}
+gallery_yaml_path: {yaml_path}
+default_category: Uncategorized
+enable_thumbnails: false
+output_dir: {output_dir}
+"""
+        )
+
+        # Build gallery
+        build_gallery(settings_path)
+
+        # Verify HTML output
+        html_content = (output_dir / "index.html").read_text()
+
+        # Verify data-width and data-height attributes exist
+        assert 'data-width="1920"' in html_content
+        assert 'data-height="1080"' in html_content
+        assert 'data-width="1080"' in html_content
+        assert 'data-height="1920"' in html_content
+        assert 'data-width="1000"' in html_content
+        assert 'data-height="1000"' in html_content
+
+        # Verify img width and height attributes exist
+        assert 'width="1920"' in html_content
+        assert 'height="1080"' in html_content
+        assert 'width="1080"' in html_content
+        assert 'height="1920"' in html_content
+        assert 'width="1000"' in html_content
+        assert 'height="1000"' in html_content
+
+        # Verify decoding="async" attribute is present
+        assert 'decoding="async"' in html_content
+
+    def test_images_not_cropped_with_flexible_layout(self, tmp_path):
+        """Test that images are displayed with object-fit: contain when layout is calculated."""
+        from PIL import Image as PILImage
+
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        # Create images with different aspect ratios
+        test_images = [
+            ("wide.jpg", 3000, 1000),  # 3:1 panorama
+            ("tall.jpg", 1000, 3000),  # 1:3 vertical
+        ]
+
+        for filename, width, height in test_images:
+            img = PILImage.new("RGB", (width, height), color=(200, 100, 100))
+            img.save(content_dir / filename)
+
+        # Create YAML
+        yaml_path = config_dir / "gallery.yaml"
+        yaml_content = "categories:\n  - Test\nimages:\n"
+        for filename, _, _ in test_images:
+            yaml_content += f"  - filename: {filename}\n"
+            yaml_content += "    category: Test\n"
+            yaml_content += f"    title: {filename}\n"
+
+        yaml_path.write_text(yaml_content)
+
+        # Create settings
+        settings_path = config_dir / "settings.yaml"
+        settings_path.write_text(
+            f"""
+content_dir: {content_dir}
+gallery_yaml_path: {yaml_path}
+default_category: Uncategorized
+enable_thumbnails: false
+output_dir: {output_dir}
+"""
+        )
+
+        # Build gallery
+        build_gallery(settings_path)
+
+        # Verify CSS includes object-fit: contain for layout-calculated class
+        css_files = list(output_dir.glob("gallery.*.css"))
+        assert len(css_files) == 1
+        css_content = css_files[0].read_text()
+
+        # Check that CSS has rules for .layout-calculated
+        assert ".layout-calculated" in css_content
+
+        # Verify HTML includes bundled gallery JS (which includes layout.js)
+        html_content = (output_dir / "index.html").read_text()
+        assert 'src="gallery.' in html_content
+        assert '.js"' in html_content
+
+        # Verify justified-layout library is included
+        assert "justified-layout" in html_content

@@ -39,6 +39,19 @@
     });
   }
 
+  // Constants for aspect ratio limits
+  const MIN_ASPECT_RATIO = 0.25; // 1:4 (very tall)
+  const MAX_ASPECT_RATIO = 4.0;  // 4:1 (very wide)
+
+  /**
+   * Clamp aspect ratio to acceptable range
+   * @param {number} aspectRatio - Original aspect ratio
+   * @returns {number} Clamped aspect ratio
+   */
+  function clampAspectRatio(aspectRatio) {
+    return Math.max(MIN_ASPECT_RATIO, Math.min(MAX_ASPECT_RATIO, aspectRatio));
+  }
+
   /**
    * Extract image dimensions from DOM
    * @param {HTMLElement} gallery - Gallery container element
@@ -53,11 +66,15 @@
       const height = parseInt(item.dataset.height);
 
       if (width && height && width > 0 && height > 0) {
+        const originalAspectRatio = width / height;
+        const clampedAspectRatio = clampAspectRatio(originalAspectRatio);
+
         data.push({
           index: index,
           width: width,
           height: height,
-          aspectRatio: width / height,
+          aspectRatio: clampedAspectRatio,
+          originalAspectRatio: originalAspectRatio,
           element: item
         });
       }
@@ -90,7 +107,10 @@
       targetRowHeight: targetRowHeight,
       maxRowHeight: targetRowHeight * 1.5,
       boxSpacing: 8,
-      containerPadding: 0
+      containerPadding: 0,
+      forceAspectRatio: false, // Don't force aspect ratio
+      showWidows: true, // Show partial last row (don't hide orphans)
+      fullWidthBreakoutRowCadence: false // Don't add full-width rows
     });
 
     return {
@@ -111,6 +131,9 @@
     gallery.style.position = 'relative';
     gallery.style.height = `${geometry.containerHeight}px`;
     gallery.classList.add('layout-calculated');
+
+    // Add data attribute for single image handling
+    gallery.setAttribute('data-image-count', imageData.length);
 
     // Position each image
     geometry.boxes.forEach((box, index) => {

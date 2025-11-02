@@ -98,6 +98,74 @@ class TestImage:
         )
         assert img.aspect_ratio is None
 
+    def test_aspect_ratio_landscape(self, tmp_path):
+        """Test aspect ratio calculation for landscape images (16:9)."""
+        img = Image(
+            filename="landscape.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=1920,
+            height=1080,
+        )
+        assert img.aspect_ratio is not None
+        assert abs(img.aspect_ratio - 1.7778) < 0.001
+
+    def test_aspect_ratio_portrait(self, tmp_path):
+        """Test aspect ratio calculation for portrait images (9:16)."""
+        img = Image(
+            filename="portrait.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=1080,
+            height=1920,
+        )
+        assert img.aspect_ratio is not None
+        assert abs(img.aspect_ratio - 0.5625) < 0.001
+
+    def test_aspect_ratio_square(self, tmp_path):
+        """Test aspect ratio calculation for square images (1:1)."""
+        img = Image(
+            filename="square.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=1000,
+            height=1000,
+        )
+        assert img.aspect_ratio == 1.0
+
+    def test_aspect_ratio_panorama(self, tmp_path):
+        """Test aspect ratio calculation for panoramic images (3:1)."""
+        img = Image(
+            filename="panorama.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=3000,
+            height=1000,
+        )
+        assert img.aspect_ratio == 3.0
+
+    def test_aspect_ratio_extreme_wide(self, tmp_path):
+        """Test aspect ratio calculation for extreme wide images (4:1)."""
+        img = Image(
+            filename="extreme_wide.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=4000,
+            height=1000,
+        )
+        assert img.aspect_ratio == 4.0
+
+    def test_aspect_ratio_extreme_tall(self, tmp_path):
+        """Test aspect ratio calculation for extreme tall images (1:4)."""
+        img = Image(
+            filename="extreme_tall.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=1000,
+            height=4000,
+        )
+        assert img.aspect_ratio == 0.25
+
 
 class TestCategory:
     """Tests for Category model."""
