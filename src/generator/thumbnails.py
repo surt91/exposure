@@ -216,6 +216,27 @@ class ThumbnailGenerator:
         thumb.thumbnail((thumb_width, thumb_height), PILImage.Resampling.LANCZOS)
         return thumb
 
+    def _cleanup_old_thumbnails(self, stem: str, current_hash: str) -> None:
+        """
+        Remove old thumbnail files for the same source image with different hashes.
+
+        Args:
+            stem: Filename stem (without extension)
+            current_hash: Current content hash to preserve
+        """
+        # Find all thumbnails matching this stem
+        old_webp_files = self.config.output_dir.glob(f"{stem}-*.webp")
+        old_jpeg_files = self.config.output_dir.glob(f"{stem}-*.jpg")
+
+        for old_file in list(old_webp_files) + list(old_jpeg_files):
+            # Check if this is NOT the current hash
+            if current_hash not in old_file.name:
+                try:
+                    old_file.unlink()
+                    self.logger.debug(f"Cleaned up old thumbnail: {old_file.name}")
+                except OSError as e:
+                    self.logger.warning(f"Failed to remove old thumbnail {old_file.name}: {e}")
+
     def _save_thumbnails(
         self, thumb: PILImage.Image, source_path: Path, content_hash: str
     ) -> tuple[Path, Path]:
@@ -236,6 +257,9 @@ class ThumbnailGenerator:
 
         webp_path = self.config.output_dir / webp_filename
         jpeg_path = self.config.output_dir / jpeg_filename
+
+        # Clean up old thumbnails with different hashes
+        self._cleanup_old_thumbnails(stem, content_hash)
 
         # Save WebP thumbnail
         thumb.save(
