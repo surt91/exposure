@@ -2,7 +2,12 @@
 
 import pytest
 
-from src.generator.scan import detect_duplicates, discover_images, filter_valid_images
+from src.generator.scan import (
+    detect_duplicates,
+    discover_images,
+    filter_valid_images,
+    get_image_dimensions,
+)
 
 
 class TestDiscoverImages:
@@ -126,3 +131,38 @@ class TestFilterValidImages:
         assert len(valid) >= 0
         if valid:
             assert empty_file not in valid
+
+
+class TestGetImageDimensions:
+    """Tests for image dimension extraction."""
+
+    def test_get_dimensions_without_pillow(self, tmp_path, monkeypatch):
+        """Test graceful handling when Pillow is not available."""
+        import src.generator.scan as scan_module
+
+        # Temporarily disable PIL
+        original_pil = scan_module.PILImage
+        monkeypatch.setattr(scan_module, "PILImage", None)
+
+        img_path = tmp_path / "test.jpg"
+        img_path.write_bytes(b"fake image")
+
+        result = get_image_dimensions(img_path)
+
+        assert result is None
+
+        # Restore PIL
+        monkeypatch.setattr(scan_module, "PILImage", original_pil)
+
+    def test_get_dimensions_nonexistent_file(self, tmp_path):
+        """Test handling of non-existent file."""
+        result = get_image_dimensions(tmp_path / "nonexistent.jpg")
+        assert result is None
+
+    def test_get_dimensions_invalid_image(self, tmp_path):
+        """Test handling of invalid image file."""
+        img_path = tmp_path / "invalid.jpg"
+        img_path.write_bytes(b"not a real image")
+
+        result = get_image_dimensions(img_path)
+        assert result is None

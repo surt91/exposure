@@ -5,11 +5,12 @@ Modern static image gallery generator - build responsive, accessible galleries f
 ## Features
 
 - 📸 Scrollable image gallery with category organization
+- 🖼️ **Flexible layout** - Images displayed at original aspect ratios without cropping
 - 🌙 **Dark mode** - Automatic theme switching based on system preference
 - 🔍 Fullscreen image viewer with keyboard navigation
 - 🔄 Automatic YAML stub generation for new images
 - ♿ Accessibility-first design (semantic HTML, ARIA, keyboard support, WCAG 2.1 AA)
-- ⚡ Performance-optimized (strict asset budgets)
+- ⚡ Performance-optimized (strict asset budgets, zero layout shift)
 - 🔒 Security-focused (no third-party scripts, CSP ready)
 - ✨ Smooth transitions and subtle visual flourishes
 
@@ -83,6 +84,29 @@ Exposure automatically adapts to your system's dark mode preference:
 **Browser Support:** Chrome 76+, Firefox 67+, Safari 12.1+, Edge 79+ (2019+)
 
 For implementation details, see [ADR 0003](/docs/decisions/0003-dark-mode-styling-approach.md)
+
+## Flexible Layout
+
+Exposure uses a justified layout algorithm that displays images at their original aspect ratios without cropping. Images are arranged in rows with consistent heights, creating a visually balanced and space-efficient gallery.
+
+**Features:**
+- **No cropping** - See the complete composition of every image
+- **Visual balance** - Images appear roughly comparable in size despite different aspect ratios
+- **Space efficient** - Minimal whitespace between images while maintaining clean spacing
+- **Responsive** - Layout automatically recalculates on window resize
+- **Zero layout shift (CLS = 0.0)** - Images reserve space before loading, preventing jarring shifts
+- **Fast** - Layout calculation completes in <20ms for 500 images
+- **Universal viewport support** - Works from mobile (320px) to 4K (3840px) displays
+
+**Implementation:**
+- Image dimensions automatically extracted using Pillow during build
+- Justified layout algorithm powered by [flickr/justified-layout](https://github.com/flickr/justified-layout) library
+- Client-side calculation ensures responsive behavior across all screen sizes
+- Graceful degradation: Falls back to CSS Grid with fixed aspect ratio if JavaScript is disabled
+
+**Browser Support:** Chrome 51+, Firefox 54+, Safari 10+, Edge 15+ (ES6+)
+
+For algorithm choice rationale and implementation details, see [ADR 0007](/docs/decisions/0007-flexible-layout-algorithm.md)
 
 ## Configuration
 

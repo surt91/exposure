@@ -118,12 +118,13 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
             entry_title = entry.title
             entry_description = entry.description
 
-        # Get dimensions if enabled
+        # Get dimensions for flexible layout
         width, height = None, None
-        if config.enable_thumbnails:
-            dims = get_image_dimensions(path)
-            if dims:
-                width, height = dims
+        dims = get_image_dimensions(path)
+        if dims:
+            width, height = dims
+        else:
+            logger.warning(_("Could not extract dimensions for %s"), filename)
 
         image = Image(
             filename=filename,
@@ -203,19 +204,30 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     fullscreen_css = Path(__file__).parent.parent / "static" / "css" / "fullscreen.css"
 
     # JS sources
+    justified_layout_js = (
+        Path(__file__).parent.parent / "static" / "js" / "vendor" / "justified-layout.js"
+    )
     gallery_js = Path(__file__).parent.parent / "static" / "js" / "gallery.js"
     a11y_js = Path(__file__).parent.parent / "static" / "js" / "a11y.js"
     fullscreen_js = Path(__file__).parent.parent / "static" / "js" / "fullscreen.js"
+    layout_js = Path(__file__).parent.parent / "static" / "js" / "layout.js"
 
     # Combine CSS files
     css_content = gallery_css.read_text(encoding="utf-8")
     css_content += "\n\n/* Fullscreen Modal */\n"
     css_content += fullscreen_css.read_text(encoding="utf-8")
 
-    # Combine JS files
-    js_content = gallery_js.read_text(encoding="utf-8")
+    # Combine JS files (justified-layout library must come first)
+    js_content = "// justified-layout library (v4.1.0) - vendored\n"
+    js_content += "// Source: https://github.com/flickr/justified-layout\n"
+    js_content += "// License: MIT (see src/static/js/vendor/justified-layout.LICENSE)\n"
+    js_content += justified_layout_js.read_text(encoding="utf-8")
+    js_content += "\n\n// Gallery functionality\n"
+    js_content += gallery_js.read_text(encoding="utf-8")
     js_content += "\n\n// Accessibility helpers\n"
     js_content += a11y_js.read_text(encoding="utf-8")
+    js_content += "\n\n// Flexible layout\n"
+    js_content += layout_js.read_text(encoding="utf-8")
     js_content += "\n\n// Fullscreen controller\n"
     js_content += fullscreen_js.read_text(encoding="utf-8")
 
