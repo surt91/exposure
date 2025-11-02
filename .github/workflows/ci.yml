@@ -35,7 +35,6 @@ jobs:
 
     - name: Run tests
       run: |
-        export PYTHONPATH=src
         uv run pytest --cov=generator --cov-report=xml --cov-report=term --ignore=tests/accessibility
 
     - name: Coverage report
@@ -65,7 +64,6 @@ jobs:
 
     - name: Run asset budget tests
       run: |
-        export PYTHONPATH=src
         uv run pytest tests/integration/test_asset_budgets.py -v
       continue-on-error: false
 
@@ -125,5 +123,4 @@ jobs:
 
     - name: Run accessibility tests
       run: |
-        export PYTHONPATH=src
         uv run pytest tests/accessibility/test_axe_a11y.py -v --tracing=retain-on-failure
