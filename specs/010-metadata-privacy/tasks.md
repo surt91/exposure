@@ -32,12 +32,12 @@
 
 **Purpose**: Install piexif library and create shared metadata filtering module
 
-- [ ] T001 Install piexif dependency by adding `piexif = "^1.1.3"` to `pyproject.toml` under `[project.dependencies]`
-- [ ] T002 Create `src/generator/metadata_filter.py` module with piexif imports
-- [ ] T003 Define `SENSITIVE_EXIF_TAGS` constant set in `src/generator/metadata_filter.py` using piexif named constants (piexif.ExifIFD.BodySerialNumber, piexif.ExifIFD.LensSerialNumber, piexif.ImageIFD.Artist, piexif.ImageIFD.Copyright, piexif.ImageIFD.XPAuthor, piexif.ImageIFD.Software, piexif.ImageIFD.ProcessingSoftware)
-- [ ] T004 Define `SENSITIVE_0TH_TAGS` constant set in `src/generator/metadata_filter.py` for thumbnail-related tags (piexif.ImageIFD.JPEGInterchangeFormat, piexif.ImageIFD.JPEGInterchangeFormatLength, piexif.ImageIFD.Compression for thumbnails)
-- [ ] T005 Define `SAFE_EXIF_TAGS` constant set in `src/generator/metadata_filter.py` using piexif named constants (piexif.ImageIFD.Orientation, piexif.ExifIFD.ColorSpace, piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized, piexif.ImageIFD.DateTime, piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ExifIFD.LensModel, piexif.ExifIFD.LensMake)
-- [ ] T006 Define `SAFE_0TH_TAGS` constant set in `src/generator/metadata_filter.py` for display-critical fields
+- [x] T001 Install piexif dependency by adding `piexif = "^1.1.3"` to `pyproject.toml` under `[project.dependencies]`
+- [x] T002 Create `src/generator/metadata_filter.py` module with piexif imports
+- [x] T003 Define `SENSITIVE_EXIF_TAGS` constant set in `src/generator/metadata_filter.py` using piexif named constants (piexif.ExifIFD.BodySerialNumber, piexif.ExifIFD.LensSerialNumber, piexif.ImageIFD.Artist, piexif.ImageIFD.Copyright, piexif.ImageIFD.XPAuthor, piexif.ImageIFD.Software, piexif.ImageIFD.ProcessingSoftware)
+- [x] T004 Define `SENSITIVE_0TH_TAGS` constant set in `src/generator/metadata_filter.py` for thumbnail-related tags (piexif.ImageIFD.JPEGInterchangeFormat, piexif.ImageIFD.JPEGInterchangeFormatLength, piexif.ImageIFD.Compression for thumbnails)
+- [x] T005 Define `SAFE_EXIF_TAGS` constant set in `src/generator/metadata_filter.py` using piexif named constants (piexif.ImageIFD.Orientation, piexif.ExifIFD.ColorSpace, piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized, piexif.ImageIFD.DateTime, piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ExifIFD.LensModel, piexif.ExifIFD.LensMake)
+- [x] T006 Define `SAFE_0TH_TAGS` constant set in `src/generator/metadata_filter.py` for display-critical fields
 
 ---
 
@@ -45,20 +45,20 @@
 
 **Purpose**: Implement shared metadata filtering functions used by both thumbnails and full-size images
 
-- [ ] T007 Implement `filter_metadata(source_path: Path) -> Optional[bytes]` function in `src/generator/metadata_filter.py` that loads EXIF with piexif.load(), removes GPS IFD via exif_dict.pop("GPS", None), filters sensitive tags, returns cleaned EXIF bytes via piexif.dump()
-- [ ] T008 Implement `_remove_sensitive_tags(exif_dict: dict) -> dict` helper function in `src/generator/metadata_filter.py` to filter EXIF/0th IFDs using SENSITIVE_EXIF_TAGS and SENSITIVE_0TH_TAGS constants
-- [ ] T009 Implement error handling in `filter_metadata()` to catch piexif.InvalidImageDataError and return None on failure with logging
-- [ ] T010 Implement `strip_and_save(src_path: Path, dest_path: Path) -> bool` function in `src/generator/metadata_filter.py` that calls filter_metadata(), opens image with Pillow, saves with cleaned EXIF, returns success status
-- [ ] T011 Add logging in `strip_and_save()` to log warnings with "⚠ WARNING:" prefix when metadata stripping fails
+- [x] T007 Implement `filter_metadata(source_path: Path) -> Optional[bytes]` function in `src/generator/metadata_filter.py` that loads EXIF with piexif.load(), removes GPS IFD via exif_dict.pop("GPS", None), filters sensitive tags, returns cleaned EXIF bytes via piexif.dump()
+- [x] T008 Implement `_remove_sensitive_tags(exif_dict: dict) -> dict` helper function in `src/generator/metadata_filter.py` to filter EXIF/0th IFDs using SENSITIVE_EXIF_TAGS and SENSITIVE_0TH_TAGS constants
+- [x] T009 Implement error handling in `filter_metadata()` to catch piexif.InvalidImageDataError and return None on failure with logging
+- [x] T010 Implement `strip_and_save(src_path: Path, dest_path: Path) -> bool` function in `src/generator/metadata_filter.py` that calls filter_metadata(), opens image with Pillow, saves with cleaned EXIF, returns success status
+- [x] T011 Add logging in `strip_and_save()` to log warnings with "⚠ WARNING:" prefix when metadata stripping fails
 
 ## Phase 3: Data Model Enhancements
 
 **Purpose**: Update data models to track metadata stripping status
 
-- [ ] T012 Add `metadata_stripped: bool = True` field to `ThumbnailImage` model in `src/generator/model.py`
-- [ ] T013 Add `metadata_strip_warning: Optional[str] = None` field to `ThumbnailImage` model in `src/generator/model.py`
-- [ ] T014 Add `metadata_stripped: bool = True` field to `CacheEntry` model in `src/generator/cache.py`
-- [ ] T015 Bump `CACHE_VERSION` in `src/generator/cache.py` to force rebuild with metadata stripping
+- [x] T012 Add `metadata_stripped: bool = True` field to `ThumbnailImage` model in `src/generator/model.py`
+- [x] T013 Add `metadata_strip_warning: Optional[str] = None` field to `ThumbnailImage` model in `src/generator/model.py`
+- [x] T014 Add `metadata_stripped: bool = True` field to `CacheEntry` model in `src/generator/cache.py`
+- [x] T015 Bump `CACHE_VERSION` in `src/generator/cache.py` to force rebuild with metadata stripping
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -72,20 +72,20 @@
 
 ### Implementation for User Story 1 - Thumbnails
 
-- [ ] T016 [US1] Import `filter_metadata` from `src/generator/metadata_filter` in `src/generator/thumbnails.py`
-- [ ] T017 [US1] Call `filter_metadata(source_path)` in `generate_thumbnail()` method in `src/generator/thumbnails.py` after reading source image
-- [ ] T018 [US1] Update `_save_thumbnails()` method in `src/generator/thumbnails.py` to save WebP with cleaned EXIF bytes via `exif=cleaned_exif` parameter
-- [ ] T019 [US1] Update `_save_thumbnails()` method in `src/generator/thumbnails.py` to save JPEG with cleaned EXIF bytes via `exif=cleaned_exif` parameter
-- [ ] T020 [US1] Populate `ThumbnailImage.metadata_stripped` and `metadata_strip_warning` fields in `generate_thumbnail()` method in `src/generator/thumbnails.py` based on filter_metadata() result
+- [x] T016 [US1] Import `filter_metadata` from `src/generator/metadata_filter` in `src/generator/thumbnails.py`
+- [x] T017 [US1] Call `filter_metadata(source_path)` in `generate_thumbnail()` method in `src/generator/thumbnails.py` after reading source image
+- [x] T018 [US1] Update `_save_thumbnails()` method in `src/generator/thumbnails.py` to save WebP with cleaned EXIF bytes via `exif=cleaned_exif` parameter
+- [x] T019 [US1] Update `_save_thumbnails()` method in `src/generator/thumbnails.py` to save JPEG with cleaned EXIF bytes via `exif=cleaned_exif` parameter
+- [x] T020 [US1] Populate `ThumbnailImage.metadata_stripped` and `metadata_strip_warning` fields in `generate_thumbnail()` method in `src/generator/thumbnails.py` based on filter_metadata() result
 
 ### Implementation for User Story 1 - Full-Size Originals
 
-- [ ] T021 [US1] Import `strip_and_save` from `src/generator/metadata_filter` in `src/generator/assets.py`
-- [ ] T022 [US1] Add `strip_metadata: bool = False` parameter to `copy_with_hash()` function in `src/generator/assets.py`
-- [ ] T023 [US1] Add image format detection in `copy_with_hash()` in `src/generator/assets.py` (check if extension in ['.jpg', '.jpeg', '.png', '.gif', '.webp'])
-- [ ] T024 [US1] Call `strip_and_save(src, dest)` for image files when `strip_metadata=True` in `copy_with_hash()` in `src/generator/assets.py`
-- [ ] T025 [US1] Add fallback to `shutil.copy2()` if `strip_and_save()` fails with warning log in `copy_with_hash()` in `src/generator/assets.py`
-- [ ] T026 [US1] Update call sites in `src/generator/build_html.py` to pass `strip_metadata=True` when copying full-size original images
+- [x] T021 [US1] Import `strip_and_save` from `src/generator/metadata_filter` in `src/generator/assets.py`
+- [x] T022 [US1] Add `strip_metadata: bool = False` parameter to `copy_with_hash()` function in `src/generator/assets.py`
+- [x] T023 [US1] Add image format detection in `copy_with_hash()` in `src/generator/assets.py` (check if extension in ['.jpg', '.jpeg', '.png', '.gif', '.webp'])
+- [x] T024 [US1] Call `strip_and_save(src, dest)` for image files when `strip_metadata=True` in `copy_with_hash()` in `src/generator/assets.py`
+- [x] T025 [US1] Add fallback to `shutil.copy2()` if `strip_and_save()` fails with warning log in `copy_with_hash()` in `src/generator/assets.py`
+- [x] T026 [US1] Update call sites in `src/generator/build_html.py` to pass `strip_metadata=True` when copying full-size original images
 
 **Checkpoint**: At this point, GPS and location data should be completely removed from all generated thumbnails AND full-size originals
 
@@ -99,14 +99,14 @@
 
 ### Implementation for User Story 2
 
-- [ ] T027 [US2] Verify `SENSITIVE_EXIF_TAGS` includes camera serial numbers (piexif.ExifIFD.BodySerialNumber, piexif.ExifIFD.LensSerialNumber) in `src/generator/metadata_filter.py`
-- [ ] T028 [US2] Verify `SENSITIVE_EXIF_TAGS` includes creator fields (piexif.ImageIFD.Artist, piexif.ImageIFD.Copyright, piexif.ImageIFD.XPAuthor) in `src/generator/metadata_filter.py`
-- [ ] T029 [US2] Verify `SENSITIVE_EXIF_TAGS` includes software fields (piexif.ImageIFD.Software, piexif.ImageIFD.ProcessingSoftware) in `src/generator/metadata_filter.py`
-- [ ] T030 [US2] Verify `SAFE_EXIF_TAGS` includes timestamp fields (piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized, piexif.ImageIFD.DateTime) in `src/generator/metadata_filter.py`
-- [ ] T031 [US2] Verify ICC color profile preservation in `strip_and_save()` method in `src/generator/metadata_filter.py` (Pillow preserves via img.info['icc_profile'])
-- [ ] T032 [US2] Verify `SAFE_EXIF_TAGS` includes orientation metadata (piexif.ImageIFD.Orientation) in `src/generator/metadata_filter.py`
-- [ ] T033 [US2] Verify `SAFE_EXIF_TAGS` includes camera/lens information (piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ExifIFD.LensModel, piexif.ExifIFD.LensMake) per FR-008a in `src/generator/metadata_filter.py`
-- [ ] T034 [US2] Verify `SENSITIVE_0TH_TAGS` includes embedded thumbnail removal (piexif.ImageIFD.JPEGInterchangeFormat, piexif.ImageIFD.JPEGInterchangeFormatLength) in `src/generator/metadata_filter.py`
+- [x] T027 [US2] Verify `SENSITIVE_EXIF_TAGS` includes camera serial numbers (piexif.ExifIFD.BodySerialNumber, piexif.ExifIFD.LensSerialNumber) in `src/generator/metadata_filter.py`
+- [x] T028 [US2] Verify `SENSITIVE_EXIF_TAGS` includes creator fields (piexif.ImageIFD.Artist, piexif.ImageIFD.Copyright, piexif.ImageIFD.XPAuthor) in `src/generator/metadata_filter.py`
+- [x] T029 [US2] Verify `SENSITIVE_EXIF_TAGS` includes software fields (piexif.ImageIFD.Software, piexif.ImageIFD.ProcessingSoftware) in `src/generator/metadata_filter.py`
+- [x] T030 [US2] Verify `SAFE_EXIF_TAGS` includes timestamp fields (piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized, piexif.ImageIFD.DateTime) in `src/generator/metadata_filter.py`
+- [x] T031 [US2] Verify ICC color profile preservation in `strip_and_save()` method in `src/generator/metadata_filter.py` (Pillow preserves via img.info['icc_profile'])
+- [x] T032 [US2] Verify `SAFE_EXIF_TAGS` includes orientation metadata (piexif.ImageIFD.Orientation) in `src/generator/metadata_filter.py`
+- [x] T033 [US2] Verify `SAFE_EXIF_TAGS` includes camera/lens information (piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ExifIFD.LensModel, piexif.ExifIFD.LensMake) per FR-008a in `src/generator/metadata_filter.py`
+- [x] T034 [US2] Verify `SENSITIVE_0TH_TAGS` includes embedded thumbnail removal (piexif.ImageIFD.JPEGInterchangeFormat, piexif.ImageIFD.JPEGInterchangeFormatLength) in `src/generator/metadata_filter.py`
 
 **Checkpoint**: At this point, all sensitive personal metadata should be removed while display-critical fields are preserved
 
@@ -120,12 +120,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T035 [P] [US3] Implement `_format_size()` helper method in `src/generator/thumbnails.py` to format bytes as human-readable strings (MB/KB/B with proper precision)
-- [ ] T036 [US3] Add INFO-level progress logging in `generate_thumbnail()` method in `src/generator/thumbnails.py` after successful thumbnail generation
-- [ ] T037 [US3] Format progress log message as "✓ {filename} → {source_size} → {thumb_size} ({reduction_pct}% reduction)" in `generate_thumbnail()` method in `src/generator/thumbnails.py`
-- [ ] T038 [US3] Calculate file size reduction percentage using formula `((original_size - thumbnail_size) / original_size) × 100` in `generate_thumbnail()` method in `src/generator/thumbnails.py`
-- [ ] T039 [US3] Add WARNING-level logging with "⚠ WARNING:" prefix when metadata stripping fails in `generate_thumbnail()` method in `src/generator/thumbnails.py`
-- [ ] T040 [US3] Ensure progress logs appear in real-time (use `logger.info()` immediately after each image, not batched) in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [x] T035 [P] [US3] Implement `_format_size()` helper method in `src/generator/thumbnails.py` to format bytes as human-readable strings (MB/KB/B with proper precision)
+- [x] T036 [US3] Add INFO-level progress logging in `generate_thumbnail()` method in `src/generator/thumbnails.py` after successful thumbnail generation
+- [x] T037 [US3] Format progress log message as "✓ {filename} → {source_size} → {thumb_size} ({reduction_pct}% reduction)" in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [x] T038 [US3] Calculate file size reduction percentage using formula `((original_size - thumbnail_size) / original_size) × 100` in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [x] T039 [US3] Add WARNING-level logging with "⚠ WARNING:" prefix when metadata stripping fails in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [x] T040 [US3] Ensure progress logs appear in real-time (use `logger.info()` immediately after each image, not batched) in `generate_thumbnail()` method in `src/generator/thumbnails.py`
 
 **Checkpoint**: At this point, build process should show clear real-time progress with size reduction stats
 
@@ -139,11 +139,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T041 [US4] Verify orientation preservation by ensuring piexif.ImageIFD.Orientation is in `SAFE_EXIF_TAGS` and never in `SENSITIVE_EXIF_TAGS` in `src/generator/metadata_filter.py`
-- [ ] T042 [US4] Verify color profile preservation by ensuring ICC profile handling in `strip_and_save()` method in `src/generator/metadata_filter.py` (preserve via Pillow's info dict)
-- [ ] T043 [US4] Verify timestamp preservation by ensuring piexif.ExifIFD.DateTimeOriginal/DateTimeDigitized/DateTime are in `SAFE_EXIF_TAGS` in `src/generator/metadata_filter.py`
-- [ ] T044 [US4] Verify camera/lens info preservation by ensuring Make/Model/LensModel/LensMake tags are in `SAFE_EXIF_TAGS` per FR-008a in `src/generator/metadata_filter.py`
-- [ ] T045 [US4] Verify GPS tags are never preserved by testing that GPS IFD is removed via exif_dict.pop("GPS", None) in `filter_metadata()` in `src/generator/metadata_filter.py`
+- [x] T041 [US4] Verify orientation preservation by ensuring piexif.ImageIFD.Orientation is in `SAFE_EXIF_TAGS` and never in `SENSITIVE_EXIF_TAGS` in `src/generator/metadata_filter.py`
+- [x] T042 [US4] Verify color profile preservation by ensuring ICC profile handling in `strip_and_save()` method in `src/generator/metadata_filter.py` (preserve via Pillow's info dict)
+- [x] T043 [US4] Verify timestamp preservation by ensuring piexif.ExifIFD.DateTimeOriginal/DateTimeDigitized/DateTime are in `SAFE_EXIF_TAGS` in `src/generator/metadata_filter.py`
+- [x] T044 [US4] Verify camera/lens info preservation by ensuring Make/Model/LensModel/LensMake tags are in `SAFE_EXIF_TAGS` per FR-008a in `src/generator/metadata_filter.py`
+- [x] T045 [US4] Verify GPS tags are never preserved by testing that GPS IFD is removed via exif_dict.pop("GPS", None) in `filter_metadata()` in `src/generator/metadata_filter.py`
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -153,11 +153,11 @@
 
 **Purpose**: Graceful handling of failures and edge cases
 
-- [ ] T046 Implement graceful handling for images with no EXIF metadata in `filter_metadata()` method in `src/generator/metadata_filter.py` (return None, which means no metadata to strip)
-- [ ] T047 Implement graceful handling for corrupted EXIF data in `filter_metadata()` method in `src/generator/metadata_filter.py` (catch piexif.InvalidImageDataError, log warning, return None, continue build)
-- [ ] T048 Implement graceful handling for unsupported image formats in `filter_metadata()` method in `src/generator/metadata_filter.py` (catch exceptions, return None)
-- [ ] T049 Ensure build continues when metadata stripping fails per FR-021 in `generate_thumbnail()` method in `src/generator/thumbnails.py` (populate metadata_strip_warning but continue)
-- [ ] T050 Verify failed images still included in gallery output per FR-023 in `generate_thumbnail()` method in `src/generator/thumbnails.py`
+- [x] T046 Implement graceful handling for images with no EXIF metadata in `filter_metadata()` method in `src/generator/metadata_filter.py` (return None, which means no metadata to strip)
+- [x] T047 Implement graceful handling for corrupted EXIF data in `filter_metadata()` method in `src/generator/metadata_filter.py` (catch piexif.InvalidImageDataError, log warning, return None, continue build)
+- [x] T048 Implement graceful handling for unsupported image formats in `filter_metadata()` method in `src/generator/metadata_filter.py` (catch exceptions, return None)
+- [x] T049 Ensure build continues when metadata stripping fails per FR-021 in `generate_thumbnail()` method in `src/generator/thumbnails.py` (populate metadata_strip_warning but continue)
+- [x] T050 Verify failed images still included in gallery output per FR-023 in `generate_thumbnail()` method in `src/generator/thumbnails.py`
 
 ---
 
@@ -165,9 +165,9 @@
 
 **Purpose**: Ensure incremental builds work correctly with metadata stripping
 
-- [ ] T051 Update cache write logic in `src/generator/cache.py` to save `metadata_stripped` field from `ThumbnailImage` to `CacheEntry`
-- [ ] T052 Verify cache invalidation on `CACHE_VERSION` bump triggers full rebuild with metadata stripping in `src/generator/cache.py`
-- [ ] T053 Test cache hit behavior in `generate_thumbnail()` method in `src/generator/thumbnails.py` to ensure cached thumbnails already have metadata stripped (log at DEBUG level)
+- [x] T051 Update cache write logic in `src/generator/cache.py` to save `metadata_stripped` field from `ThumbnailImage` to `CacheEntry`
+- [x] T052 Verify cache invalidation on `CACHE_VERSION` bump triggers full rebuild with metadata stripping in `src/generator/cache.py`
+- [x] T053 Test cache hit behavior in `generate_thumbnail()` method in `src/generator/thumbnails.py` to ensure cached thumbnails already have metadata stripped (log at DEBUG level)
 
 ---
 
@@ -175,14 +175,14 @@
 
 **Purpose**: Documentation, validation, and cross-cutting improvements
 
-- [ ] T054 [P] Update README.md to document metadata privacy feature (what's removed, what's preserved, how to verify)
-- [ ] T055 [P] Verify all functional requirements FR-001 through FR-024 are implemented by reviewing code against spec.md
-- [ ] T056 [P] Verify all success criteria SC-001 through SC-010 can be measured by testing with exiftool
-- [ ] T057 [P] Add example to quickstart.md showing how to verify metadata removal with exiftool
-- [ ] T058 Run manual validation per quickstart.md test scenarios (GPS-tagged images, images with serial numbers, images with no metadata)
-- [ ] T059 Verify build time impact is ≤15% increase per performance goal in plan.md (updated from 10% to account for full-size processing)
-- [ ] T060 [P] Add inline code comments documenting metadata stripping logic in `src/generator/metadata_filter.py`
-- [ ] T061 Verify no console output shows "summary report" of failures per FR-024 (inline warnings only)
+- [x] T054 [P] Update README.md to document metadata privacy feature (what's removed, what's preserved, how to verify)
+- [x] T055 [P] Verify all functional requirements FR-001 through FR-024 are implemented by reviewing code against spec.md
+- [x] T056 [P] Verify all success criteria SC-001 through SC-010 can be measured by testing with exiftool
+- [x] T057 [P] Add example to quickstart.md showing how to verify metadata removal with exiftool
+- [x] T058 Run manual validation per quickstart.md test scenarios (GPS-tagged images, images with serial numbers, images with no metadata)
+- [x] T059 Verify build time impact is ≤15% increase per performance goal in plan.md (updated from 10% to account for full-size processing)
+- [x] T060 [P] Add inline code comments documenting metadata stripping logic in `src/generator/metadata_filter.py`
+- [x] T061 Verify no console output shows "summary report" of failures per FR-024 (inline warnings only)
 
 ---
 

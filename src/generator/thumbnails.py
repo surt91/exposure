@@ -10,6 +10,7 @@ from PIL import Image as PILImage
 from PIL import ImageOps
 
 from src.generator.constants import CACHE_VERSION, EXIF_ORIENTATION_TAG
+from src.generator.metadata_filter import filter_metadata
 from src.generator.model import ImageMetadata, ThumbnailConfig, ThumbnailImage
 from src.generator.utils import ensure_directory, hash_bytes, validate_file_exists
 
@@ -91,6 +92,8 @@ class ThumbnailGenerator:
             source_size_bytes=source_path.stat().st_size,
             content_hash=cache_entry.content_hash,
             generated_at=cache_entry.thumbnail_generated_at,
+            metadata_stripped=cache_entry.metadata_stripped,
+            metadata_strip_warning=None,  # Don't carry warnings from cache
         )
 
     def generate_thumbnail(
@@ -137,11 +140,20 @@ class ThumbnailGenerator:
 
                 # Generate and save thumbnails
                 thumb = self._create_thumbnail(img)
-                webp_path, jpeg_path = self._save_thumbnails(thumb, source_path, content_hash)
+                webp_path, jpeg_path, metadata_stripped, strip_warning = self._save_thumbnails(
+                    thumb, source_path, content_hash
+                )
 
                 # Build result object
                 thumbnail = self._build_thumbnail_result(
-                    source_path, webp_path, jpeg_path, thumb, content_hash, metadata
+                    source_path,
+                    webp_path,
+                    jpeg_path,
+                    thumb,
+                    content_hash,
+                    metadata,
+                    metadata_stripped,
+                    strip_warning,
                 )
 
                 # Update cache
@@ -239,9 +251,9 @@ class ThumbnailGenerator:
 
     def _save_thumbnails(
         self, thumb: PILImage.Image, source_path: Path, content_hash: str
-    ) -> tuple[Path, Path]:
+    ) -> tuple[Path, Path, bool, Optional[str]]:
         """
-        Save WebP and JPEG thumbnails to disk.
+        Save WebP and JPEG thumbnails to disk with metadata filtering.
 
         Args:
             thumb: Thumbnail PIL Image
@@ -249,7 +261,7 @@ class ThumbnailGenerator:
             content_hash: Content hash for filename
 
         Returns:
-            Tuple of (webp_path, jpeg_path)
+            Tuple of (webp_path, jpeg_path, metadata_stripped, strip_warning)
         """
         stem = source_path.stem
         webp_filename = f"{stem}-{content_hash}.webp"
@@ -261,18 +273,35 @@ class ThumbnailGenerator:
         # Clean up old thumbnails with different hashes
         self._cleanup_old_thumbnails(stem, content_hash)
 
-        # Save WebP thumbnail
+        # Filter metadata from source image
+        cleaned_exif = filter_metadata(source_path)
+        metadata_stripped = cleaned_exif is not None
+        strip_warning = None
+
+        if cleaned_exif is None:
+            # Metadata filtering failed, log warning
+            strip_warning = f"Metadata filtering failed for {source_path.name}"
+            self.logger.warning(f"⚠ WARNING: {strip_warning}")
+
+        # Save WebP thumbnail with cleaned EXIF
         thumb.save(
             webp_path,
             "WEBP",
             quality=self.config.webp_quality,
             method=6,  # Best compression
+            exif=cleaned_exif if cleaned_exif else b"",
         )
 
-        # Save JPEG fallback
-        thumb.save(jpeg_path, "JPEG", quality=self.config.jpeg_quality, optimize=True)
+        # Save JPEG fallback with cleaned EXIF
+        thumb.save(
+            jpeg_path,
+            "JPEG",
+            quality=self.config.jpeg_quality,
+            optimize=True,
+            exif=cleaned_exif if cleaned_exif else b"",
+        )
 
-        return webp_path, jpeg_path
+        return webp_path, jpeg_path, metadata_stripped, strip_warning
 
     def _build_thumbnail_result(
         self,
@@ -282,6 +311,8 @@ class ThumbnailGenerator:
         thumb: PILImage.Image,
         content_hash: str,
         metadata: ImageMetadata,
+        metadata_stripped: bool,
+        strip_warning: Optional[str],
     ) -> ThumbnailImage:
         """
         Build ThumbnailImage result object.
@@ -293,6 +324,8 @@ class ThumbnailGenerator:
             thumb: Thumbnail PIL Image
             content_hash: Content hash
             metadata: Source image metadata
+            metadata_stripped: Whether metadata was successfully stripped
+            strip_warning: Error message if stripping failed
 
         Returns:
             ThumbnailImage object
@@ -312,17 +345,45 @@ class ThumbnailGenerator:
             source_size_bytes=metadata.file_size_bytes,
             content_hash=content_hash,
             generated_at=datetime.now(),
+            metadata_stripped=metadata_stripped,
+            metadata_strip_warning=strip_warning,
         )
 
+    def _format_size(self, bytes_count: int) -> str:
+        """
+        Format byte count as human-readable size string.
+
+        Args:
+            bytes_count: File size in bytes (non-negative integer)
+
+        Returns:
+            Human-readable size string with appropriate unit
+        """
+        if bytes_count >= 1_000_000:
+            return f"{bytes_count / 1_000_000:.1f}MB"
+        elif bytes_count >= 1_000:
+            return f"{bytes_count / 1_000:.0f}KB"
+        else:
+            return f"{bytes_count}B"
+
     def _log_thumbnail_generation(self, thumbnail: ThumbnailImage, metadata: ImageMetadata) -> None:
-        """Log thumbnail generation statistics."""
-        self.logger.debug(
-            f"Generated thumbnail for {thumbnail.source_filename}: "
-            f"{metadata.file_size_bytes // 1024}KB → "
-            f"{thumbnail.webp_size_bytes // 1024}KB WebP, "
-            f"{thumbnail.jpeg_size_bytes // 1024}KB JPEG "
-            f"({thumbnail.size_reduction_percent:.1f}% reduction)"
+        """Log thumbnail generation statistics with progress info."""
+        source_size_str = self._format_size(metadata.file_size_bytes)
+        thumb_size_str = self._format_size(thumbnail.webp_size_bytes)
+        reduction_pct = thumbnail.size_reduction_percent
+
+        # Log INFO-level progress message
+        self.logger.info(
+            f"✓ {thumbnail.source_filename} → {source_size_str} → {thumb_size_str} "
+            f"({reduction_pct:.1f}% reduction)"
         )
+
+        # Log warning if metadata stripping failed
+        if thumbnail.metadata_strip_warning:
+            self.logger.warning(
+                f"⚠ WARNING: Metadata stripping failed for {thumbnail.source_filename}: "
+                f"{thumbnail.metadata_strip_warning}"
+            )
 
     def generate_batch(
         self,

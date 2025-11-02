@@ -148,6 +148,12 @@ class ThumbnailImage(BaseModel):
     source_size_bytes: int = Field(gt=0)
     content_hash: str = Field(min_length=8, max_length=8)
     generated_at: datetime
+    metadata_stripped: bool = Field(
+        default=True, description="Whether sensitive metadata was successfully removed"
+    )
+    metadata_strip_warning: Optional[str] = Field(
+        default=None, description="Error message if metadata stripping failed"
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 

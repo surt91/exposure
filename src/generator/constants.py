@@ -6,7 +6,7 @@ from pathlib import Path
 IMAGE_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".gif", ".webp"})
 
 # Cache version for build cache compatibility
-CACHE_VERSION = "1.0"
+CACHE_VERSION = "2.0"  # Bumped to force rebuild with metadata stripping
 
 # Default configuration values
 DEFAULT_THUMBNAIL_MAX_DIMENSION = 800

@@ -382,9 +382,9 @@ def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
     """
     from .assets import copy_with_hash
 
-    # Copy original image to originals directory
+    # Copy original image to originals directory with metadata stripping
     originals_dir = output_dir / "images" / "originals"
-    img_dest = copy_with_hash(image.file_path, originals_dir)
+    img_dest = copy_with_hash(image.file_path, originals_dir, strip_metadata=True)
     img_href = f"images/originals/{img_dest.name}"
 
     # Build template data
