@@ -10,8 +10,28 @@
     <link rel="stylesheet" href="{{ css_href }}">
 </head>
 <body>
-    <header>
-        <h1>{{ gallery_title }}</h1>
+    <header role="banner">
+{% if banner_image %}
+        {# Banner present: render banner section #}
+        <div class="gallery-banner">
+            <img
+                src="{{ banner_image }}"
+                alt="{% if gallery_title %}Banner for {{ gallery_title }}{% else %}{{ default_title }} banner{% endif %}"
+                class="banner-image"
+            >
+{% if gallery_title %}
+            {# Title as overlay on banner #}
+            <h1 class="banner-title">{{ gallery_title }}</h1>
+{% if gallery_subtitle %}
+            {# Subtitle below title (only if title present) #}
+            <p class="banner-subtitle">{{ gallery_subtitle }}</p>
+{% endif %}
+{% endif %}
+        </div>
+{% else %}
+        {# No banner: simple header with title #}
+        <h1>{{ gallery_title if gallery_title else default_title }}</h1>
+{% endif %}
     </header>
 
     <main class="gallery">
@@ -26,11 +46,27 @@
                     data-category="{{ image['category'] }}"
                     data-title="{{ image['title'] }}"
                     data-description="{{ image['description'] }}"
+                    data-original-src="{{ image['src'] }}"
 {% if image['width'] and image['height'] %}
                     data-width="{{ image['width'] }}"
                     data-height="{{ image['height'] }}"
 {% endif %}
                 >
+{% if image['thumbnail'] %}
+                    <picture>
+                        <source srcset="{{ image['thumbnail_webp_href'] }}" type="image/webp">
+                        <img
+                            src="{{ image['thumbnail_jpeg_href'] }}"
+                            alt="{{ image['alt_text'] }}"
+{% if image['thumbnail_width'] and image['thumbnail_height'] %}
+                            width="{{ image['thumbnail_width'] }}"
+                            height="{{ image['thumbnail_height'] }}"
+{% endif %}
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    </picture>
+{% else %}
                     <img
                         src="{{ image['src'] }}"
                         alt="{{ image['alt_text'] }}"
@@ -41,6 +77,7 @@
                         loading="lazy"
                         decoding="async"
                     />
+{% endif %}
 {% if image['title'] %}
                     <div class="image-caption">{{ image['title'] }}</div>
 {% endif %}

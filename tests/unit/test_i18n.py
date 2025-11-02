@@ -12,8 +12,8 @@ def test_setup_i18n_english():
     assert translations is not None
 
     # English is the source language, should return original strings
-    result = _("Exposure Gallery Generator")
-    assert result == "Exposure Gallery Generator"
+    result = _("Category:")
+    assert result == "Category:"
 
 
 def test_setup_i18n_german():
@@ -22,8 +22,8 @@ def test_setup_i18n_german():
     assert translations is not None
 
     # Should return German translation
-    result = _("Exposure Gallery Generator")
-    assert result == "Exposure Galerie-Generator"
+    result = _("Category:")
+    assert result == "Kategorie:"
 
 
 def test_setup_i18n_nonexistent_locale():
@@ -32,8 +32,8 @@ def test_setup_i18n_nonexistent_locale():
     assert translations is not None
 
     # Should fallback to English (original string)
-    result = _("Exposure Gallery Generator")
-    assert result == "Exposure Gallery Generator"
+    result = _("Category:")
+    assert result == "Category:"
 
 
 def test_translate_function():
@@ -104,10 +104,10 @@ def test_translations_persist_across_calls():
 
     # Multiple translation calls should work
     result1 = _("Categories:")
-    result2 = _("Exposure Gallery Generator")
+    result2 = _("Category:")
 
     assert result1 == "Kategorien:"
-    assert result2 == "Exposure Galerie-Generator"
+    assert result2 == "Kategorie:"
 
 
 def test_switch_locale():

@@ -87,6 +87,9 @@
     const title = imageItem.dataset.title || img.alt || filename;
     const description = imageItem.dataset.description || '';
 
+    // Get original image URL (use data-original-src if available for thumbnails, fallback to img.src)
+    const originalSrc = imageItem.dataset.originalSrc || img.src;
+
     // Update modal content
     const modalImg = modal.querySelector('#modal-image');
     const modalTitle = modal.querySelector('#modal-title');
@@ -94,7 +97,7 @@
     const modalCategory = modal.querySelector('#modal-category');
 
     if (modalImg) {
-      modalImg.src = img.src;
+      modalImg.src = originalSrc;
       modalImg.alt = img.alt;
     }
 
@@ -108,7 +111,9 @@
     }
 
     if (modalCategory) {
-      modalCategory.textContent = `Category: ${currentCategory}`;
+      // Get translated category label from modal data attribute
+      const categoryLabel = modal.dataset.i18nCategory || 'Category:';
+      modalCategory.textContent = `${categoryLabel} ${currentCategory}`;
     }
 
     // Show modal

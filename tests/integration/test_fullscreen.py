@@ -49,7 +49,6 @@ images:
             f"content_dir: {content_dir}\n"
             f"gallery_yaml_path: {gallery_yaml}\n"
             f"default_category: Uncategorized\n"
-            f"enable_thumbnails: false\n"
             f"output_dir: {output_dir}\n"
         )
 

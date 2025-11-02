@@ -246,7 +246,6 @@ class TestSpaceEfficiencyIntegration:
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )

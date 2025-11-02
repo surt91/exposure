@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from .model import YamlEntry
+from .utils import ensure_directory, validate_file_exists
 
 
 def load_gallery_yaml(yaml_path: Path) -> tuple[list[str], list[YamlEntry]]:
@@ -22,8 +23,7 @@ def load_gallery_yaml(yaml_path: Path) -> tuple[list[str], list[YamlEntry]]:
         yaml.YAMLError: If YAML is malformed
         ValueError: If required fields are missing
     """
-    if not yaml_path.exists():
-        raise FileNotFoundError(f"Gallery YAML not found: {yaml_path}")
+    validate_file_exists(yaml_path, "Gallery YAML")
 
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
@@ -87,7 +87,7 @@ def save_gallery_yaml(yaml_path: Path, categories: list[str], entries: list[Yaml
     data = {"categories": categories, "images": [e.model_dump() for e in entries]}
 
     # Ensure parent directory exists
-    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_directory(yaml_path.parent)
 
     with open(yaml_path, "w") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)

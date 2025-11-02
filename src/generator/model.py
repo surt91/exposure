@@ -1,11 +1,24 @@
 """Data models for the image gallery generator."""
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
+
+from .constants import (
+    DEFAULT_CACHE_FILE,
+    DEFAULT_JPEG_QUALITY,
+    DEFAULT_LOCALE,
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_OUTPUT_DIR,
+    DEFAULT_THUMBNAIL_DIR,
+    DEFAULT_THUMBNAIL_MAX_DIMENSION,
+    DEFAULT_WEBP_QUALITY,
+    RESAMPLING_FILTERS,
+)
 
 
 class Image(BaseModel):
@@ -18,6 +31,7 @@ class Image(BaseModel):
     height: Optional[int] = None
     title: str = ""
     description: str = ""
+    thumbnail: Optional["ThumbnailImage"] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -35,6 +49,141 @@ class Image(BaseModel):
         if self.width and self.height:
             return self.width / self.height
         return None
+
+    @property
+    def image_url(self) -> str:
+        """Get relative URL to original image for HTML templates."""
+        return f"images/originals/{self.filename}"
+
+    @property
+    def thumbnail_url(self) -> str:
+        """Get relative URL to thumbnail WebP for HTML templates."""
+        if self.thumbnail:
+            return f"images/thumbnails/{self.thumbnail.webp_path.name}"
+        return self.image_url  # Fallback to original
+
+    @property
+    def thumbnail_fallback_url(self) -> str:
+        """Get relative URL to JPEG fallback thumbnail."""
+        if self.thumbnail:
+            return f"images/thumbnails/{self.thumbnail.jpeg_path.name}"
+        return self.image_url  # Fallback to original
+
+
+class ThumbnailConfig(BaseModel):
+    """
+    Configuration for thumbnail generation.
+
+    All fields have sensible defaults based on research findings.
+    Configuration loaded from YAML or environment variables.
+    """
+
+    max_dimension: int = Field(
+        default=DEFAULT_THUMBNAIL_MAX_DIMENSION,
+        ge=100,
+        le=4000,
+        description="Maximum width or height for thumbnails in pixels",
+    )
+
+    webp_quality: int = Field(
+        default=DEFAULT_WEBP_QUALITY,
+        ge=1,
+        le=100,
+        description="WebP compression quality (1-100, higher = better quality)",
+    )
+
+    jpeg_quality: int = Field(
+        default=DEFAULT_JPEG_QUALITY,
+        ge=1,
+        le=100,
+        description="JPEG fallback compression quality (1-100, higher = better quality)",
+    )
+
+    output_dir: Path = Field(
+        default=DEFAULT_THUMBNAIL_DIR,
+        description="Directory for generated thumbnail files",
+    )
+
+    enable_cache: bool = Field(
+        default=True, description="Enable incremental build caching to skip unchanged images"
+    )
+
+    cache_file: Path = Field(
+        default=DEFAULT_CACHE_FILE, description="Path to build cache JSON file"
+    )
+
+    resampling_filter: str = Field(
+        default="LANCZOS",
+        description="PIL resampling filter for thumbnail generation",
+    )
+
+    @field_validator("resampling_filter")
+    @classmethod
+    def validate_resampling_filter(cls, v: str) -> str:
+        """Validate resampling filter is supported."""
+        if v not in RESAMPLING_FILTERS:
+            raise ValueError(f"Invalid resampling filter. Must be one of: {RESAMPLING_FILTERS}")
+        return v
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @field_validator("output_dir", "cache_file", mode="before")
+    @classmethod
+    def convert_to_path(cls, v):
+        """Convert string paths to Path objects."""
+        return Path(v) if not isinstance(v, Path) else v
+
+
+class ThumbnailImage(BaseModel):
+    """Represents a generated thumbnail with both WebP and JPEG fallback formats."""
+
+    source_filename: str = Field(min_length=1)
+    source_path: Path
+    webp_path: Path
+    jpeg_path: Path
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    webp_size_bytes: int = Field(gt=0)
+    jpeg_size_bytes: int = Field(gt=0)
+    source_size_bytes: int = Field(gt=0)
+    content_hash: str = Field(min_length=8, max_length=8)
+    generated_at: datetime
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @property
+    def size_reduction_percent(self) -> float:
+        """Calculate percentage reduction in file size (WebP vs original)."""
+        return ((self.source_size_bytes - self.webp_size_bytes) / self.source_size_bytes) * 100
+
+    @property
+    def webp_savings_percent(self) -> float:
+        """Calculate percentage savings of WebP vs JPEG fallback."""
+        return ((self.jpeg_size_bytes - self.webp_size_bytes) / self.jpeg_size_bytes) * 100
+
+    @property
+    def aspect_ratio(self) -> float:
+        """Calculate thumbnail aspect ratio."""
+        return self.width / self.height
+
+
+class ImageMetadata(BaseModel):
+    """Extended metadata extracted from source images during thumbnail generation."""
+
+    filename: str = Field(min_length=1)
+    file_path: Path
+    format: str
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    file_size_bytes: int = Field(gt=0)
+    color_mode: str
+    has_transparency: bool
+    exif_orientation: Optional[int] = Field(default=None, ge=1, le=8)
+    is_animated: bool = False
+    frame_count: int = Field(default=1, ge=1)
+    dpi: Optional[tuple[int, int]] = None
+
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class Category(BaseModel):
@@ -102,23 +251,42 @@ class GalleryConfig(BaseSettings):
         description="Default category for images without explicit category assignment",
         examples=["Uncategorized", "General"],
     )
-    enable_thumbnails: bool = Field(
-        default=False, description="Whether to generate thumbnail images (not yet implemented)"
+    thumbnail_config: ThumbnailConfig = Field(
+        default_factory=ThumbnailConfig, description="Thumbnail generation configuration"
     )
     output_dir: Path = Field(
-        default=Path("dist"),
+        default=DEFAULT_OUTPUT_DIR,
         description="Output directory for generated gallery files",
         examples=["dist/", "build/", "public/"],
     )
     locale: str = Field(
-        default="en",
+        default=DEFAULT_LOCALE,
         description="Locale for UI strings (en=English, de=German)",
         examples=["en", "de"],
     )
     log_level: str = Field(
-        default="INFO",
+        default=DEFAULT_LOG_LEVEL,
         description="Logging level (DEBUG, INFO, WARNING, ERROR)",
         examples=["INFO", "DEBUG", "WARNING"],
+    )
+    banner_image: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to banner image displayed at top of gallery (relative to content_dir or absolute)"
+        ),
+        examples=["banner.jpg", "/path/to/banner.jpg"],
+    )
+    gallery_title: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+        description="Gallery title displayed prominently in banner or header",
+        examples=["My 3D Printing Gallery", "Nature Photography"],
+    )
+    gallery_subtitle: Optional[str] = Field(
+        default=None,
+        description="Gallery subtitle displayed below title (requires gallery_title)",
+        examples=["Showcasing my latest creations", "A journey through landscapes"],
     )
 
     model_config = SettingsConfigDict(
@@ -157,6 +325,66 @@ class GalleryConfig(BaseSettings):
     def convert_to_path(cls, v):
         """Convert string paths to Path objects."""
         return Path(v) if not isinstance(v, Path) else v
+
+    @field_validator("banner_image", mode="before")
+    @classmethod
+    def validate_banner_image(cls, v, info):
+        """Validate banner image path exists if provided."""
+        if v is None:
+            return None
+
+        path = Path(v) if not isinstance(v, Path) else v
+
+        # Check absolute path
+        if path.is_absolute():
+            if not path.exists():
+                raise ValueError(f"Banner image not found: {path}")
+            if not path.is_file():
+                raise ValueError(f"Banner image path is not a file: {path}")
+            return path
+
+        # Try relative to content_dir
+        content_dir = info.data.get("content_dir")
+        if content_dir:
+            full_path = Path(content_dir) / path
+            if full_path.exists() and full_path.is_file():
+                return full_path
+
+        raise ValueError(
+            f"Banner image not found: {v}. Provide absolute path or path relative to content_dir."
+        )
+
+    @field_validator("gallery_title", mode="before")
+    @classmethod
+    def validate_gallery_title(cls, v):
+        """Validate gallery title if provided."""
+        if v is None:
+            return None
+
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                raise ValueError("Gallery title cannot be empty or whitespace-only")
+            if len(v) > 200:
+                raise ValueError("Gallery title must be 200 characters or less")
+
+        return v
+
+    @field_validator("gallery_subtitle", mode="before")
+    @classmethod
+    def validate_gallery_subtitle(cls, v):
+        """Validate gallery subtitle if provided."""
+        if v is None:
+            return None
+
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return None  # Treat empty as None
+            if len(v) > 300:
+                raise ValueError("Gallery subtitle must be 300 characters or less")
+
+        return v
 
     @model_validator(mode="after")
     def validate_paths(self):

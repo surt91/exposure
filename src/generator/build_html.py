@@ -3,6 +3,7 @@
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Import model module to set the yaml file path
 from . import model
@@ -50,6 +51,110 @@ def load_config(settings_path: Path) -> GalleryConfig:
     return GalleryConfig()  # type: ignore[call-arg]
 
 
+def _validate_and_discover_images(config: GalleryConfig) -> list[Path]:
+    """
+    Discover and validate images in content directory.
+
+    Args:
+        config: Gallery configuration
+
+    Returns:
+        List of valid image paths
+
+    Raises:
+        ValueError: If duplicate filenames found
+    """
+    # Discover images
+    logger.info(_("Scanning images in %s..."), config.content_dir)
+    image_paths = discover_images(config.content_dir)
+    logger.info(_("Found %d image files"), len(image_paths))
+
+    # Filter valid images
+    valid_paths = filter_valid_images(image_paths)
+    if len(valid_paths) < len(image_paths):
+        logger.warning(_("%d invalid images skipped"), len(image_paths) - len(valid_paths))
+
+    # Check for duplicates
+    duplicates = detect_duplicates(valid_paths)
+    if duplicates:
+        logger.error(_("Duplicate filenames detected:"))
+        for filename, paths in duplicates.items():
+            logger.error("  %s: %s", filename, ", ".join(str(p) for p in paths))
+        raise ValueError(_("Cannot proceed with duplicate filenames"))
+
+    return valid_paths
+
+
+def _sync_yaml_stubs(config: GalleryConfig, valid_paths: list[Path]) -> tuple[list[str], dict]:
+    """
+    Synchronize YAML file with discovered images.
+
+    Args:
+        config: Gallery configuration
+        valid_paths: List of valid image paths
+
+    Returns:
+        Tuple of (category names, entry map)
+    """
+    # Load YAML
+    categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
+
+    # Append stubs for new images
+    filenames = [p.name for p in valid_paths]
+    stubs_added = append_stub_entries(config.gallery_yaml_path, filenames, config.default_category)
+    if stubs_added > 0:
+        logger.info(_("Added %d stub entries to YAML"), stubs_added)
+        # Reload after stub addition
+        categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
+
+    entry_map = get_entry_map(yaml_entries)
+    return categories, entry_map
+
+
+def _create_image_from_path(path: Path, entry_map: dict, default_category: str) -> Image:
+    """
+    Create Image object from path and YAML metadata.
+
+    Args:
+        path: Path to image file
+        entry_map: Dictionary mapping filename to YAML entry
+        default_category: Default category for images without YAML entry
+
+    Returns:
+        Image object
+    """
+    filename = path.name
+    entry = entry_map.get(filename)
+
+    if entry is None:
+        logger.warning(_("No YAML entry for %s, using defaults"), filename)
+        entry_category = default_category
+        entry_title = ""
+        entry_description = ""
+    else:
+        entry_category = entry.category
+        entry_title = entry.title
+        entry_description = entry.description
+
+    # Get dimensions for flexible layout
+    width, height = None, None
+    dims = get_image_dimensions(path)
+    if dims:
+        width, height = dims
+    else:
+        logger.warning(_("Could not extract dimensions for %s"), filename)
+
+    return Image(
+        filename=filename,
+        file_path=path,
+        category=entry_category,
+        width=width,
+        height=height,
+        title=entry_title,
+        description=entry_description,
+    )
+
+
 def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
     """
     Scan images and synchronize with YAML metadata.
@@ -70,72 +175,13 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
     Raises:
         ValueError: If duplicate filenames found or other validation errors
     """
-    # Discover images
-    logger.info(_("Scanning images in %s..."), config.content_dir)
-    image_paths = discover_images(config.content_dir)
-    logger.info(_("Found %d image files"), len(image_paths))
-
-    # Filter valid images
-    valid_paths = filter_valid_images(image_paths)
-    if len(valid_paths) < len(image_paths):
-        logger.warning(_("%d invalid images skipped"), len(image_paths) - len(valid_paths))
-
-    # Check for duplicates
-    duplicates = detect_duplicates(valid_paths)
-    if duplicates:
-        logger.error(_("Duplicate filenames detected:"))
-        for filename, paths in duplicates.items():
-            logger.error("  %s: %s", filename, ", ".join(str(p) for p in paths))
-        raise ValueError(_("Cannot proceed with duplicate filenames"))
-
-    # Load YAML
-    categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
-
-    # Append stubs for new images
-    filenames = [p.name for p in valid_paths]
-    stubs_added = append_stub_entries(config.gallery_yaml_path, filenames, config.default_category)
-    if stubs_added > 0:
-        logger.info(_("Added %d stub entries to YAML"), stubs_added)
-        # Reload after stub addition
-        categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
+    valid_paths = _validate_and_discover_images(config)
+    categories, entry_map = _sync_yaml_stubs(config, valid_paths)
 
     # Create Image objects by merging paths with YAML metadata
-    entry_map = get_entry_map(yaml_entries)
-    images = []
-
-    for path in valid_paths:
-        filename = path.name
-        entry = entry_map.get(filename)
-
-        if entry is None:
-            # This shouldn't happen after stub generation, but handle gracefully
-            logger.warning(_("No YAML entry for %s, using defaults"), filename)
-            entry_category = config.default_category
-            entry_title = ""
-            entry_description = ""
-        else:
-            entry_category = entry.category
-            entry_title = entry.title
-            entry_description = entry.description
-
-        # Get dimensions for flexible layout
-        width, height = None, None
-        dims = get_image_dimensions(path)
-        if dims:
-            width, height = dims
-        else:
-            logger.warning(_("Could not extract dimensions for %s"), filename)
-
-        image = Image(
-            filename=filename,
-            file_path=path,
-            category=entry_category,
-            width=width,
-            height=height,
-            title=entry_title,
-            description=entry_description,
-        )
-        images.append(image)
+    images = [
+        _create_image_from_path(path, entry_map, config.default_category) for path in valid_paths
+    ]
 
     return categories, images
 
@@ -170,6 +216,217 @@ def organize_by_category(category_names: list[str], images: list[Image]) -> list
     return categories
 
 
+def get_default_title() -> str:
+    """
+    Get default gallery title from i18n translations.
+
+    Returns:
+        Localized default title (e.g., "Gallery" or "Galerie")
+    """
+    return _("Gallery")
+
+
+def copy_banner_image(config: GalleryConfig) -> str | None:
+    """
+    Copy banner image to output directory.
+
+    Args:
+        config: Gallery configuration with optional banner_image
+
+    Returns:
+        Relative URL to banner image, or None if no banner configured
+    """
+    if not config.banner_image:
+        return None
+
+    from .utils import ensure_directory
+
+    # Create banner output directory
+    banner_output_dir = config.output_dir / "images" / "banner"
+    ensure_directory(banner_output_dir)
+
+    # Copy banner to output
+    import shutil
+
+    dest_path = banner_output_dir / config.banner_image.name
+    shutil.copy2(config.banner_image, dest_path)
+
+    logger.info("Copied banner image: %s", config.banner_image.name)
+
+    # Return relative URL for template
+    return f"images/banner/{config.banner_image.name}"
+
+
+def _get_static_dir() -> Path:
+    """Get the path to the static directory."""
+    return Path(__file__).parent.parent / "static"
+
+
+def _combine_css_files() -> str:
+    """
+    Combine all CSS files into a single string.
+
+    Returns:
+        Combined CSS content
+    """
+    static_dir = _get_static_dir()
+    gallery_css = static_dir / "css" / "gallery.css"
+    fullscreen_css = static_dir / "css" / "fullscreen.css"
+
+    css_content = gallery_css.read_text(encoding="utf-8")
+    css_content += "\n\n/* Fullscreen Modal */\n"
+    css_content += fullscreen_css.read_text(encoding="utf-8")
+
+    return css_content
+
+
+def _combine_js_files() -> str:
+    """
+    Combine all JavaScript files into a single string.
+
+    Order matters: justified-layout library must come first.
+
+    Returns:
+        Combined JavaScript content
+    """
+    static_dir = _get_static_dir()
+
+    js_files = [
+        (
+            "vendor/justified-layout.js",
+            "justified-layout library (v4.1.0) - vendored\n"
+            "// Source: https://github.com/flickr/justified-layout\n"
+            "// License: MIT (see src/static/js/vendor/justified-layout.LICENSE)",
+        ),
+        ("gallery.js", "Gallery functionality"),
+        ("a11y.js", "Accessibility helpers"),
+        ("layout.js", "Flexible layout"),
+        ("fullscreen.js", "Fullscreen controller"),
+    ]
+
+    js_parts = []
+    for filename, comment in js_files:
+        js_path = static_dir / "js" / filename
+        js_parts.append(f"// {comment}")
+        js_parts.append(js_path.read_text(encoding="utf-8"))
+        js_parts.append("")  # Empty line separator
+
+    return "\n".join(js_parts)
+
+
+def _setup_jinja_environment(locale: str):
+    """
+    Setup Jinja2 environment with i18n support.
+
+    Args:
+        locale: Locale for translations
+
+    Returns:
+        Configured Jinja2 Environment
+    """
+    from jinja2 import Environment, FileSystemLoader
+
+    from .i18n import setup_i18n
+
+    translations = setup_i18n(locale)
+    templates_dir = Path(__file__).parent.parent / "templates"
+
+    env = Environment(
+        loader=FileSystemLoader(templates_dir),
+        autoescape=True,
+        extensions=["jinja2.ext.i18n"],
+    )
+    env.install_gettext_translations(translations)  # type: ignore[attr-defined]
+
+    return env
+
+
+def _get_thumbnail_info(image: Image) -> dict[str, Any]:
+    """
+    Extract thumbnail information from image.
+
+    Args:
+        image: Image object
+
+    Returns:
+        Dictionary with thumbnail URLs and dimensions
+    """
+    if not image.thumbnail:
+        return {
+            "thumbnail_webp_href": None,
+            "thumbnail_jpeg_href": None,
+            "thumbnail_width": None,
+            "thumbnail_height": None,
+        }
+
+    return {
+        "thumbnail_webp_href": f"images/thumbnails/{image.thumbnail.webp_path.name}",
+        "thumbnail_jpeg_href": f"images/thumbnails/{image.thumbnail.jpeg_path.name}",
+        "thumbnail_width": image.thumbnail.width,
+        "thumbnail_height": image.thumbnail.height,
+    }
+
+
+def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
+    """
+    Prepare image data for template rendering.
+
+    Copies original image with hash and prepares thumbnail URLs.
+
+    Args:
+        image: Image object to prepare
+        output_dir: Gallery output directory
+
+    Returns:
+        Dictionary with image data for template
+    """
+    from .assets import copy_with_hash
+
+    # Copy original image to originals directory
+    originals_dir = output_dir / "images" / "originals"
+    img_dest = copy_with_hash(image.file_path, originals_dir)
+    img_href = f"images/originals/{img_dest.name}"
+
+    # Build template data
+    template_data = {
+        "filename": image.filename,
+        "src": img_href,
+        "category": image.category,
+        "title": image.title,
+        "description": image.description,
+        "alt_text": image.alt_text,
+        "width": image.width,
+        "height": image.height,
+        "thumbnail": image.thumbnail,
+    }
+
+    # Add thumbnail info
+    template_data.update(_get_thumbnail_info(image))
+
+    return template_data
+
+
+def _prepare_template_categories(
+    categories: list[Category], output_dir: Path
+) -> list[dict[str, Any]]:
+    """
+    Prepare category data for template rendering.
+
+    Args:
+        categories: List of Category objects
+        output_dir: Gallery output directory
+
+    Returns:
+        List of category dictionaries with prepared image data
+    """
+    template_categories = []
+    for category in categories:
+        template_images = [_prepare_template_image(image, output_dir) for image in category.images]
+        template_categories.append({"name": category.name, "images": template_images})
+
+    return template_categories
+
+
 def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> str:
     """
     Generate HTML for the gallery from categories using Jinja2 templates.
@@ -181,98 +438,124 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     Returns:
         Generated HTML string
     """
-    from jinja2 import Environment, FileSystemLoader
+    from .assets import write_with_hash
 
-    from .assets import copy_with_hash, write_with_hash
-    from .i18n import setup_i18n
-
-    # Setup internationalization
-    translations = setup_i18n(config.locale)
-
-    # Setup Jinja2 environment with i18n extension
-    templates_dir = Path(__file__).parent.parent / "templates"
-    env = Environment(
-        loader=FileSystemLoader(templates_dir),
-        autoescape=True,
-        extensions=["jinja2.ext.i18n"],
-    )
-    env.install_gettext_translations(translations)  # type: ignore[attr-defined]
+    # Setup Jinja2 environment
+    env = _setup_jinja_environment(config.locale)
     template = env.get_template("index.html.j2")
 
-    # CSS sources
-    gallery_css = Path(__file__).parent.parent / "static" / "css" / "gallery.css"
-    fullscreen_css = Path(__file__).parent.parent / "static" / "css" / "fullscreen.css"
+    # Combine and write assets
+    css_content = _combine_css_files()
+    js_content = _combine_js_files()
 
-    # JS sources
-    justified_layout_js = (
-        Path(__file__).parent.parent / "static" / "js" / "vendor" / "justified-layout.js"
-    )
-    gallery_js = Path(__file__).parent.parent / "static" / "js" / "gallery.js"
-    a11y_js = Path(__file__).parent.parent / "static" / "js" / "a11y.js"
-    fullscreen_js = Path(__file__).parent.parent / "static" / "js" / "fullscreen.js"
-    layout_js = Path(__file__).parent.parent / "static" / "js" / "layout.js"
-
-    # Combine CSS files
-    css_content = gallery_css.read_text(encoding="utf-8")
-    css_content += "\n\n/* Fullscreen Modal */\n"
-    css_content += fullscreen_css.read_text(encoding="utf-8")
-
-    # Combine JS files (justified-layout library must come first)
-    js_content = "// justified-layout library (v4.1.0) - vendored\n"
-    js_content += "// Source: https://github.com/flickr/justified-layout\n"
-    js_content += "// License: MIT (see src/static/js/vendor/justified-layout.LICENSE)\n"
-    js_content += justified_layout_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Gallery functionality\n"
-    js_content += gallery_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Accessibility helpers\n"
-    js_content += a11y_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Flexible layout\n"
-    js_content += layout_js.read_text(encoding="utf-8")
-    js_content += "\n\n// Fullscreen controller\n"
-    js_content += fullscreen_js.read_text(encoding="utf-8")
-
-    # Write combined files with hashing
     css_output = write_with_hash(css_content, "gallery.css", config.output_dir)
     js_output = write_with_hash(js_content, "gallery.js", config.output_dir)
 
     css_href = css_output.name
     js_href = js_output.name
 
-    # Copy images and build image data for template
-    # We need to create a modified category structure with hashed image paths
-    template_categories = []
-    for category in categories:
-        template_images = []
-        for image in category.images:
-            # Copy image and get hashed filename
-            img_dest = copy_with_hash(image.file_path, config.output_dir / "images")
-            img_href = f"images/{img_dest.name}"
+    # Prepare template data
+    template_categories = _prepare_template_categories(categories, config.output_dir)
 
-            # Create image dict with hashed path for template
-            template_images.append(
-                {
-                    "filename": image.filename,
-                    "src": img_href,
-                    "category": image.category,
-                    "title": image.title,
-                    "description": image.description,
-                    "alt_text": image.alt_text,
-                    "width": image.width,
-                    "height": image.height,
-                }
-            )
-
-        template_categories.append({"name": category.name, "images": template_images})
+    # Prepare banner and title data
+    banner_image_url = copy_banner_image(config)
+    default_title = get_default_title()
 
     # Render template with data
     html = template.render(
-        gallery_title="Image Gallery",
+        banner_image=banner_image_url,
+        gallery_title=config.gallery_title,
+        gallery_subtitle=config.gallery_subtitle,
+        default_title=default_title,
         categories=template_categories,
         css_href=css_href,
         js_href=js_href,
+        i18n_category_label=_("Category:"),
     )
 
     return html
+
+
+def _print_banner() -> None:
+    """Print the ASCII art banner."""
+    logger.info("")
+    logger.info("  _____ __  __ ____   ___  ____  _   _ ____  _____ ")
+    logger.info(" | ____|\\ \\/ /|  _ \\ / _ \\/ ___|| | | |  _ \\| ____|")
+    logger.info(" |  _|   \\  / | |_) | | | \\___ \\| | | | |_) |  _|  ")
+    logger.info(" | |___  /  \\ |  __/| |_| |___) | |_| |  _ <| |___ ")
+    logger.info(" |_____|/_/\\_\\|_|    \\___/|____/ \\___/|_| \\_\\_____|")
+    logger.info("")
+
+
+def _generate_thumbnails_for_images(images: list[Image], config: GalleryConfig) -> None:
+    """
+    Generate thumbnails for all images.
+
+    Attaches generated thumbnails to Image objects in-place.
+
+    Args:
+        images: List of Image objects to generate thumbnails for
+        config: Gallery configuration
+    """
+    from .thumbnails import ThumbnailGenerator
+
+    logger.info(_("Generating thumbnails..."))
+
+    # Configure thumbnail generator with gallery output paths
+    thumbnail_config = config.thumbnail_config.model_copy()
+    thumbnail_config.output_dir = config.output_dir / "images" / "thumbnails"
+    thumbnail_config.cache_file = config.output_dir / ".build-cache.json"
+
+    thumb_gen = ThumbnailGenerator(thumbnail_config, logger)
+
+    # Generate thumbnails
+    image_paths = [img.file_path for img in images]
+    successful, failed = thumb_gen.generate_batch(image_paths)
+
+    # Attach thumbnails to Image objects
+    thumbnail_map = {str(t.source_path): t for t in successful}
+    for img in images:
+        img.thumbnail = thumbnail_map.get(str(img.file_path))
+
+
+def _write_html_output(html: str, output_dir: Path) -> Path:
+    """
+    Write generated HTML to index.html file.
+
+    Args:
+        html: Generated HTML content
+        output_dir: Gallery output directory
+
+    Returns:
+        Path to written HTML file
+    """
+    from .utils import ensure_directory
+
+    output_path = output_dir / "index.html"
+    ensure_directory(output_path.parent)
+    output_path.write_text(html, encoding="utf-8")
+
+    return output_path
+
+
+def _print_build_summary(categories: list[Category], output_path: Path, html_size: int) -> None:
+    """
+    Print build summary with statistics.
+
+    Args:
+        categories: List of built categories
+        output_path: Path to generated HTML file
+        html_size: Size of generated HTML in bytes
+    """
+    logger.info(_("✓ Generated %s"), output_path)
+    logger.info(_("  HTML size: %d bytes"), html_size)
+
+    logger.info(_("Categories:"))
+    for cat in categories:
+        logger.info("  %s: %s", cat.name, _("%d images") % len(cat.images))
+
+    logger.info(_("✓ Gallery built successfully!"))
+    logger.info(_("  Output: %s"), output_path.parent.absolute())
 
 
 def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
@@ -282,26 +565,22 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     Args:
         config_path: Path to settings.yaml configuration file
     """
-    # Load configuration first to get locale
+    # Load configuration and setup i18n
     config = load_config(config_path)
 
-    # Setup internationalization before any translated messages
     from .i18n import setup_i18n
 
     setup_i18n(config.locale)
 
-    # ASCII art banner
-    logger.info("")
-    logger.info("  _____ __  __ ____   ___  ____  _   _ ____  _____ ")
-    logger.info(" | ____|\\ \\/ /|  _ \\ / _ \\/ ___|| | | |  _ \\| ____|")
-    logger.info(" |  _|   \\  / | |_) | | | \\___ \\| | | | |_) |  _|  ")
-    logger.info(" | |___  /  \\ |  __/| |_| |___) | |_| |  _ <| |___ ")
-    logger.info(" |_____|/_/\\_\\|_|    \\___/|____/ \\___/|_| \\_\\_____|")
-    logger.info("")
+    # Print banner
+    _print_banner()
 
-    # Scan and sync
+    # Scan and sync images with YAML metadata
     category_names, images = scan_and_sync(config)
     logger.info(_("Loaded %d images across %d categories"), len(images), len(category_names))
+
+    # Generate thumbnails
+    _generate_thumbnails_for_images(images, config)
 
     # Organize by category
     categories = organize_by_category(category_names, images)
@@ -310,20 +589,11 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     logger.info(_("Generating gallery HTML..."))
     html = generate_gallery_html(categories, config)
 
-    # Write index.html
-    output_path = config.output_dir / "index.html"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(html, encoding="utf-8")
+    # Write output
+    output_path = _write_html_output(html, config.output_dir)
 
-    logger.info(_("✓ Generated %s"), output_path)
-    logger.info(_("  HTML size: %d bytes"), len(html))
-
-    logger.info(_("Categories:"))
-    for cat in categories:
-        logger.info("  %s: %s", cat.name, _("%d images") % len(cat.images))
-
-    logger.info(_("✓ Gallery built successfully!"))
-    logger.info(_("  Output: %s"), config.output_dir.absolute())
+    # Print summary
+    _print_build_summary(categories, output_path, len(html))
 
 
 def main() -> None:

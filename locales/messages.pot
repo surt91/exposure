@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-11-02 10:08+0100\n"
+"POT-Creation-Date: 2025-11-02 20:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,86 +17,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/generator/build_html.py:74
+#: src/generator/build_html.py:68
 #, python-format
 msgid "Scanning images in %s..."
 msgstr ""
 
-#: src/generator/build_html.py:76
+#: src/generator/build_html.py:70
 #, python-format
 msgid "Found %d image files"
 msgstr ""
 
-#: src/generator/build_html.py:81
+#: src/generator/build_html.py:75
 #, python-format
 msgid "%d invalid images skipped"
 msgstr ""
 
-#: src/generator/build_html.py:86
+#: src/generator/build_html.py:80
 msgid "Duplicate filenames detected:"
 msgstr ""
 
-#: src/generator/build_html.py:89
+#: src/generator/build_html.py:83
 msgid "Cannot proceed with duplicate filenames"
 msgstr ""
 
-#: src/generator/build_html.py:98
+#: src/generator/build_html.py:106
 #, python-format
 msgid "Added %d stub entries to YAML"
 msgstr ""
 
-#: src/generator/build_html.py:112
+#: src/generator/build_html.py:130
 #, python-format
 msgid "No YAML entry for %s, using defaults"
 msgstr ""
 
-#: src/generator/build_html.py:162
+#: src/generator/build_html.py:145
+#, python-format
+msgid "Could not extract dimensions for %s"
+msgstr ""
+
+#: src/generator/build_html.py:209
 #, python-format
 msgid "Unknown category '%s' for %s"
 msgstr ""
 
-#: src/generator/build_html.py:274
-msgid "Exposure Gallery Generator"
+#: src/generator/build_html.py:226
+msgid "Gallery"
 msgstr ""
 
-#: src/generator/build_html.py:282
-#, python-format
-msgid "Loaded %d images across %d categories"
+#: src/generator/build_html.py:473
+msgid "Category:"
 msgstr ""
 
-#: src/generator/build_html.py:288
-msgid "Generating gallery HTML..."
+#: src/generator/build_html.py:502
+msgid "Generating thumbnails..."
 msgstr ""
 
-#: src/generator/build_html.py:296
+#: src/generator/build_html.py:550
 #, python-format
 msgid "✓ Generated %s"
 msgstr ""
 
-#: src/generator/build_html.py:297
+#: src/generator/build_html.py:551
 #, python-format
 msgid "  HTML size: %d bytes"
 msgstr ""
 
-#: src/generator/build_html.py:299
+#: src/generator/build_html.py:553
 msgid "Categories:"
 msgstr ""
 
-#: src/generator/build_html.py:301
+#: src/generator/build_html.py:555
 #, python-format
 msgid "%d images"
 msgstr ""
 
-#: src/generator/build_html.py:303
+#: src/generator/build_html.py:557
 msgid "✓ Gallery built successfully!"
 msgstr ""
 
-#: src/generator/build_html.py:304
+#: src/generator/build_html.py:558
 #, python-format
 msgid "  Output: %s"
 msgstr ""
 
-#: src/generator/build_html.py:321
+#: src/generator/build_html.py:580
+#, python-format
+msgid "Loaded %d images across %d categories"
+msgstr ""
+
+#: src/generator/build_html.py:589
+msgid "Generating gallery HTML..."
+msgstr ""
+
+#: src/generator/build_html.py:613
 #, python-format
 msgid "Error: %s"
 msgstr ""

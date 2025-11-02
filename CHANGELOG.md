@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Gallery banner and title** - Optional full-width banner image with styled title overlay
+- Banner image displayed at top of gallery spanning full viewport width
+- Responsive banner height: 40vh (desktop), 30vh (tablet), 25vh (mobile)
+- Gallery title with enhanced typography: 3rem font, 700 weight, text shadow for readability
+- **Gallery subtitle** - Optional descriptive text displayed below the title
+- Subtitle styling: 1.5rem font, 400 weight, 0.9 opacity for secondary emphasis
+- Subtitle requires title to be present (semantic correctness)
+- Subtitle validation: max 300 characters, empty/whitespace treated as None
+- Title overlay on banner with gradient background for contrast
+- CSS custom properties for banner height customization
+- Backward compatible - galleries without banner/title show simple header
+- Banner validation: verifies image exists at build time
+- Title validation: 1-200 characters, no empty/whitespace-only
+- Support for relative (to content_dir) or absolute banner paths
+- Semantic HTML with proper accessibility (alt text, heading hierarchy)
+- Dark mode compatible - no special handling needed
+- i18n support for default gallery title
+- **Image preprocessing with optimized thumbnails** - Always generate WebP and JPEG thumbnails at build time
+- Thumbnail generation scales images to 800px maximum dimension with aspect ratio preservation
+- WebP format with JPEG fallback using HTML `<picture>` element for automatic browser selection
+- 90%+ file size reduction for gallery pages (125MB → 15MB for 50 images)
+- Page load time improved from 45s to 3s for 50 images on 10Mbps connection
+- Incremental build caching - only regenerate thumbnails for changed images
+- Cache tracking via `build/.build-cache.json` with mtime comparison
+- Full-resolution originals preserved and displayed in modal view
+- EXIF orientation correction applied automatically during thumbnail generation
+- Configurable quality settings for WebP (default: 85) and JPEG (default: 90)
+- `thumbnail_config` nested configuration for advanced control
+- Architecture decision record for image preprocessing approach (ADR 008)
+
+### Changed
+- Gallery grid now displays thumbnails instead of full-resolution images when enabled
+- Original images moved to `images/originals/` subdirectory in build output
+- Thumbnails stored in `images/thumbnails/` subdirectory
+- Fullscreen modal updated to load original high-resolution images
+- Image items now include `data-original-src` attribute for modal integration
+
 ## [0.2.0] - 2025-11-02
 
 ### Changed
