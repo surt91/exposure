@@ -126,8 +126,12 @@ class TestReproducibility:
         # Should have same file structure
         assert build1_files == build2_files, "Build outputs have different file structures"
 
-        # Compare file contents
+        # Compare file contents (excluding cache files which contain timestamps)
         for rel_path in build1_files:
+            # Skip cache files as they contain timestamp information
+            if rel_path.name == ".build-cache.json":
+                continue
+
             file1 = build1_dir / rel_path
             file2 = build2_dir / rel_path
 

@@ -105,7 +105,6 @@ jobs:
         content_dir: content
         gallery_yaml_path: config/gallery.yaml
         default_category: Uncategorized
-        enable_thumbnails: false
         output_dir: dist
         EOF
 
