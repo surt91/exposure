@@ -16,6 +16,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-02
 - Python 3.11 + Pydantic 2.0+ (data models), Jinja2 3.1+ (templates), Pillow 10.0+ (image metadata), PyYAML 6.0+ (config), Babel 2.13+ (i18n) (009-gallery-banner)
 - File-based (YAML configuration files, static image assets) (009-gallery-banner)
 - Python 3.11+ + Pydantic 2.0+ (data models), Jinja2 3.1+ (templates), Pillow 10.0+ (image metadata), PyYAML 6.0+ (config), Babel 2.13+ (i18n) (009-gallery-banner)
+- Python 3.11+ + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), PyYAML 6.0+ (config), Jinja2 3.1+ (templates), Babel 2.13+ (i18n) (010-metadata-privacy)
+- File-based (source images, generated thumbnails, build cache JSON, no database) (010-metadata-privacy)
 
 ## Project Structure
 
@@ -50,9 +52,9 @@ uv run pybabel compile -d locales
 Python 3.11: Follow standard conventions
 
 ## Recent Changes
+- 010-metadata-privacy: Added Python 3.11+ + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), PyYAML 6.0+ (config), Jinja2 3.1+ (templates), Babel 2.13+ (i18n)
 - 009-gallery-banner: Added Python 3.11+ + Pydantic 2.0+ (data models), Jinja2 3.1+ (templates), Pillow 10.0+ (image metadata), PyYAML 6.0+ (config), Babel 2.13+ (i18n)
 - 009-gallery-banner: Added Python 3.11 + Pydantic 2.0+ (data models), Jinja2 3.1+ (templates), Pillow 10.0+ (image metadata), PyYAML 6.0+ (config), Babel 2.13+ (i18n)
-- 008-image-preprocessing: Added Python 3.11 + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), Jinja2 3.1+ (HTML templating), PyYAML 6.0+ (config)
 
 
 <!-- MANUAL ADDITIONS START -->

@@ -479,11 +479,11 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
 def _print_banner() -> None:
     """Print the ASCII art banner."""
     logger.info("")
-    logger.info("  _____ __  __ ____   ___  ____  _   _ ____  _____ ")
-    logger.info(" | ____|\\ \\/ /|  _ \\ / _ \\/ ___|| | | |  _ \\| ____|")
-    logger.info(" |  _|   \\  / | |_) | | | \\___ \\| | | | |_) |  _|  ")
-    logger.info(" | |___  /  \\ |  __/| |_| |___) | |_| |  _ <| |___ ")
-    logger.info(" |_____|/_/\\_\\|_|    \\___/|____/ \\___/|_| \\_\\_____|")
+    logger.info("  ____ ___  _________   ____  ________ _________   ____  ")
+    logger.info("_/ __ \\\\  \\/  /\\____ \\ /  _ \\/  ___/  |  \\_  __ \\_/ __ \\ ")
+    logger.info("\\  ___/ >    < |  |_> >  <_> )___ \\|  |  /|  | \\/\\  ___/ ")
+    logger.info(" \\___  >__/\\_ \\|   __/ \\____/____  >____/ |__|    \\___  >")
+    logger.info("     \\/      \\/|__|              \\/                   \\/ ")
     logger.info("")
 
 
