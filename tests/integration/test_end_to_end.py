@@ -304,8 +304,11 @@ output_dir: {output_dir}
         assert 'src="gallery.' in html_content
         assert '.js"' in html_content
 
-        # Verify justified-layout library is included
-        assert "justified-layout" in html_content
+        # Verify justified-layout library is bundled in JS
+        js_files = list(output_dir.glob("gallery.*.js"))
+        assert len(js_files) == 1
+        js_content = js_files[0].read_text()
+        assert "justified-layout" in js_content or "justifiedLayout" in js_content
 
     def test_image_size_variance_within_bounds(self, tmp_path):
         """Test that displayed image sizes fall within ±50% of median size (T025)."""
@@ -913,8 +916,11 @@ output_dir: {output_dir}
         assert html_content.count('data-width="') == len(test_images)
         assert html_content.count('data-height="') == len(test_images)
 
-        # Verify layout system is in place
-        assert "justified-layout" in html_content
+        # Verify layout system is bundled in JS
+        js_files = list(output_dir.glob("gallery.*.js"))
+        assert len(js_files) == 1
+        js_content = js_files[0].read_text()
+        assert "justified-layout" in js_content or "justifiedLayout" in js_content
 
         # In real test, would use Playwright with viewport size:
         # page.set_viewport_size({"width": 1920, "height": 1080})
@@ -978,8 +984,11 @@ output_dir: {output_dir}
         assert "width=device-width" in html_content
         assert "initial-scale=1.0" in html_content
 
-        # Verify layout JS is present (handles responsive behavior)
-        assert "justified-layout" in html_content
+        # Verify layout JS is bundled (handles responsive behavior)
+        js_files = list(output_dir.glob("gallery.*.js"))
+        assert len(js_files) == 1
+        js_content = js_files[0].read_text()
+        assert "justified-layout" in js_content or "justifiedLayout" in js_content
 
         # Verify dimensions present (required for any viewport)
         assert html_content.count('data-width="') == len(test_images)

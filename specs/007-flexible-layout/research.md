@@ -287,7 +287,7 @@
 4. Add width/height attributes to `<img>` tags
 
 ### Phase 2: Layout Algorithm
-1. Add justified-layout library via npm/unpkg CDN (or bundle)
+1. Vendor justified-layout library locally in `src/static/js/vendor/justified-layout.js`
 2. Create layout.js module
 3. Implement pre-render calculation
 4. Test with various aspect ratios and gallery sizes

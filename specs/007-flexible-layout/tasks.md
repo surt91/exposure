@@ -18,7 +18,7 @@
 **Purpose**: Project initialization and basic structure
 
 - [X] T001 Verify Python 3.11+ environment with Pillow 10.0+ installed
-- [X] T002 [P] Add justified-layout library reference (CDN) to documentation
+- [X] T002 [P] Add justified-layout library vendored locally to src/static/js/vendor/justified-layout.js
 - [X] T003 [P] Create src/static/js/layout.js file structure
 - [X] T004 [P] Review current CSS Grid implementation in src/static/css/gallery.css
 
@@ -35,7 +35,7 @@
 - [X] T007 Update image scanning logic in src/generator/scan.py to call extract_dimensions() for all images
 - [X] T008 Update build_html.py in src/generator/build_html.py to pass width/height when creating Image objects
 - [X] T009 Update index.html.j2 template in src/templates/index.html.j2 to include data-width, data-height attributes and img width/height attributes
-- [X] T010 Add justified-layout library CDN script tag in src/templates/index.html.j2 head section
+- [X] T010 Ensure justified-layout library is bundled with gallery.js during asset build
 - [X] T011 [P] Create unit test for Image model with dimensions in tests/unit/test_model.py
 - [X] T012 [P] Create unit test for extract_dimensions() in tests/unit/test_scan.py
 

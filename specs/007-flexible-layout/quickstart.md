@@ -203,29 +203,21 @@ uv run exposure
 
 **Goal**: Add justified-layout library for calculations.
 
-#### 3.1 Add Library
+#### 3.1 Add Vendored Library
 
-Option A: Use CDN (simplest, no build step):
-```html
-<!-- In index.html.j2 <head> -->
-<script src="https://unpkg.com/justified-layout@4.1.0/dist/justified-layout.min.js"></script>
-```
+The justified-layout library is vendored locally in `src/static/js/vendor/`:
+- `justified-layout.js` - The library code
+- `justified-layout.LICENSE` - License file
 
-Option B: Install via npm and bundle:
-```bash
-npm install justified-layout
-# Then import in layout.js
-```
+This approach:
+- Ensures offline functionality
+- Eliminates external CDN dependencies
+- Provides better privacy (no third-party requests)
+- Allows bundling with other assets during build
 
-**Recommendation**: Use Option A (CDN) initially for simplicity. Can switch to bundled version later if needed.
+#### 3.2 Verify Library in Template
 
-#### 3.2 Verify Library Loads
-
-Add to `src/templates/index.html.j2` in `<head>`:
-
-```html
-<script src="https://unpkg.com/justified-layout@4.1.0/dist/justified-layout.min.js"></script>
-```
+The library is automatically included during the asset bundling process. The bundled JavaScript will include the justified-layout library alongside the gallery code.
 
 **Test**: Open built gallery in browser, check console:
 ```javascript
@@ -712,8 +704,8 @@ Verify in browser DevTools Elements panel.
 **Solution**: Verify library script loads before layout.js:
 
 ```html
-<script src="https://unpkg.com/justified-layout@4.1.0/dist/justified-layout.min.js"></script>
-<script src="js/layout.js"></script>
+<!-- justified-layout library is bundled with gallery.js -->
+<script src="gallery.js"></script>
 ```
 
 Check Network tab in DevTools for 404 errors.

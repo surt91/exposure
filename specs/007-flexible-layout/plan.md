@@ -48,7 +48,7 @@ After completing research, data model, and contract design, all constitution req
 2. ✅ **Performance budget** - Verified: Library adds 5KB + 2KB integration code = 7KB total. New total: ~22KB JS (well under 75KB).
 3. ✅ **Accessibility** - Verified: Semantic HTML preserved, keyboard nav unchanged, alt text required, axe tests will catch regressions.
 4. ✅ **Content integrity** - Verified: Dimension extraction deterministic (Pillow), layout algorithm deterministic (same inputs → same outputs).
-5. ✅ **Security/privacy** - Verified: Using CDN (unpkg.com) for library OR bundling locally. No tracking/analytics. CSP compatible.
+5. ✅ **Security/privacy** - Verified: Library vendored locally at `src/static/js/vendor/justified-layout.js`. No external dependencies. No tracking/analytics. CSP compatible.
 6. ✅ **Documentation** - Created: ADR 0007 outlined in quickstart, README update planned.
 7. ✅ **CI gates** - Verified: Asset budget tests will catch JS size, accessibility tests run automatically, E2E tests verify layout.
 
