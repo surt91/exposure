@@ -15,6 +15,9 @@ def copy_with_hash(
     """
     Copy file to destination with hash in filename, optionally stripping metadata.
 
+    If the destination file already exists with the correct hash, skip copying
+    for improved incremental build performance.
+
     Args:
         src_path: Source file path
         dest_dir: Destination directory
@@ -34,12 +37,21 @@ def copy_with_hash(
 
     if preserve_name:
         dest_path = dest_dir / src_path.name
+        # Check if file exists and matches source mtime
+        if dest_path.exists() and dest_path.stat().st_mtime >= src_path.stat().st_mtime:
+            logger.debug(f"Skipping copy of {src_path.name} (destination up to date)")
+            return dest_path
     else:
         file_hash = hash_file(src_path)
         stem = src_path.stem
         ext = src_path.suffix
         hashed_name = f"{stem}.{file_hash}{ext}"
         dest_path = dest_dir / hashed_name
+
+        # If destination with matching hash already exists, skip copy
+        if dest_path.exists():
+            logger.debug(f"Skipping copy of {src_path.name} (hash match: {file_hash[:8]}...)")
+            return dest_path
 
     # For image files, strip metadata if requested
     if strip_metadata and src_path.suffix.lower() in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
