@@ -584,3 +584,14 @@ module.exports = function (input, config) {
 };
 
 },{"./row":1}]},{},[]);
+
+// Expose as global for browser usage
+// The browserify bundle above creates a require function in the local scope
+// We need to call it and expose the result globally
+(function() {
+	if (typeof window !== 'undefined') {
+		// Call require with the entry module name
+		var requireFunc = require;
+		window.justifiedLayout = requireFunc('justified-layout');
+	}
+})();

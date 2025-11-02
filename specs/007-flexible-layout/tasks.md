@@ -17,10 +17,10 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Verify Python 3.11+ environment with Pillow 10.0+ installed
-- [ ] T002 [P] Add justified-layout library reference (CDN) to documentation
-- [ ] T003 [P] Create src/static/js/layout.js file structure
-- [ ] T004 [P] Review current CSS Grid implementation in src/static/css/gallery.css
+- [X] T001 Verify Python 3.11+ environment with Pillow 10.0+ installed
+- [X] T002 [P] Add justified-layout library reference (CDN) to documentation
+- [X] T003 [P] Create src/static/js/layout.js file structure
+- [X] T004 [P] Review current CSS Grid implementation in src/static/css/gallery.css
 
 ---
 
@@ -30,14 +30,14 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Update Image model in src/generator/model.py to add optional width, height fields and aspect_ratio property
-- [ ] T006 Implement extract_dimensions() function in src/generator/scan.py using Pillow to extract image dimensions
-- [ ] T007 Update image scanning logic in src/generator/scan.py to call extract_dimensions() for all images
-- [ ] T008 Update build_html.py in src/generator/build_html.py to pass width/height when creating Image objects
-- [ ] T009 Update index.html.j2 template in src/templates/index.html.j2 to include data-width, data-height attributes and img width/height attributes
-- [ ] T010 Add justified-layout library CDN script tag in src/templates/index.html.j2 head section
-- [ ] T011 [P] Create unit test for Image model with dimensions in tests/unit/test_model.py
-- [ ] T012 [P] Create unit test for extract_dimensions() in tests/unit/test_scan.py
+- [X] T005 Update Image model in src/generator/model.py to add optional width, height fields and aspect_ratio property
+- [X] T006 Implement extract_dimensions() function in src/generator/scan.py using Pillow to extract image dimensions
+- [X] T007 Update image scanning logic in src/generator/scan.py to call extract_dimensions() for all images
+- [X] T008 Update build_html.py in src/generator/build_html.py to pass width/height when creating Image objects
+- [X] T009 Update index.html.j2 template in src/templates/index.html.j2 to include data-width, data-height attributes and img width/height attributes
+- [X] T010 Add justified-layout library CDN script tag in src/templates/index.html.j2 head section
+- [X] T011 [P] Create unit test for Image model with dimensions in tests/unit/test_model.py
+- [X] T012 [P] Create unit test for extract_dimensions() in tests/unit/test_scan.py
 
 **Checkpoint**: Foundation ready - dimension extraction working, templates updated, user story implementation can now begin
 
@@ -59,14 +59,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] Implement extractImageData() function in src/static/js/layout.js to read dimensions from DOM
-- [ ] T017 [US1] Implement calculateLayout() wrapper function in src/static/js/layout.js that calls justified-layout library
-- [ ] T018 [US1] Implement applyLayout() function in src/static/js/layout.js to position images in DOM
-- [ ] T019 [US1] Implement init() function in src/static/js/layout.js to initialize layout on DOMContentLoaded
-- [ ] T020 [US1] Update CSS in src/static/css/gallery.css to add .layout-calculated class styles for positioned layout
-- [ ] T021 [US1] Update CSS in src/static/css/gallery.css to change object-fit from cover to contain for .layout-calculated images
-- [ ] T022 [US1] Update asset copying in src/generator/assets.py to include layout.js in build output
-- [ ] T023 [US1] Add layout.js script tag in src/templates/index.html.j2 after gallery.js
+- [X] T016 [US1] Implement extractImageData() function in src/static/js/layout.js to read dimensions from DOM
+- [X] T017 [US1] Implement calculateLayout() wrapper function in src/static/js/layout.js that calls justified-layout library
+- [X] T018 [US1] Implement applyLayout() function in src/static/js/layout.js to position images in DOM
+- [X] T019 [US1] Implement init() function in src/static/js/layout.js to initialize layout on DOMContentLoaded
+- [X] T020 [US1] Update CSS in src/static/css/gallery.css to add .layout-calculated class styles for positioned layout
+- [X] T021 [US1] Update CSS in src/static/css/gallery.css to change object-fit from cover to contain for .layout-calculated images
+- [X] T022 [US1] Update asset copying in src/generator/assets.py to include layout.js in build output
+- [X] T023 [US1] Add layout.js script tag in src/templates/index.html.j2 after gallery.js
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - images display without cropping
 
@@ -86,12 +86,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T027 [US2] Configure justified-layout options in src/static/js/layout.js with targetRowHeight: 320px
-- [ ] T028 [US2] Configure justified-layout options in src/static/js/layout.js with maxRowHeight: 480px
+- [X] T027 [US2] Configure justified-layout options in src/static/js/layout.js with targetRowHeight: 320px
+- [X] T028 [US2] Configure justified-layout options in src/static/js/layout.js with maxRowHeight: 480px
 - [ ] T029 [US2] Add aspect ratio validation in src/static/js/layout.js to clamp extreme ratios (0.25 to 4.0)
-- [ ] T030 [US2] Implement responsive targetRowHeight adjustment in src/static/js/layout.js based on viewport width
-- [ ] T031 [US2] Add CSS transitions in src/static/css/gallery.css for smooth layout changes
-- [ ] T032 [US2] Test and adjust spacing parameter in src/static/js/layout.js (default: 8px) for optimal visual balance
+- [X] T030 [US2] Implement responsive targetRowHeight adjustment in src/static/js/layout.js based on viewport width
+- [X] T031 [US2] Add CSS transitions in src/static/css/gallery.css for smooth layout changes
+- [X] T032 [US2] Test and adjust spacing parameter in src/static/js/layout.js (default: 8px) for optimal visual balance
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - images uncropped and consistently sized
 
@@ -111,9 +111,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T036 [US3] Fine-tune boxSpacing parameter in src/static/js/layout.js for optimal space usage
-- [ ] T037 [US3] Implement row height calculation optimization in src/static/js/layout.js
-- [ ] T038 [US3] Add container padding configuration in src/static/js/layout.js (containerPadding: 0)
+- [X] T036 [US3] Fine-tune boxSpacing parameter in src/static/js/layout.js for optimal space usage
+- [X] T037 [US3] Implement row height calculation optimization in src/static/js/layout.js
+- [X] T038 [US3] Add container padding configuration in src/static/js/layout.js (containerPadding: 0)
 - [ ] T039 [US3] Handle edge case for single image layouts in src/static/js/layout.js
 - [ ] T040 [US3] Update gallery container styles in src/static/css/gallery.css to minimize external margins
 - [ ] T041 [US3] Add handling for partial last row in src/static/js/layout.js (forceLastRow: false)
@@ -139,11 +139,11 @@
 - [ ] T045 [US4] Move layout calculation to synchronous execution before DOMContentLoaded in src/static/js/layout.js
 - [ ] T046 [US4] Pre-calculate layout before first paint by executing in head in src/templates/index.html.j2
 - [ ] T047 [US4] Add performance timing instrumentation in src/static/js/layout.js to measure calculation time
-- [ ] T048 [US4] Implement loading state styling in src/static/css/gallery.css with skeleton placeholders
-- [ ] T049 [US4] Add decoding="async" attribute to img tags in src/templates/index.html.j2
-- [ ] T050 [US4] Optimize layout calculation by caching container width in src/static/js/layout.js
-- [ ] T051 [US4] Implement debounced resize handler in src/static/js/layout.js (150ms debounce)
-- [ ] T052 [US4] Add error handling for layout calculation failures in src/static/js/layout.js with fallback to CSS Grid
+- [X] T048 [US4] Implement loading state styling in src/static/css/gallery.css with skeleton placeholders
+- [X] T049 [US4] Add decoding="async" attribute to img tags in src/templates/index.html.j2
+- [X] T050 [US4] Optimize layout calculation by caching container width in src/static/js/layout.js
+- [X] T051 [US4] Implement debounced resize handler in src/static/js/layout.js (150ms debounce)
+- [X] T052 [US4] Add error handling for layout calculation failures in src/static/js/layout.js with fallback to CSS Grid
 
 **Checkpoint**: All user stories complete - layout is fast, shift-free, uncropped, balanced, and space-efficient
 
@@ -153,16 +153,16 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T053 [P] Create ADR 0007 in docs/decisions/0007-flexible-layout-algorithm.md documenting algorithm choice
-- [ ] T054 [P] Update README.md with flexible layout feature description
-- [ ] T055 [P] Add browser compatibility notes to documentation
-- [ ] T056 [P] Add unit tests for edge cases in tests/unit/test_scan.py: invalid files, missing dimensions, extreme aspect ratios
-- [ ] T057 [P] Add accessibility regression tests in tests/accessibility/test_axe_a11y.py for new layout
+- [X] T053 [P] Create ADR 0007 in docs/decisions/0007-flexible-layout-algorithm.md documenting algorithm choice
+- [X] T054 [P] Update README.md with flexible layout feature description
+- [X] T055 [P] Add browser compatibility notes to documentation
+- [X] T056 [P] Add unit tests for edge cases in tests/unit/test_scan.py: invalid files, missing dimensions, extreme aspect ratios
+- [X] T057 [P] Add accessibility regression tests in tests/accessibility/test_axe_a11y.py for new layout
 - [ ] T058 [P] Add responsive layout tests in tests/integration/test_end_to_end.py for mobile (320px) and desktop (1920px)
-- [ ] T059 Code review for performance optimization opportunities across all layout code
+- [X] T059 Code review for performance optimization opportunities across all layout code
 - [ ] T060 Verify all acceptance scenarios from spec.md work correctly
 - [ ] T061 Run quickstart.md validation to ensure implementation matches documented workflow
-- [ ] T062 [P] Update i18n workflow documentation in docs/i18n-workflow.md if any user-facing strings added
+- [X] T062 [P] Update i18n workflow documentation in docs/i18n-workflow.md if any user-facing strings added
 - [ ] T063 Performance profiling for galleries with 500+ images
 
 ---
