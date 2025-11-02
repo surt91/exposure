@@ -58,3 +58,6 @@ config/settings.yaml
 
 # Logs
 *.log
+
+# Local Netlify folder
+.netlify
