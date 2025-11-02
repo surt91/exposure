@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2024 Hendrik Schawe
 
-"""Internationalization (i18n) support for fotoview gallery generator.
+"""Internationalization (i18n) support for exposure gallery generator.
 
 This module provides translation infrastructure using Babel/gettext.
 Translations are loaded from .mo files in the locales/ directory.

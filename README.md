@@ -1,4 +1,4 @@
-# Fotoview
+# Exposure
 
 Modern static image gallery generator - build responsive, accessible galleries from a simple YAML configuration.
 
@@ -35,7 +35,7 @@ mkdir -p content
 cp /path/to/your/images/* content/
 
 # Generate the gallery
-uv run python -m src.generator.build_html
+uv run exposure
 
 # Open dist/index.html in your browser
 ```
@@ -61,7 +61,7 @@ uv run ruff format .
 
 ### Type Checking
 
-Fotoview uses [ty](https://github.com/astral-sh/ty) from Astral for fast, strict type checking:
+Exposure uses [ty](https://github.com/astral-sh/ty) from Astral for fast, strict type checking:
 
 - All source code is fully type-annotated
 - Type checking enforced in CI pipeline
@@ -70,7 +70,7 @@ Fotoview uses [ty](https://github.com/astral-sh/ty) from Astral for fast, strict
 
 ## Dark Mode
 
-Fotoview automatically adapts to your system's dark mode preference:
+Exposure automatically adapts to your system's dark mode preference:
 
 - **Light mode** (default): Clean white background, optimal for bright environments
 - **Dark mode** (automatic): Near-black background (#0f0f0f) reduces eye strain
@@ -100,10 +100,10 @@ log_level: INFO                        # Logging verbosity (DEBUG, INFO, WARNING
 
 ### Environment Variable Overrides
 
-All configuration values can be overridden using environment variables with the `FOTOVIEW_` prefix. This is useful for CI/CD pipelines, Docker deployments, or testing different configurations without modifying YAML files.
+All configuration values can be overridden using environment variables with the `EXPOSURE_` prefix. This is useful for CI/CD pipelines, Docker deployments, or testing different configurations without modifying YAML files.
 
 **Precedence (highest to lowest):**
-1. Environment variables (`FOTOVIEW_*`)
+1. Environment variables (`EXPOSURE_*`)
 2. `.env` file (if present)
 3. `config/settings.yaml`
 4. Default values
@@ -112,27 +112,27 @@ All configuration values can be overridden using environment variables with the 
 
 ```bash
 # Override locale for German UI
-FOTOVIEW_LOCALE=de uv run python -m src.generator.build_html
+EXPOSURE_LOCALE=de uv run exposure
 
 # Enable debug logging
-FOTOVIEW_LOG_LEVEL=DEBUG uv run python -m src.generator.build_html
+EXPOSURE_LOG_LEVEL=DEBUG uv run exposure
 
 # Use custom content directory
-FOTOVIEW_CONTENT_DIR=/path/to/images uv run python -m src.generator.build_html
+EXPOSURE_CONTENT_DIR=/path/to/images uv run exposure
 
 # Multiple overrides
-FOTOVIEW_LOCALE=de FOTOVIEW_OUTPUT_DIR=build uv run python -m src.generator.build_html
+EXPOSURE_LOCALE=de EXPOSURE_OUTPUT_DIR=build uv run exposure
 ```
 
 **Available Environment Variables:**
 
-- `FOTOVIEW_CONTENT_DIR` - Source images directory
-- `FOTOVIEW_GALLERY_YAML_PATH` - Path to metadata YAML file
-- `FOTOVIEW_DEFAULT_CATEGORY` - Default category for uncategorized images
-- `FOTOVIEW_ENABLE_THUMBNAILS` - Enable thumbnail metadata (true/false)
-- `FOTOVIEW_OUTPUT_DIR` - Generated site output directory
-- `FOTOVIEW_LOCALE` - UI language code (en, de)
-- `FOTOVIEW_LOG_LEVEL` - Logging verbosity (DEBUG, INFO, WARNING, ERROR)
+- `EXPOSURE_CONTENT_DIR` - Source images directory
+- `EXPOSURE_GALLERY_YAML_PATH` - Path to metadata YAML file
+- `EXPOSURE_DEFAULT_CATEGORY` - Default category for uncategorized images
+- `EXPOSURE_ENABLE_THUMBNAILS` - Enable thumbnail metadata (true/false)
+- `EXPOSURE_OUTPUT_DIR` - Generated site output directory
+- `EXPOSURE_LOCALE` - UI language code (en, de)
+- `EXPOSURE_LOG_LEVEL` - Logging verbosity (DEBUG, INFO, WARNING, ERROR)
 
 **Note:** Environment variable names are case-insensitive on most systems, but uppercase is recommended for clarity.
 
@@ -154,7 +154,7 @@ images:
 
 ## Performance & Accessibility
 
-Fotoview enforces strict budgets to ensure fast, accessible galleries:
+Exposure enforces strict budgets to ensure fast, accessible galleries:
 
 ### Performance Budgets
 - HTML: ≤30KB per page (enforced in CI)
@@ -177,7 +177,7 @@ All standards are automatically enforced via CI with Playwright + axe-core integ
 
 ## Architecture
 
-Fotoview uses a build-time generation approach:
+Exposure uses a build-time generation approach:
 
 1. **Scan**: Discover images in `content/`
 2. **Merge**: Match images with YAML metadata

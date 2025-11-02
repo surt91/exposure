@@ -322,8 +322,8 @@ log_level: INFO
 
     def test_load_config_env_var_override(self, settings_file, monkeypatch):
         """Test that environment variables override YAML values."""
-        monkeypatch.setenv("FOTOVIEW_LOCALE", "de")
-        monkeypatch.setenv("FOTOVIEW_LOG_LEVEL", "DEBUG")
+        monkeypatch.setenv("EXPOSURE_LOCALE", "de")
+        monkeypatch.setenv("EXPOSURE_LOG_LEVEL", "DEBUG")
 
         config = load_config(settings_file)
 
@@ -383,7 +383,7 @@ default_category: Uncategorized
     def test_load_config_env_var_case_insensitive(self, settings_file, monkeypatch):
         """Test that environment variables are case-insensitive."""
         # pydantic-settings with case_sensitive=False should handle this
-        monkeypatch.setenv("fotoview_locale", "de")
+        monkeypatch.setenv("exposure_locale", "de")
 
         config = load_config(settings_file)
 

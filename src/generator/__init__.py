@@ -14,7 +14,7 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
     Returns:
         Configured logger instance
     """
-    logger = logging.getLogger("fotoview")
+    logger = logging.getLogger("exposure")
     logger.setLevel(getattr(logging, level.upper()))
 
     # Remove any existing handlers
@@ -37,4 +37,4 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
 
 
 # Create module-level logger instance
-logger = logging.getLogger("fotoview")
+logger = logging.getLogger("exposure")

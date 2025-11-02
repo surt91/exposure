@@ -1,6 +1,6 @@
 # Internationalization (i18n) Workflow
 
-Fotoview uses [Babel](https://babel.pocoo.org/) and [gettext](https://www.gnu.org/software/gettext/) for internationalization support. This document describes the workflow for managing translations.
+Exposure uses [Babel](https://babel.pocoo.org/) and [gettext](https://www.gnu.org/software/gettext/) for internationalization support. This document describes the workflow for managing translations.
 
 ## Overview
 
@@ -136,7 +136,7 @@ locale: de  # Options: en (English), de (German)
 Or via environment variable:
 
 ```bash
-FOTOVIEW_LOCALE=de uv run python -m src.generator.build_html
+EXPOSURE_LOCALE=de uv run exposure
 ```
 
 ### Fallback Behavior
@@ -163,7 +163,7 @@ grep -i "Kategorie" dist/index.html
 
 ```bash
 # Try unsupported locale
-FOTOVIEW_LOCALE=fr uv run python -m src.generator.build_html
+EXPOSURE_LOCALE=fr uv run exposure
 
 # Should use English with no errors
 ```

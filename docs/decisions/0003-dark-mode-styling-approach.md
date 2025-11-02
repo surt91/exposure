@@ -7,7 +7,7 @@
 
 ## Context
 
-The fotoview gallery needed a modern dark theme to reduce eye strain and enhance the viewing experience for images. The primary decision was whether to implement dark mode using:
+The exposure gallery needed a modern dark theme to reduce eye strain and enhance the viewing experience for images. The primary decision was whether to implement dark mode using:
 
 1. Pure CSS with CSS custom properties and `@media (prefers-color-scheme: dark)`
 2. JavaScript framework/library (Tailwind CSS, CSS-in-JS)

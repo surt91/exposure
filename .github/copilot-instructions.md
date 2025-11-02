@@ -1,6 +1,6 @@
-# fotoview Development Guidelines
+# exposure Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-10-31
+Auto-generated from all feature plans. Last updated: 2025-11-02
 
 ## Active Technologies
 - Python 3.11 (build tooling), HTML5/CSS3/ES Modules (delivery assets)
@@ -22,7 +22,7 @@ tests/
 
 ```bash
 # Build gallery
-uv run python -m src.generator.build_html
+uv run exposure
 
 # Run tests
 uv run pytest

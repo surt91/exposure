@@ -11,7 +11,7 @@ from .model import Category, GalleryConfig, Image
 from .scan import detect_duplicates, discover_images, filter_valid_images, get_image_dimensions
 from .yaml_sync import append_stub_entries, get_entry_map, load_gallery_yaml
 
-logger = logging.getLogger("fotoview")
+logger = logging.getLogger("exposure")
 
 
 def load_config(settings_path: Path) -> GalleryConfig:
@@ -19,16 +19,16 @@ def load_config(settings_path: Path) -> GalleryConfig:
     Load configuration from settings.yaml and environment variables.
 
     Uses pydantic-settings to automatically load and merge configuration from:
-    1. Environment variables (FOTOVIEW_* prefix) - highest priority
+    1. Environment variables (EXPOSURE_* prefix) - highest priority
     2. .env file (if present)
     3. YAML settings file - lowest priority
 
     Examples:
         # Override locale via environment variable:
-        FOTOVIEW_LOCALE=de python -m src.generator.build_html
+        EXPOSURE_LOCALE=de uv run exposure
 
         # Override log level:
-        FOTOVIEW_LOG_LEVEL=DEBUG python -m src.generator.build_html
+        EXPOSURE_LOG_LEVEL=DEBUG uv run exposure
 
     Args:
         settings_path: Path to settings.yaml file
@@ -270,12 +270,22 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     Args:
         config_path: Path to settings.yaml configuration file
     """
-    logger.info("=" * 60)
-    logger.info(_("Fotoview Gallery Generator"))
-    logger.info("=" * 60)
-
-    # Load configuration
+    # Load configuration first to get locale
     config = load_config(config_path)
+
+    # Setup internationalization before any translated messages
+    from .i18n import setup_i18n
+
+    setup_i18n(config.locale)
+
+    # ASCII art banner
+    logger.info("")
+    logger.info("  _____ __  __ ____   ___  ____  _   _ ____  _____ ")
+    logger.info(" | ____|\\ \\/ /|  _ \\ / _ \\/ ___|| | | |  _ \\| ____|")
+    logger.info(" |  _|   \\  / | |_) | | | \\___ \\| | | | |_) |  _|  ")
+    logger.info(" | |___  /  \\ |  __/| |_| |___) | |_| |  _ <| |___ ")
+    logger.info(" |_____|/_/\\_\\|_|    \\___/|____/ \\___/|_| \\_\\_____|")
+    logger.info("")
 
     # Scan and sync
     category_names, images = scan_and_sync(config)

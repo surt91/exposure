@@ -122,13 +122,12 @@ class TestAssetBudgets:
 
         # Report
         print("\n=== Asset Budget Report ===")
-        print(
-            f"HTML: {html_size:>6} / {MAX_HTML_SIZE:>6} bytes ({html_size / MAX_HTML_SIZE * 100:>5.1f}%)"
-        )
-        print(
-            f"CSS:  {css_size:>6} / {MAX_CSS_SIZE:>6} bytes ({css_size / MAX_CSS_SIZE * 100:>5.1f}%)"
-        )
-        print(f"JS:   {js_size:>6} / {MAX_JS_SIZE:>6} bytes ({js_size / MAX_JS_SIZE * 100:>5.1f}%)")
+        html_pct = html_size / MAX_HTML_SIZE * 100
+        css_pct = css_size / MAX_CSS_SIZE * 100
+        js_pct = js_size / MAX_JS_SIZE * 100
+        print(f"HTML: {html_size:>6} / {MAX_HTML_SIZE:>6} bytes ({html_pct:>5.1f}%)")
+        print(f"CSS:  {css_size:>6} / {MAX_CSS_SIZE:>6} bytes ({css_pct:>5.1f}%)")
+        print(f"JS:   {js_size:>6} / {MAX_JS_SIZE:>6} bytes ({js_pct:>5.1f}%)")
         print("=" * 30)
 
         # Assert all budgets

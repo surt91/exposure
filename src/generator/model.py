@@ -75,11 +75,11 @@ class GalleryConfig(BaseSettings):
 
     Supports loading from YAML files and environment variables.
     Environment variables take precedence over YAML configuration.
-    All environment variables should be prefixed with FOTOVIEW_.
+    All environment variables should be prefixed with EXPOSURE_.
 
     Example:
-        FOTOVIEW_LOCALE=de  # Override locale setting
-        FOTOVIEW_LOG_LEVEL=DEBUG  # Override log level
+        EXPOSURE_LOCALE=de  # Override locale setting
+        EXPOSURE_LOG_LEVEL=DEBUG  # Override log level
     """
 
     content_dir: Path = Field(
@@ -115,7 +115,7 @@ class GalleryConfig(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_prefix="FOTOVIEW_",
+        env_prefix="EXPOSURE_",
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
@@ -135,7 +135,7 @@ class GalleryConfig(BaseSettings):
         Customize settings sources and their priority.
 
         Priority (highest to lowest):
-        1. Environment variables (FOTOVIEW_*)
+        1. Environment variables (EXPOSURE_*)
         2. .env file
         3. YAML settings file
         4. Default values

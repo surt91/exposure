@@ -7,7 +7,7 @@
 
 ## Context
 
-The fotoview static gallery generator was initially built with Python dataclasses, string concatenation for HTML generation, and print() statements for console output. As the project matures, we need to modernize the codebase to improve maintainability, type safety, and support internationalization.
+The exposure static gallery generator was initially built with Python dataclasses, string concatenation for HTML generation, and print() statements for console output. As the project matures, we need to modernize the codebase to improve maintainability, type safety, and support internationalization.
 
 ### Current Issues
 

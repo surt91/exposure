@@ -6,7 +6,7 @@
 
 **Context:**
 
-The Fotoview gallery generator needs to produce static HTML files from images and metadata. We need a templating approach that is:
+The Exposure gallery generator needs to produce static HTML files from images and metadata. We need a templating approach that is:
 
 - Simple and maintainable
 - Fast for build-time generation

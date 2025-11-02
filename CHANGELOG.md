@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-11-02
+
+### Changed
+- **Renamed project from "fotoview" to "exposure"**
+- Simplified CLI command from `uv run python -m src.generator.build_html` to `uv run exposure`
+- Environment variable prefix changed from `FOTOVIEW_*` to `EXPOSURE_*`
+- Updated all documentation, translations, and meta tags to reflect new branding
+- Logger name changed from "fotoview" to "exposure"
+- Package name in pyproject.toml updated to "exposure"
+
+### Added
+- Console script entry point `exposure` for simplified command-line invocation
+
+### Breaking Changes
+- Environment variables with `FOTOVIEW_*` prefix are no longer recognized - use `EXPOSURE_*` instead
+- Package name changed - reinstall with `uv sync` required
+
+### Migration Guide
+- Update any scripts or CI/CD pipelines to use `uv run exposure` instead of `uv run python -m src.generator.build_html`
+- Replace `FOTOVIEW_*` environment variables with `EXPOSURE_*` equivalents
+- The old module invocation `python -m src.generator.build_html` still works as a Python language feature
+
 ### Added
 - Initial project structure
 - Python package configuration with uv
