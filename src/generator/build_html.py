@@ -228,7 +228,7 @@ def get_default_title() -> str:
 
 def copy_banner_image(config: GalleryConfig) -> str | None:
     """
-    Copy banner image to output directory.
+    Copy banner image to output directory with metadata stripping.
 
     Args:
         config: Gallery configuration with optional banner_image
@@ -239,22 +239,22 @@ def copy_banner_image(config: GalleryConfig) -> str | None:
     if not config.banner_image:
         return None
 
+    from .assets import copy_with_hash
     from .utils import ensure_directory
 
     # Create banner output directory
     banner_output_dir = config.output_dir / "images" / "banner"
     ensure_directory(banner_output_dir)
 
-    # Copy banner to output
-    import shutil
-
-    dest_path = banner_output_dir / config.banner_image.name
-    shutil.copy2(config.banner_image, dest_path)
+    # Copy banner to output with metadata stripping
+    dest_path = copy_with_hash(
+        config.banner_image, banner_output_dir, preserve_name=True, strip_metadata=True
+    )
 
     logger.info("Copied banner image: %s", config.banner_image.name)
 
     # Return relative URL for template
-    return f"images/banner/{config.banner_image.name}"
+    return f"images/banner/{dest_path.name}"
 
 
 def _get_static_dir() -> Path:
@@ -382,9 +382,9 @@ def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
     """
     from .assets import copy_with_hash
 
-    # Copy original image to originals directory
+    # Copy original image to originals directory with metadata stripping
     originals_dir = output_dir / "images" / "originals"
-    img_dest = copy_with_hash(image.file_path, originals_dir)
+    img_dest = copy_with_hash(image.file_path, originals_dir, strip_metadata=True)
     img_href = f"images/originals/{img_dest.name}"
 
     # Build template data
@@ -479,11 +479,11 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
 def _print_banner() -> None:
     """Print the ASCII art banner."""
     logger.info("")
-    logger.info("  _____ __  __ ____   ___  ____  _   _ ____  _____ ")
-    logger.info(" | ____|\\ \\/ /|  _ \\ / _ \\/ ___|| | | |  _ \\| ____|")
-    logger.info(" |  _|   \\  / | |_) | | | \\___ \\| | | | |_) |  _|  ")
-    logger.info(" | |___  /  \\ |  __/| |_| |___) | |_| |  _ <| |___ ")
-    logger.info(" |_____|/_/\\_\\|_|    \\___/|____/ \\___/|_| \\_\\_____|")
+    logger.info("  ____ ___  _________   ____  ________ _________   ____  ")
+    logger.info("_/ __ \\\\  \\/  /\\____ \\ /  _ \\/  ___/  |  \\_  __ \\_/ __ \\ ")
+    logger.info("\\  ___/ >    < |  |_> >  <_> )___ \\|  |  /|  | \\/\\  ___/ ")
+    logger.info(" \\___  >__/\\_ \\|   __/ \\____/____  >____/ |__|    \\___  >")
+    logger.info("     \\/      \\/|__|              \\/                   \\/ ")
     logger.info("")
 
 

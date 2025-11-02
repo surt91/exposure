@@ -23,6 +23,9 @@ class CacheEntry(BaseModel):
     jpeg_path: str
     content_hash: str
     thumbnail_generated_at: datetime
+    metadata_stripped: bool = Field(
+        default=True, description="Whether metadata was stripped in this build"
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -53,5 +56,6 @@ class BuildCache(BaseModel):
             jpeg_path=str(thumbnail.jpeg_path),
             content_hash=thumbnail.content_hash,
             thumbnail_generated_at=thumbnail.generated_at,
+            metadata_stripped=thumbnail.metadata_stripped,
         )
         self.last_updated = datetime.now()

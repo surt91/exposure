@@ -1,19 +1,28 @@
 """Asset hashing and copying utilities."""
 
+import logging
 import shutil
 from pathlib import Path
 
 from .utils import hash_content, hash_file
 
+logger = logging.getLogger(__name__)
 
-def copy_with_hash(src_path: Path, dest_dir: Path, preserve_name: bool = False) -> Path:
+
+def copy_with_hash(
+    src_path: Path, dest_dir: Path, preserve_name: bool = False, strip_metadata: bool = False
+) -> Path:
     """
-    Copy file to destination with hash in filename.
+    Copy file to destination with hash in filename, optionally stripping metadata.
+
+    If the destination file already exists with the correct hash, skip copying
+    for improved incremental build performance.
 
     Args:
         src_path: Source file path
         dest_dir: Destination directory
         preserve_name: If True, use original name without hash
+        strip_metadata: If True, strip sensitive metadata from image files
 
     Returns:
         Path to the copied file with hashed name
@@ -28,6 +37,10 @@ def copy_with_hash(src_path: Path, dest_dir: Path, preserve_name: bool = False) 
 
     if preserve_name:
         dest_path = dest_dir / src_path.name
+        # Check if file exists and matches source mtime
+        if dest_path.exists() and dest_path.stat().st_mtime >= src_path.stat().st_mtime:
+            logger.debug(f"Skipping copy of {src_path.name} (destination up to date)")
+            return dest_path
     else:
         file_hash = hash_file(src_path)
         stem = src_path.stem
@@ -35,7 +48,34 @@ def copy_with_hash(src_path: Path, dest_dir: Path, preserve_name: bool = False) 
         hashed_name = f"{stem}.{file_hash}{ext}"
         dest_path = dest_dir / hashed_name
 
-    shutil.copy2(src_path, dest_path)
+        # If destination with matching hash already exists, skip copy
+        if dest_path.exists():
+            logger.debug(f"Skipping copy of {src_path.name} (hash match: {file_hash[:8]}...)")
+            return dest_path
+
+    # For image files, strip metadata if requested
+    if strip_metadata and src_path.suffix.lower() in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+        try:
+            from .metadata_filter import strip_and_save
+
+            success = strip_and_save(src_path, dest_path)
+            if not success:
+                # Fallback to regular copy if stripping fails
+                logger.warning(
+                    f"⚠ WARNING: Metadata stripping failed for {src_path.name}, "
+                    f"falling back to regular copy"
+                )
+                shutil.copy2(src_path, dest_path)
+        except Exception as e:
+            # Fallback to regular copy on any error
+            logger.warning(
+                f"⚠ WARNING: Metadata stripping failed for {src_path.name}: {e}, "
+                f"falling back to regular copy"
+            )
+            shutil.copy2(src_path, dest_path)
+    else:
+        shutil.copy2(src_path, dest_path)
+
     return dest_path
 
 
