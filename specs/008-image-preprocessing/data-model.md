@@ -216,12 +216,11 @@ def thumbnail_fallback_url(self) -> str:
 
 Existing `GalleryConfig` model extended with thumbnail configuration.
 
-**Modified Fields**:
-- `enable_thumbnails: bool` - Changed from placeholder to active feature
-- `thumbnail_config: ThumbnailConfig` - New nested configuration object
+**New Fields**:
+- `thumbnail_config: ThumbnailConfig` - Nested configuration object for thumbnail generation
 
-**Backward Compatibility**:
-- `enable_thumbnails=False` maintains existing behavior (no thumbnail generation)
+**Behavior**:
+- Thumbnails are **always generated** during every build for optimal performance
 - Default thumbnail config values ensure safe defaults if not explicitly configured
 
 ---
@@ -349,10 +348,10 @@ assert thumbnail.webp_savings_percent > 25    # 30.8% WebP savings
 2. Default `None` maintains backward compatibility
 3. Add property methods for thumbnail URLs
 
-### Phase 3: Integrate Generator (Feature Flag)
-1. Check `enable_thumbnails` config flag
-2. Generate thumbnails only if enabled
-3. Existing builds unaffected if disabled
+### Phase 3: Integrate Generator (Always Active)
+1. Thumbnails are automatically generated during every build
+2. Generator integrated into main build pipeline
+3. No configuration flag needed - feature is always active
 
 ### Phase 4: Update Templates (Graceful Fallback)
 1. Templates check if `thumbnail` exists

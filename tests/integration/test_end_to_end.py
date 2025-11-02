@@ -1003,3 +1003,313 @@ output_dir: {output_dir}
         # - 768px (tablet): targetRowHeight=320
         # - 1024px (desktop): targetRowHeight=320
         # - 1920px (large desktop): targetRowHeight=320
+
+
+class TestThumbnailGeneration:
+    """Integration tests for thumbnail generation feature."""
+
+    def test_end_to_end_thumbnail_generation(self, tmp_path):
+        """Test complete build process with thumbnail generation."""
+        from PIL import Image as PILImage
+
+        # Setup directories
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+        thumb_dir = output_dir / "images" / "thumbnails"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        # Create test images with Pillow
+        img1 = PILImage.new("RGB", (2000, 1500), color=(255, 0, 0))
+        img1.save(content_dir / "img1.jpg")
+
+        img2 = PILImage.new("RGB", (1600, 1200), color=(0, 255, 0))
+        img2.save(content_dir / "img2.jpg")
+
+        img3 = PILImage.new("RGB", (1200, 1600), color=(0, 0, 255))
+        img3.save(content_dir / "img3.jpg")
+
+        # Create YAML
+        yaml_path = config_dir / "gallery.yaml"
+        yaml_path.write_text(
+            """
+categories:
+  - Test
+images: []
+"""
+        )
+
+        # Create settings with thumbnails enabled
+        settings_path = config_dir / "settings.yaml"
+        settings_path.write_text(
+            f"""
+content_dir: {content_dir}
+gallery_yaml_path: {yaml_path}
+default_category: Test
+output_dir: {output_dir}
+thumbnail_config:
+  max_dimension: 800
+  webp_quality: 85
+  jpeg_quality: 90
+"""
+        )
+
+        # Run full build
+        build_gallery(settings_path)
+
+        # Verify thumbnail directory created
+        assert thumb_dir.exists()
+
+        # Verify thumbnails generated (2 files per image: .webp and .jpg)
+        webp_files = list(thumb_dir.glob("*.webp"))
+        jpeg_files = list(thumb_dir.glob("*.jpg"))
+
+        assert len(webp_files) == 3
+        assert len(jpeg_files) == 3
+
+        # Verify thumbnail filenames contain hash
+        for webp_file in webp_files:
+            # Format: img1-a1b2c3d4.webp (8-char hash)
+            stem = webp_file.stem
+            assert "-" in stem
+            hash_part = stem.split("-")[-1]
+            assert len(hash_part) == 8
+
+        # Verify cache file created
+        cache_file = output_dir / ".build-cache.json"
+        assert cache_file.exists()
+
+        # Verify HTML contains thumbnail references
+        html_content = (output_dir / "index.html").read_text()
+        assert "thumbnails/" in html_content
+        assert ".webp" in html_content
+
+    def test_incremental_build_skips_unchanged(self, tmp_path):
+        """Test that incremental builds skip unchanged images."""
+        import time
+
+        from PIL import Image as PILImage
+
+        # Setup
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+        thumb_dir = output_dir / "images" / "thumbnails"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        # Create test images
+        img1_path = content_dir / "img1.jpg"
+        img2_path = content_dir / "img2.jpg"
+
+        img1 = PILImage.new("RGB", (2000, 1500), color=(255, 0, 0))
+        img1.save(img1_path)
+
+        img2 = PILImage.new("RGB", (1600, 1200), color=(0, 255, 0))
+        img2.save(img2_path)
+
+        # Create YAML
+        yaml_path = config_dir / "gallery.yaml"
+        yaml_path.write_text(
+            """
+categories:
+  - Test
+images: []
+"""
+        )
+
+        # Create settings
+        settings_path = config_dir / "settings.yaml"
+        settings_path.write_text(
+            f"""
+content_dir: {content_dir}
+gallery_yaml_path: {yaml_path}
+default_category: Test
+output_dir: {output_dir}
+"""
+        )
+
+        # First build
+        build_gallery(settings_path)
+
+        # Get initial thumbnail mtimes
+        thumb1_webp = list(thumb_dir.glob("img1-*.webp"))[0]
+        thumb2_webp = list(thumb_dir.glob("img2-*.webp"))[0]
+
+        initial_mtime1 = thumb1_webp.stat().st_mtime
+        initial_mtime2 = thumb2_webp.stat().st_mtime
+
+        # Wait to ensure mtime would change if regenerated
+        time.sleep(0.1)
+
+        # Second build without changes
+        build_gallery(settings_path)
+
+        # Thumbnails should not be regenerated (mtimes unchanged)
+        assert thumb1_webp.stat().st_mtime == initial_mtime1
+        assert thumb2_webp.stat().st_mtime == initial_mtime2
+
+        # Modify one image
+        time.sleep(0.1)
+        img1_new = PILImage.new("RGB", (2000, 1500), color=(255, 255, 0))
+        img1_new.save(img1_path)
+
+        # Third build
+        build_gallery(settings_path)
+
+        # Modified image should have new thumbnail
+        thumb1_new = list(thumb_dir.glob("img1-*.webp"))[0]
+        assert thumb1_new.stat().st_mtime > initial_mtime1
+
+        # Unchanged image should keep old thumbnail
+        assert thumb2_webp.stat().st_mtime == initial_mtime2
+
+    def test_thumbnail_dimensions_preserved(self, tmp_path):
+        """Test that thumbnail dimensions maintain aspect ratio."""
+        from PIL import Image as PILImage
+
+        # Setup
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+        thumb_dir = output_dir / "images" / "thumbnails"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        # Create landscape image (16:9)
+        landscape = PILImage.new("RGB", (1920, 1080), color=(100, 100, 255))
+        landscape.save(content_dir / "landscape.jpg")
+
+        # Create portrait image (9:16)
+        portrait = PILImage.new("RGB", (1080, 1920), color=(255, 100, 100))
+        portrait.save(content_dir / "portrait.jpg")
+
+        # Create YAML
+        yaml_path = config_dir / "gallery.yaml"
+        yaml_path.write_text("categories:\n  - Test\nimages: []")
+
+        # Create settings
+        settings_path = config_dir / "settings.yaml"
+        settings_path.write_text(
+            f"""
+content_dir: {content_dir}
+gallery_yaml_path: {yaml_path}
+default_category: Test
+output_dir: {output_dir}
+thumbnail_config:
+  max_dimension: 800
+"""
+        )
+
+        # Build
+        build_gallery(settings_path)
+
+        # Check landscape thumbnail
+        landscape_thumb = list(thumb_dir.glob("landscape-*.webp"))[0]
+        with PILImage.open(landscape_thumb) as img:
+            assert img.width == 800
+            assert img.height == 450  # 800 / (16/9)
+            # Aspect ratio preserved
+            assert abs((img.width / img.height) - (16 / 9)) < 0.01
+
+        # Check portrait thumbnail
+        portrait_thumb = list(thumb_dir.glob("portrait-*.webp"))[0]
+        with PILImage.open(portrait_thumb) as img:
+            assert img.width == 450  # 800 / (16/9)
+            assert img.height == 800
+            # Aspect ratio preserved
+            assert abs((img.width / img.height) - (9 / 16)) < 0.01
+
+    def test_thumbnail_no_upscaling(self, tmp_path):
+        """Test that small images are not upscaled."""
+        from PIL import Image as PILImage
+
+        # Setup
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+        thumb_dir = output_dir / "images" / "thumbnails"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        # Create small image (smaller than max_dimension)
+        small_img = PILImage.new("RGB", (600, 400), color=(100, 200, 100))
+        small_img.save(content_dir / "small.jpg")
+
+        # Create YAML
+        yaml_path = config_dir / "gallery.yaml"
+        yaml_path.write_text("categories:\n  - Test\nimages: []")
+
+        # Create settings
+        settings_path = config_dir / "settings.yaml"
+        settings_path.write_text(
+            f"""
+content_dir: {content_dir}
+gallery_yaml_path: {yaml_path}
+default_category: Test
+output_dir: {output_dir}
+thumbnail_config:
+  max_dimension: 800
+"""
+        )
+
+        # Build
+        build_gallery(settings_path)
+
+        # Check that thumbnail is not upscaled
+        small_thumb = list(thumb_dir.glob("small-*.webp"))[0]
+        with PILImage.open(small_thumb) as img:
+            assert img.width == 600
+            assert img.height == 400
+
+    def test_thumbnails_in_html_picture_elements(self, tmp_path):
+        """Test that thumbnails are served via HTML picture elements."""
+        from PIL import Image as PILImage
+
+        # Setup
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+
+        # Create test image
+        img = PILImage.new("RGB", (2000, 1500), color=(255, 0, 0))
+        img.save(content_dir / "test.jpg")
+
+        # Create YAML
+        yaml_path = config_dir / "gallery.yaml"
+        yaml_path.write_text("categories:\n  - Test\nimages: []")
+
+        # Create settings
+        settings_path = config_dir / "settings.yaml"
+        settings_path.write_text(
+            f"""
+content_dir: {content_dir}
+gallery_yaml_path: {yaml_path}
+default_category: Test
+output_dir: {output_dir}
+"""
+        )
+
+        # Build
+        build_gallery(settings_path)
+
+        # Check HTML
+        html_content = (output_dir / "index.html").read_text()
+
+        # Should have picture element with WebP source
+        assert "<picture>" in html_content
+        assert "<source" in html_content
+        assert 'type="image/webp"' in html_content
+        assert "thumbnails/" in html_content
+        assert ".webp" in html_content
+
+        # Should have JPEG fallback in img tag
+        assert ".jpg" in html_content or ".jpeg" in html_content

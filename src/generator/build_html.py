@@ -326,7 +326,11 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     from .thumbnails import ThumbnailGenerator
 
     logger.info(_("Generating thumbnails..."))
-    thumb_gen = ThumbnailGenerator(config.thumbnail_config, logger)
+    # Override thumbnail output_dir to be relative to gallery output_dir
+    thumbnail_config = config.thumbnail_config.model_copy()
+    thumbnail_config.output_dir = config.output_dir / "images" / "thumbnails"
+    thumbnail_config.cache_file = config.output_dir / ".build-cache.json"
+    thumb_gen = ThumbnailGenerator(thumbnail_config, logger)
 
     # Extract image paths
     image_paths = [img.file_path for img in images]
@@ -337,7 +341,9 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     # Attach thumbnails to Image objects
     thumbnail_map = {str(t.source_path): t for t in successful}
     for img in images:
-        img.thumbnail = thumbnail_map.get(str(img.file_path))  # Organize by category
+        img.thumbnail = thumbnail_map.get(str(img.file_path))
+
+    # Organize by category
     categories = organize_by_category(category_names, images)
 
     # Generate HTML

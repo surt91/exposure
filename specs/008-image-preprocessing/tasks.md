@@ -148,14 +148,14 @@
 
 **Purpose**: Improvements that affect multiple user stories and final documentation
 
-- [ ] T047 [P] Add unit tests for `calculate_thumbnail_dimensions()` in `tests/unit/test_thumbnails.py`
-- [ ] T048 [P] Add unit tests for `generate_content_hash()` in `tests/unit/test_thumbnails.py`
-- [ ] T049 [P] Add unit tests for `apply_exif_orientation()` in `tests/unit/test_thumbnails.py`
-- [ ] T050 [P] Add unit tests for ThumbnailConfig validation in `tests/unit/test_model.py`
-- [ ] T051 [P] Add unit tests for ThumbnailImage derived properties in `tests/unit/test_model.py`
-- [ ] T052 [P] Add unit tests for BuildCache operations in `tests/unit/test_model.py`
-- [ ] T053 [P] Add integration test for end-to-end thumbnail generation in `tests/integration/test_end_to_end.py`
-- [ ] T054 [P] Add integration test for incremental builds in `tests/integration/test_end_to_end.py`
+- [X] T047 [P] Add unit tests for `calculate_thumbnail_dimensions()` in `tests/unit/test_thumbnails.py`
+- [X] T048 [P] Add unit tests for `generate_content_hash()` in `tests/unit/test_thumbnails.py`
+- [X] T049 [P] Add unit tests for `apply_exif_orientation()` in `tests/unit/test_thumbnails.py`
+- [X] T050 [P] Add unit tests for ThumbnailConfig validation in `tests/unit/test_model.py`
+- [X] T051 [P] Add unit tests for ThumbnailImage derived properties in `tests/unit/test_model.py`
+- [X] T052 [P] Add unit tests for BuildCache operations in `tests/unit/test_model.py`
+- [X] T053 [P] Add integration test for end-to-end thumbnail generation in `tests/integration/test_end_to_end.py`
+- [X] T054 [P] Add integration test for incremental builds in `tests/integration/test_end_to_end.py`
 - [ ] T055 [P] Update reproducibility test to verify thumbnail hashing in `tests/integration/test_reproducibility.py`
 - [ ] T056 [P] Add performance benchmark test for 100 images in `tests/integration/test_asset_budgets.py`
 - [ ] T057 [P] Add file size reduction validation test (90%+ reduction) in `tests/integration/test_asset_budgets.py`
@@ -163,7 +163,7 @@
 - [X] T059 Update README.md with thumbnail feature documentation and configuration examples
 - [X] T060 [P] Add ADR document `docs/decisions/008-image-preprocessing-approach.md` explaining thumbnail strategy
 - [X] T061 [P] Update CHANGELOG.md with thumbnail feature description
-- [ ] T062 [P] Add environment variable documentation for thumbnail configuration to README.md
+- [X] T062 [P] Add environment variable documentation for thumbnail configuration to README.md
 - [ ] T063 Run through quickstart.md scenarios to validate all workflows
 - [ ] T064 Final build and deployment verification with sample gallery
 

@@ -124,7 +124,7 @@ log_level: INFO                        # Logging verbosity (DEBUG, INFO, WARNING
 
 ### Thumbnail Generation
 
-Thumbnails are **always generated** during build for optimal gallery performance.
+Thumbnails are **always generated** during every build for optimal gallery performance. This ensures fast page loads and efficient bandwidth usage.
 
 **Benefits:**
 - 85%+ reduction in gallery page size (125MB → 15MB for 50 images)
@@ -132,14 +132,13 @@ Thumbnails are **always generated** during build for optimal gallery performance
 - Original quality preserved in modal view
 - Incremental builds save time (only regenerate changed images)
 
-**Customize thumbnail settings:**
+**Customize thumbnail settings in `config/settings.yaml`:**
 
 ```yaml
 thumbnail_config:
   max_dimension: 800      # Max width/height in pixels (default: 800)
   webp_quality: 85        # WebP quality 1-100 (default: 85)
   jpeg_quality: 90        # JPEG fallback quality 1-100 (default: 90)
-  output_dir: build/images/thumbnails  # Output directory
   enable_cache: true      # Skip unchanged images (default: true)
 ```
 

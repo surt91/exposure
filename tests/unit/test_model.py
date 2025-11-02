@@ -1,9 +1,21 @@
 """Tests for data models."""
 
+from datetime import datetime
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
-from src.generator.model import Category, GalleryConfig, Image, YamlEntry
+from src.generator.model import (
+    BuildCache,
+    CacheEntry,
+    Category,
+    GalleryConfig,
+    Image,
+    ThumbnailConfig,
+    ThumbnailImage,
+    YamlEntry,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -298,3 +310,325 @@ class TestYamlEntry:
         entry = YamlEntry.model_validate(data)
         assert entry.filename == "test.jpg"
         assert entry.category == "Landscapes"
+
+
+class TestThumbnailConfig:
+    """Tests for ThumbnailConfig model validation."""
+
+    def test_default_configuration(self):
+        """Verify default configuration values."""
+        config = ThumbnailConfig()
+
+        assert config.max_dimension == 800
+        assert config.webp_quality == 85
+        assert config.jpeg_quality == 90
+        assert config.output_dir == Path("build/images/thumbnails")
+        assert config.enable_cache is True
+        assert config.resampling_filter == "LANCZOS"
+
+    def test_custom_configuration(self):
+        """Test creating configuration with custom values."""
+        config = ThumbnailConfig(
+            max_dimension=1200,
+            webp_quality=80,
+            jpeg_quality=85,
+            output_dir=Path("custom/thumbnails"),
+            enable_cache=False,
+            resampling_filter="BICUBIC",
+        )
+
+        assert config.max_dimension == 1200
+        assert config.webp_quality == 80
+        assert config.jpeg_quality == 85
+        assert config.output_dir == Path("custom/thumbnails")
+        assert config.enable_cache is False
+        assert config.resampling_filter == "BICUBIC"
+
+    def test_max_dimension_too_small_raises(self):
+        """Test that max_dimension below 100 raises ValidationError."""
+        with pytest.raises(ValidationError, match="max_dimension"):
+            ThumbnailConfig(max_dimension=50)
+
+    def test_max_dimension_too_large_raises(self):
+        """Test that max_dimension above 4000 raises ValidationError."""
+        with pytest.raises(ValidationError, match="max_dimension"):
+            ThumbnailConfig(max_dimension=5000)
+
+    def test_webp_quality_too_low_raises(self):
+        """Test that webp_quality below 1 raises ValidationError."""
+        with pytest.raises(ValidationError, match="webp_quality"):
+            ThumbnailConfig(webp_quality=0)
+
+    def test_webp_quality_too_high_raises(self):
+        """Test that webp_quality above 100 raises ValidationError."""
+        with pytest.raises(ValidationError, match="webp_quality"):
+            ThumbnailConfig(webp_quality=150)
+
+    def test_jpeg_quality_validation(self):
+        """Test JPEG quality validation range."""
+        # Valid quality values
+        config = ThumbnailConfig(jpeg_quality=1)
+        assert config.jpeg_quality == 1
+
+        config = ThumbnailConfig(jpeg_quality=100)
+        assert config.jpeg_quality == 100
+
+        # Invalid values
+        with pytest.raises(ValidationError, match="jpeg_quality"):
+            ThumbnailConfig(jpeg_quality=0)
+
+        with pytest.raises(ValidationError, match="jpeg_quality"):
+            ThumbnailConfig(jpeg_quality=101)
+
+    def test_resampling_filter_validation(self):
+        """Test resampling filter validation."""
+        # Valid filters
+        for filter_name in ["LANCZOS", "BICUBIC", "BILINEAR", "NEAREST"]:
+            config = ThumbnailConfig(resampling_filter=filter_name)
+            assert config.resampling_filter == filter_name
+
+        # Invalid filter
+        with pytest.raises(ValidationError, match="resampling_filter"):
+            ThumbnailConfig(resampling_filter="INVALID")
+
+    def test_path_conversion(self):
+        """Test automatic conversion of strings to Path objects."""
+        config = ThumbnailConfig(output_dir="build/thumbnails", cache_file="build/cache.json")
+
+        assert isinstance(config.output_dir, Path)
+        assert isinstance(config.cache_file, Path)
+
+
+class TestThumbnailImage:
+    """Tests for ThumbnailImage model."""
+
+    def test_create_thumbnail_image(self, tmp_path):
+        """Test creating valid ThumbnailImage."""
+        source = tmp_path / "source.jpg"
+        webp = tmp_path / "thumb.webp"
+        jpeg = tmp_path / "thumb.jpg"
+
+        thumbnail = ThumbnailImage(
+            source_filename="source.jpg",
+            source_path=source,
+            webp_path=webp,
+            jpeg_path=jpeg,
+            width=800,
+            height=600,
+            webp_size_bytes=45_000,
+            jpeg_size_bytes=65_000,
+            source_size_bytes=2_500_000,
+            content_hash="a1b2c3d4",
+            generated_at=datetime.now(),
+        )
+
+        assert thumbnail.source_filename == "source.jpg"
+        assert thumbnail.width == 800
+        assert thumbnail.height == 600
+
+    def test_size_reduction_percent(self, tmp_path):
+        """Test size reduction percentage calculation."""
+        source = tmp_path / "source.jpg"
+        webp = tmp_path / "thumb.webp"
+        jpeg = tmp_path / "thumb.jpg"
+
+        thumbnail = ThumbnailImage(
+            source_filename="source.jpg",
+            source_path=source,
+            webp_path=webp,
+            jpeg_path=jpeg,
+            width=800,
+            height=600,
+            webp_size_bytes=50_000,  # 50KB
+            jpeg_size_bytes=70_000,  # 70KB
+            source_size_bytes=2_500_000,  # 2.5MB
+            content_hash="a1b2c3d4",
+            generated_at=datetime.now(),
+        )
+
+        # Should be 98% reduction (2.5MB -> 50KB)
+        assert abs(thumbnail.size_reduction_percent - 98.0) < 0.1
+
+    def test_webp_savings_percent(self, tmp_path):
+        """Test WebP savings vs JPEG percentage calculation."""
+        source = tmp_path / "source.jpg"
+        webp = tmp_path / "thumb.webp"
+        jpeg = tmp_path / "thumb.jpg"
+
+        thumbnail = ThumbnailImage(
+            source_filename="source.jpg",
+            source_path=source,
+            webp_path=webp,
+            jpeg_path=jpeg,
+            width=800,
+            height=600,
+            webp_size_bytes=45_000,  # 45KB
+            jpeg_size_bytes=65_000,  # 65KB
+            source_size_bytes=2_500_000,
+            content_hash="a1b2c3d4",
+            generated_at=datetime.now(),
+        )
+
+        # Should be ~30.8% savings (65KB - 45KB) / 65KB
+        assert abs(thumbnail.webp_savings_percent - 30.769) < 0.1
+
+    def test_aspect_ratio(self, tmp_path):
+        """Test aspect ratio calculation."""
+        source = tmp_path / "source.jpg"
+        webp = tmp_path / "thumb.webp"
+        jpeg = tmp_path / "thumb.jpg"
+
+        thumbnail = ThumbnailImage(
+            source_filename="source.jpg",
+            source_path=source,
+            webp_path=webp,
+            jpeg_path=jpeg,
+            width=800,
+            height=600,
+            webp_size_bytes=45_000,
+            jpeg_size_bytes=65_000,
+            source_size_bytes=2_500_000,
+            content_hash="a1b2c3d4",
+            generated_at=datetime.now(),
+        )
+
+        # 800/600 = 1.333...
+        assert abs(thumbnail.aspect_ratio - (4 / 3)) < 0.001
+
+    def test_validation_errors(self, tmp_path):
+        """Test validation errors for invalid values."""
+        source = tmp_path / "source.jpg"
+        webp = tmp_path / "thumb.webp"
+        jpeg = tmp_path / "thumb.jpg"
+
+        # Zero width
+        with pytest.raises(ValidationError, match="width"):
+            ThumbnailImage(
+                source_filename="source.jpg",
+                source_path=source,
+                webp_path=webp,
+                jpeg_path=jpeg,
+                width=0,
+                height=600,
+                webp_size_bytes=45_000,
+                jpeg_size_bytes=65_000,
+                source_size_bytes=2_500_000,
+                content_hash="a1b2c3d4",
+                generated_at=datetime.now(),
+            )
+
+        # Invalid hash length
+        with pytest.raises(ValidationError, match="content_hash"):
+            ThumbnailImage(
+                source_filename="source.jpg",
+                source_path=source,
+                webp_path=webp,
+                jpeg_path=jpeg,
+                width=800,
+                height=600,
+                webp_size_bytes=45_000,
+                jpeg_size_bytes=65_000,
+                source_size_bytes=2_500_000,
+                content_hash="abc",  # Too short
+                generated_at=datetime.now(),
+            )
+
+
+class TestBuildCache:
+    """Tests for BuildCache model."""
+
+    def test_create_empty_cache(self):
+        """Test creating empty build cache."""
+        cache = BuildCache()
+
+        assert len(cache.entries) == 0
+        assert cache.cache_version == "1.0"
+        assert isinstance(cache.last_updated, datetime)
+
+    def test_should_regenerate_missing_entry(self, tmp_path):
+        """Test that should_regenerate returns True for missing entries."""
+        cache = BuildCache()
+        source = tmp_path / "image.jpg"
+        source.touch()
+
+        assert cache.should_regenerate(source) is True
+
+    def test_should_regenerate_modified_file(self, tmp_path):
+        """Test that should_regenerate returns True for modified files."""
+        cache = BuildCache()
+        source = tmp_path / "image.jpg"
+        source.write_text("original content")
+
+        # Add cache entry with old mtime
+        old_mtime = source.stat().st_mtime - 100
+        cache.entries[str(source)] = CacheEntry(
+            source_path=str(source),
+            source_mtime=old_mtime,
+            webp_path="thumb.webp",
+            jpeg_path="thumb.jpg",
+            content_hash="abc123",
+            thumbnail_generated_at=datetime.now(),
+        )
+
+        # File has been modified (current mtime > cached mtime)
+        assert cache.should_regenerate(source) is True
+
+    def test_should_regenerate_unchanged_file(self, tmp_path):
+        """Test that should_regenerate returns False for unchanged files."""
+        cache = BuildCache()
+        source = tmp_path / "image.jpg"
+        source.write_text("content")
+
+        # Add cache entry with current mtime
+        current_mtime = source.stat().st_mtime
+        cache.entries[str(source)] = CacheEntry(
+            source_path=str(source),
+            source_mtime=current_mtime,
+            webp_path="thumb.webp",
+            jpeg_path="thumb.jpg",
+            content_hash="abc123",
+            thumbnail_generated_at=datetime.now(),
+        )
+
+        # File unchanged
+        assert cache.should_regenerate(source) is False
+
+    def test_update_entry(self, tmp_path):
+        """Test updating cache entry with new thumbnail."""
+        cache = BuildCache()
+        source = tmp_path / "image.jpg"
+        source.write_text("content")
+
+        webp = tmp_path / "thumb.webp"
+        jpeg = tmp_path / "thumb.jpg"
+
+        thumbnail = ThumbnailImage(
+            source_filename="image.jpg",
+            source_path=source,
+            webp_path=webp,
+            jpeg_path=jpeg,
+            width=800,
+            height=600,
+            webp_size_bytes=45_000,
+            jpeg_size_bytes=65_000,
+            source_size_bytes=100_000,
+            content_hash="a1b2c3d4",
+            generated_at=datetime.now(),
+        )
+
+        cache.update_entry(source, thumbnail)
+
+        # Entry should be added
+        assert str(source) in cache.entries
+        entry = cache.entries[str(source)]
+        assert entry.content_hash == "a1b2c3d4"
+        assert entry.source_path == str(source)
+
+    def test_cache_versioning(self):
+        """Test cache version field."""
+        cache = BuildCache(cache_version="1.0")
+        assert cache.cache_version == "1.0"
+
+        # Version can be set to different value
+        cache2 = BuildCache(cache_version="2.0")
+        assert cache2.cache_version == "2.0"
