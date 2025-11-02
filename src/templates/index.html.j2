@@ -9,6 +9,7 @@
     <title>{{ gallery_title }}</title>
     <link rel="stylesheet" href="{{ css_href }}">
 </head>
+</head>
 <body>
     <header>
         <h1>{{ gallery_title }}</h1>
@@ -26,11 +27,20 @@
                     data-category="{{ image['category'] }}"
                     data-title="{{ image['title'] }}"
                     data-description="{{ image['description'] }}"
+{% if image['width'] and image['height'] %}
+                    data-width="{{ image['width'] }}"
+                    data-height="{{ image['height'] }}"
+{% endif %}
                 >
                     <img
                         src="{{ image['src'] }}"
                         alt="{{ image['alt_text'] }}"
+{% if image['width'] and image['height'] %}
+                        width="{{ image['width'] }}"
+                        height="{{ image['height'] }}"
+{% endif %}
                         loading="lazy"
+                        decoding="async"
                     />
 {% if image['title'] %}
                     <div class="image-caption">{{ image['title'] }}</div>

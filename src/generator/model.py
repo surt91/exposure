@@ -29,6 +29,13 @@ class Image(BaseModel):
         # Fallback to filename without extension
         return Path(self.filename).stem.replace("_", " ").replace("-", " ").title()
 
+    @property
+    def aspect_ratio(self) -> Optional[float]:
+        """Calculate aspect ratio if dimensions available."""
+        if self.width and self.height:
+            return self.width / self.height
+        return None
+
 
 class Category(BaseModel):
     """Represents a category grouping images."""

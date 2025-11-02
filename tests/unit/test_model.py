@@ -67,6 +67,37 @@ class TestImage:
         )
         assert img.alt_text == "Mountain Sunrise"
 
+    def test_aspect_ratio_with_dimensions(self, tmp_path):
+        """Test aspect ratio calculation with dimensions."""
+        img = Image(
+            filename="test.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=1920,
+            height=1080,
+        )
+        assert img.aspect_ratio is not None
+        assert abs(img.aspect_ratio - 1.7777777777777777) < 0.0001
+
+    def test_aspect_ratio_without_dimensions(self, tmp_path):
+        """Test aspect ratio returns None without dimensions."""
+        img = Image(
+            filename="test.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+        )
+        assert img.aspect_ratio is None
+
+    def test_aspect_ratio_with_partial_dimensions(self, tmp_path):
+        """Test aspect ratio returns None with partial dimensions."""
+        img = Image(
+            filename="test.jpg",
+            file_path=tmp_path / "test.jpg",
+            category="Test",
+            width=1920,
+        )
+        assert img.aspect_ratio is None
+
 
 class TestCategory:
     """Tests for Category model."""

@@ -10,6 +10,7 @@ Auto-generated from all feature plans. Last updated: 2025-11-02
 - Git repository (LICENSE file, source file headers tracked in version control)
 - Python 3.11+ + PyYAML 6.0+, Pillow 10.0+, Pydantic 2.0+, Jinja2 3.1+, Babel 2.13+, pydantic-settings 2.0+ (006-tool-rename-cli)
 - File-based (YAML configuration, static assets, no database) (006-tool-rename-cli)
+- Python 3.11+ (build tooling), HTML5/CSS3/ES Modules (delivery assets) + Pydantic v2 (data models), Jinja2 (templating), Pillow (image metadata), PyYAML (config), Babel (i18n) (007-flexible-layout)
 
 ## Project Structure
 
@@ -44,9 +45,9 @@ uv run pybabel compile -d locales
 Python 3.11: Follow standard conventions
 
 ## Recent Changes
+- 007-flexible-layout: Added Python 3.11+ (build tooling), HTML5/CSS3/ES Modules (delivery assets) + Pydantic v2 (data models), Jinja2 (templating), Pillow (image metadata), PyYAML (config), Babel (i18n)
 - 006-tool-rename-cli: Added Python 3.11+ + PyYAML 6.0+, Pillow 10.0+, Pydantic 2.0+, Jinja2 3.1+, Babel 2.13+, pydantic-settings 2.0+
 - 005-library-refactor-i18n: Migrated to Pydantic v2 data models, Jinja2 templating, standard Python logging, Babel i18n support, pydantic-settings for configuration management
-- 004-apache-license: Added Apache 2.0 license with SPDX headers
 
 
 <!-- MANUAL ADDITIONS START -->
