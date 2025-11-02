@@ -123,100 +123,182 @@ class ThumbnailGenerator:
             if cached_thumbnail:
                 self.logger.debug(f"Skipping {source_path.name} (cached, unchanged)")
                 return cached_thumbnail
-            # If cache entry missing or files don't exist, fall through to regeneration
 
         try:
             # Extract metadata if not provided
             if metadata is None:
                 metadata = self.extract_metadata(source_path)
 
-            # Generate content hash for filename
             content_hash = generate_content_hash(source_path.read_bytes())
 
-            # Open and process image
             with PILImage.open(source_path) as img:
-                # Apply EXIF orientation
-                img = apply_exif_orientation(img)
+                # Prepare image for thumbnailing
+                img = self._prepare_image(img, metadata)
 
-                # For animated GIFs, use first frame only
-                if metadata.is_animated:
-                    img.seek(0)
+                # Generate and save thumbnails
+                thumb = self._create_thumbnail(img)
+                webp_path, jpeg_path = self._save_thumbnails(thumb, source_path, content_hash)
 
-                # Convert RGBA to RGB for JPEG compatibility
-                if img.mode in ("RGBA", "LA", "P"):
-                    # Create white background
-                    rgb_img = PILImage.new("RGB", img.size, (255, 255, 255))
-                    if img.mode == "P":
-                        img = img.convert("RGBA")
-                    rgb_img.paste(img, mask=img.split()[-1] if "A" in img.mode else None)
-                    img = rgb_img
-                elif img.mode not in ("RGB", "L"):
-                    img = img.convert("RGB")
-
-                # Calculate thumbnail dimensions
-                thumb_width, thumb_height = calculate_thumbnail_dimensions(
-                    img.width, img.height, self.config.max_dimension
-                )
-
-                # Create thumbnail
-                thumb = img.copy()
-                thumb.thumbnail((thumb_width, thumb_height), PILImage.Resampling.LANCZOS)
-
-                # Generate output filenames
-                stem = source_path.stem
-                webp_filename = f"{stem}-{content_hash}.webp"
-                jpeg_filename = f"{stem}-{content_hash}.jpg"
-
-                webp_path = self.config.output_dir / webp_filename
-                jpeg_path = self.config.output_dir / jpeg_filename
-
-                # Save WebP thumbnail
-                thumb.save(
-                    webp_path,
-                    "WEBP",
-                    quality=self.config.webp_quality,
-                    method=6,  # Best compression
-                )
-
-                # Save JPEG fallback
-                thumb.save(jpeg_path, "JPEG", quality=self.config.jpeg_quality, optimize=True)
-
-                # Get file sizes
-                webp_size = webp_path.stat().st_size
-                jpeg_size = jpeg_path.stat().st_size
-
-                # Create ThumbnailImage
-                thumbnail = ThumbnailImage(
-                    source_filename=source_path.name,
-                    source_path=source_path,
-                    webp_path=webp_path,
-                    jpeg_path=jpeg_path,
-                    width=thumb.width,
-                    height=thumb.height,
-                    webp_size_bytes=webp_size,
-                    jpeg_size_bytes=jpeg_size,
-                    source_size_bytes=metadata.file_size_bytes,
-                    content_hash=content_hash,
-                    generated_at=datetime.now(),
+                # Build result object
+                thumbnail = self._build_thumbnail_result(
+                    source_path, webp_path, jpeg_path, thumb, content_hash, metadata
                 )
 
                 # Update cache
                 if self.config.enable_cache:
                     self.cache.update_entry(source_path, thumbnail)
 
-                self.logger.debug(
-                    f"Generated thumbnail for {source_path.name}: "
-                    f"{metadata.file_size_bytes // 1024}KB → "
-                    f"{webp_size // 1024}KB WebP, "
-                    f"{jpeg_size // 1024}KB JPEG "
-                    f"({thumbnail.size_reduction_percent:.1f}% reduction)"
-                )
-
+                self._log_thumbnail_generation(thumbnail, metadata)
                 return thumbnail
 
         except Exception as e:
             self.logger.warning(f"Failed to generate thumbnail for {source_path.name}: {e}")
             return None
+
+    def _prepare_image(self, img: PILImage.Image, metadata: ImageMetadata) -> PILImage.Image:
+        """
+        Prepare image for thumbnail generation.
+
+        Applies EXIF orientation and converts to RGB mode.
+
+        Args:
+            img: PIL Image to prepare
+            metadata: Image metadata
+
+        Returns:
+            Prepared PIL Image
+        """
+        # Apply EXIF orientation
+        img = apply_exif_orientation(img)
+
+        # For animated GIFs, use first frame only
+        if metadata.is_animated:
+            img.seek(0)
+
+        # Convert to RGB for JPEG compatibility
+        return self._convert_to_rgb(img)
+
+    def _convert_to_rgb(self, img: PILImage.Image) -> PILImage.Image:
+        """
+        Convert image to RGB mode for JPEG compatibility.
+
+        Args:
+            img: PIL Image to convert
+
+        Returns:
+            RGB PIL Image
+        """
+        if img.mode in ("RGBA", "LA", "P"):
+            # Create white background
+            rgb_img = PILImage.new("RGB", img.size, (255, 255, 255))
+            if img.mode == "P":
+                img = img.convert("RGBA")
+            rgb_img.paste(img, mask=img.split()[-1] if "A" in img.mode else None)
+            return rgb_img
+        elif img.mode not in ("RGB", "L"):
+            return img.convert("RGB")
+        return img
+
+    def _create_thumbnail(self, img: PILImage.Image) -> PILImage.Image:
+        """
+        Create thumbnail with calculated dimensions.
+
+        Args:
+            img: Source PIL Image
+
+        Returns:
+            Thumbnail PIL Image
+        """
+        thumb_width, thumb_height = calculate_thumbnail_dimensions(
+            img.width, img.height, self.config.max_dimension
+        )
+        thumb = img.copy()
+        thumb.thumbnail((thumb_width, thumb_height), PILImage.Resampling.LANCZOS)
+        return thumb
+
+    def _save_thumbnails(
+        self, thumb: PILImage.Image, source_path: Path, content_hash: str
+    ) -> tuple[Path, Path]:
+        """
+        Save WebP and JPEG thumbnails to disk.
+
+        Args:
+            thumb: Thumbnail PIL Image
+            source_path: Path to source image
+            content_hash: Content hash for filename
+
+        Returns:
+            Tuple of (webp_path, jpeg_path)
+        """
+        stem = source_path.stem
+        webp_filename = f"{stem}-{content_hash}.webp"
+        jpeg_filename = f"{stem}-{content_hash}.jpg"
+
+        webp_path = self.config.output_dir / webp_filename
+        jpeg_path = self.config.output_dir / jpeg_filename
+
+        # Save WebP thumbnail
+        thumb.save(
+            webp_path,
+            "WEBP",
+            quality=self.config.webp_quality,
+            method=6,  # Best compression
+        )
+
+        # Save JPEG fallback
+        thumb.save(jpeg_path, "JPEG", quality=self.config.jpeg_quality, optimize=True)
+
+        return webp_path, jpeg_path
+
+    def _build_thumbnail_result(
+        self,
+        source_path: Path,
+        webp_path: Path,
+        jpeg_path: Path,
+        thumb: PILImage.Image,
+        content_hash: str,
+        metadata: ImageMetadata,
+    ) -> ThumbnailImage:
+        """
+        Build ThumbnailImage result object.
+
+        Args:
+            source_path: Path to source image
+            webp_path: Path to WebP thumbnail
+            jpeg_path: Path to JPEG thumbnail
+            thumb: Thumbnail PIL Image
+            content_hash: Content hash
+            metadata: Source image metadata
+
+        Returns:
+            ThumbnailImage object
+        """
+        webp_size = webp_path.stat().st_size
+        jpeg_size = jpeg_path.stat().st_size
+
+        return ThumbnailImage(
+            source_filename=source_path.name,
+            source_path=source_path,
+            webp_path=webp_path,
+            jpeg_path=jpeg_path,
+            width=thumb.width,
+            height=thumb.height,
+            webp_size_bytes=webp_size,
+            jpeg_size_bytes=jpeg_size,
+            source_size_bytes=metadata.file_size_bytes,
+            content_hash=content_hash,
+            generated_at=datetime.now(),
+        )
+
+    def _log_thumbnail_generation(self, thumbnail: ThumbnailImage, metadata: ImageMetadata) -> None:
+        """Log thumbnail generation statistics."""
+        self.logger.debug(
+            f"Generated thumbnail for {thumbnail.source_filename}: "
+            f"{metadata.file_size_bytes // 1024}KB → "
+            f"{thumbnail.webp_size_bytes // 1024}KB WebP, "
+            f"{thumbnail.jpeg_size_bytes // 1024}KB JPEG "
+            f"({thumbnail.size_reduction_percent:.1f}% reduction)"
+        )
 
     def generate_batch(
         self,
@@ -283,7 +365,7 @@ class ThumbnailGenerator:
             BuildCache object with entries from disk, or empty cache if file
             does not exist or is invalid.
         """
-        from src.generator.model import BuildCache
+        from src.generator.cache import BuildCache
 
         cache_file = self.config.cache_file
 

@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 from .constants import (
-    CACHE_VERSION,
     DEFAULT_CACHE_FILE,
     DEFAULT_JPEG_QUALITY,
     DEFAULT_LOCALE,
@@ -185,49 +184,6 @@ class ImageMetadata(BaseModel):
     dpi: Optional[tuple[int, int]] = None
 
     model_config = {"arbitrary_types_allowed": True}
-
-
-class CacheEntry(BaseModel):
-    """Single entry in the build cache for incremental builds."""
-
-    source_path: str
-    source_mtime: float
-    webp_path: str
-    jpeg_path: str
-    content_hash: str
-    thumbnail_generated_at: datetime
-
-    model_config = {"arbitrary_types_allowed": True}
-
-
-class BuildCache(BaseModel):
-    """Tracks processed images and their modification times for incremental builds."""
-
-    entries: dict[str, CacheEntry] = Field(default_factory=dict)
-    cache_version: str = Field(default=CACHE_VERSION)
-    last_updated: datetime = Field(default_factory=datetime.now)
-
-    model_config = {"arbitrary_types_allowed": True}
-
-    def should_regenerate(self, source_path: Path) -> bool:
-        """Check if thumbnail needs regeneration based on mtime."""
-        entry = self.entries.get(str(source_path))
-        if entry is None:
-            return True
-        current_mtime = source_path.stat().st_mtime
-        return current_mtime > entry.source_mtime
-
-    def update_entry(self, source_path: Path, thumbnail: ThumbnailImage) -> None:
-        """Update or add cache entry for processed image."""
-        self.entries[str(source_path)] = CacheEntry(
-            source_path=str(source_path),
-            source_mtime=source_path.stat().st_mtime,
-            webp_path=str(thumbnail.webp_path),
-            jpeg_path=str(thumbnail.jpeg_path),
-            content_hash=thumbnail.content_hash,
-            thumbnail_generated_at=thumbnail.generated_at,
-        )
-        self.last_updated = datetime.now()
 
 
 class Category(BaseModel):

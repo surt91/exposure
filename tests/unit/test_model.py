@@ -6,9 +6,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from src.generator.cache import BuildCache, CacheEntry
 from src.generator.model import (
-    BuildCache,
-    CacheEntry,
     Category,
     GalleryConfig,
     Image,

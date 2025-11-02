@@ -51,6 +51,110 @@ def load_config(settings_path: Path) -> GalleryConfig:
     return GalleryConfig()  # type: ignore[call-arg]
 
 
+def _validate_and_discover_images(config: GalleryConfig) -> list[Path]:
+    """
+    Discover and validate images in content directory.
+
+    Args:
+        config: Gallery configuration
+
+    Returns:
+        List of valid image paths
+
+    Raises:
+        ValueError: If duplicate filenames found
+    """
+    # Discover images
+    logger.info(_("Scanning images in %s..."), config.content_dir)
+    image_paths = discover_images(config.content_dir)
+    logger.info(_("Found %d image files"), len(image_paths))
+
+    # Filter valid images
+    valid_paths = filter_valid_images(image_paths)
+    if len(valid_paths) < len(image_paths):
+        logger.warning(_("%d invalid images skipped"), len(image_paths) - len(valid_paths))
+
+    # Check for duplicates
+    duplicates = detect_duplicates(valid_paths)
+    if duplicates:
+        logger.error(_("Duplicate filenames detected:"))
+        for filename, paths in duplicates.items():
+            logger.error("  %s: %s", filename, ", ".join(str(p) for p in paths))
+        raise ValueError(_("Cannot proceed with duplicate filenames"))
+
+    return valid_paths
+
+
+def _sync_yaml_stubs(config: GalleryConfig, valid_paths: list[Path]) -> tuple[list[str], dict]:
+    """
+    Synchronize YAML file with discovered images.
+
+    Args:
+        config: Gallery configuration
+        valid_paths: List of valid image paths
+
+    Returns:
+        Tuple of (category names, entry map)
+    """
+    # Load YAML
+    categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
+
+    # Append stubs for new images
+    filenames = [p.name for p in valid_paths]
+    stubs_added = append_stub_entries(config.gallery_yaml_path, filenames, config.default_category)
+    if stubs_added > 0:
+        logger.info(_("Added %d stub entries to YAML"), stubs_added)
+        # Reload after stub addition
+        categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
+
+    entry_map = get_entry_map(yaml_entries)
+    return categories, entry_map
+
+
+def _create_image_from_path(path: Path, entry_map: dict, default_category: str) -> Image:
+    """
+    Create Image object from path and YAML metadata.
+
+    Args:
+        path: Path to image file
+        entry_map: Dictionary mapping filename to YAML entry
+        default_category: Default category for images without YAML entry
+
+    Returns:
+        Image object
+    """
+    filename = path.name
+    entry = entry_map.get(filename)
+
+    if entry is None:
+        logger.warning(_("No YAML entry for %s, using defaults"), filename)
+        entry_category = default_category
+        entry_title = ""
+        entry_description = ""
+    else:
+        entry_category = entry.category
+        entry_title = entry.title
+        entry_description = entry.description
+
+    # Get dimensions for flexible layout
+    width, height = None, None
+    dims = get_image_dimensions(path)
+    if dims:
+        width, height = dims
+    else:
+        logger.warning(_("Could not extract dimensions for %s"), filename)
+
+    return Image(
+        filename=filename,
+        file_path=path,
+        category=entry_category,
+        width=width,
+        height=height,
+        title=entry_title,
+        description=entry_description,
+    )
+
+
 def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
     """
     Scan images and synchronize with YAML metadata.
@@ -71,72 +175,13 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
     Raises:
         ValueError: If duplicate filenames found or other validation errors
     """
-    # Discover images
-    logger.info(_("Scanning images in %s..."), config.content_dir)
-    image_paths = discover_images(config.content_dir)
-    logger.info(_("Found %d image files"), len(image_paths))
-
-    # Filter valid images
-    valid_paths = filter_valid_images(image_paths)
-    if len(valid_paths) < len(image_paths):
-        logger.warning(_("%d invalid images skipped"), len(image_paths) - len(valid_paths))
-
-    # Check for duplicates
-    duplicates = detect_duplicates(valid_paths)
-    if duplicates:
-        logger.error(_("Duplicate filenames detected:"))
-        for filename, paths in duplicates.items():
-            logger.error("  %s: %s", filename, ", ".join(str(p) for p in paths))
-        raise ValueError(_("Cannot proceed with duplicate filenames"))
-
-    # Load YAML
-    categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
-
-    # Append stubs for new images
-    filenames = [p.name for p in valid_paths]
-    stubs_added = append_stub_entries(config.gallery_yaml_path, filenames, config.default_category)
-    if stubs_added > 0:
-        logger.info(_("Added %d stub entries to YAML"), stubs_added)
-        # Reload after stub addition
-        categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
+    valid_paths = _validate_and_discover_images(config)
+    categories, entry_map = _sync_yaml_stubs(config, valid_paths)
 
     # Create Image objects by merging paths with YAML metadata
-    entry_map = get_entry_map(yaml_entries)
-    images = []
-
-    for path in valid_paths:
-        filename = path.name
-        entry = entry_map.get(filename)
-
-        if entry is None:
-            # This shouldn't happen after stub generation, but handle gracefully
-            logger.warning(_("No YAML entry for %s, using defaults"), filename)
-            entry_category = config.default_category
-            entry_title = ""
-            entry_description = ""
-        else:
-            entry_category = entry.category
-            entry_title = entry.title
-            entry_description = entry.description
-
-        # Get dimensions for flexible layout
-        width, height = None, None
-        dims = get_image_dimensions(path)
-        if dims:
-            width, height = dims
-        else:
-            logger.warning(_("Could not extract dimensions for %s"), filename)
-
-        image = Image(
-            filename=filename,
-            file_path=path,
-            category=entry_category,
-            width=width,
-            height=height,
-            title=entry_title,
-            description=entry_description,
-        )
-        images.append(image)
+    images = [
+        _create_image_from_path(path, entry_map, config.default_category) for path in valid_paths
+    ]
 
     return categories, images
 
@@ -255,6 +300,32 @@ def _setup_jinja_environment(locale: str):
     return env
 
 
+def _get_thumbnail_info(image: Image) -> dict[str, Any]:
+    """
+    Extract thumbnail information from image.
+
+    Args:
+        image: Image object
+
+    Returns:
+        Dictionary with thumbnail URLs and dimensions
+    """
+    if not image.thumbnail:
+        return {
+            "thumbnail_webp_href": None,
+            "thumbnail_jpeg_href": None,
+            "thumbnail_width": None,
+            "thumbnail_height": None,
+        }
+
+    return {
+        "thumbnail_webp_href": f"images/thumbnails/{image.thumbnail.webp_path.name}",
+        "thumbnail_jpeg_href": f"images/thumbnails/{image.thumbnail.jpeg_path.name}",
+        "thumbnail_width": image.thumbnail.width,
+        "thumbnail_height": image.thumbnail.height,
+    }
+
+
 def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
     """
     Prepare image data for template rendering.
@@ -275,20 +346,8 @@ def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
     img_dest = copy_with_hash(image.file_path, originals_dir)
     img_href = f"images/originals/{img_dest.name}"
 
-    # Prepare thumbnail info if available
-    thumbnail_webp_href = None
-    thumbnail_jpeg_href = None
-    thumbnail_width = None
-    thumbnail_height = None
-
-    if image.thumbnail:
-        # Thumbnails already exist in the output directory from generation
-        thumbnail_webp_href = f"images/thumbnails/{image.thumbnail.webp_path.name}"
-        thumbnail_jpeg_href = f"images/thumbnails/{image.thumbnail.jpeg_path.name}"
-        thumbnail_width = image.thumbnail.width
-        thumbnail_height = image.thumbnail.height
-
-    return {
+    # Build template data
+    template_data = {
         "filename": image.filename,
         "src": img_href,
         "category": image.category,
@@ -298,11 +357,12 @@ def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
         "width": image.width,
         "height": image.height,
         "thumbnail": image.thumbnail,
-        "thumbnail_webp_href": thumbnail_webp_href,
-        "thumbnail_jpeg_href": thumbnail_jpeg_href,
-        "thumbnail_width": thumbnail_width,
-        "thumbnail_height": thumbnail_height,
     }
+
+    # Add thumbnail info
+    template_data.update(_get_thumbnail_info(image))
+
+    return template_data
 
 
 def _prepare_template_categories(
