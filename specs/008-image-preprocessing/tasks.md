@@ -156,16 +156,16 @@
 - [X] T052 [P] Add unit tests for BuildCache operations in `tests/unit/test_model.py`
 - [X] T053 [P] Add integration test for end-to-end thumbnail generation in `tests/integration/test_end_to_end.py`
 - [X] T054 [P] Add integration test for incremental builds in `tests/integration/test_end_to_end.py`
-- [ ] T055 [P] Update reproducibility test to verify thumbnail hashing in `tests/integration/test_reproducibility.py`
-- [ ] T056 [P] Add performance benchmark test for 100 images in `tests/integration/test_asset_budgets.py`
-- [ ] T057 [P] Add file size reduction validation test (90%+ reduction) in `tests/integration/test_asset_budgets.py`
-- [ ] T058 [P] Update accessibility tests to verify thumbnail HTML in `tests/accessibility/test_axe_a11y.py`
+- [X] T055 [P] Update reproducibility test to verify thumbnail hashing in `tests/integration/test_reproducibility.py`
+- [X] T056 [P] Add performance benchmark test for 100 images in `tests/integration/test_asset_budgets.py`
+- [X] T057 [P] Add file size reduction validation test (90%+ reduction) in `tests/integration/test_asset_budgets.py`
+- [X] T058 [P] Update accessibility tests to verify thumbnail HTML in `tests/accessibility/test_axe_a11y.py`
 - [X] T059 Update README.md with thumbnail feature documentation and configuration examples
 - [X] T060 [P] Add ADR document `docs/decisions/008-image-preprocessing-approach.md` explaining thumbnail strategy
 - [X] T061 [P] Update CHANGELOG.md with thumbnail feature description
 - [X] T062 [P] Add environment variable documentation for thumbnail configuration to README.md
-- [ ] T063 Run through quickstart.md scenarios to validate all workflows
-- [ ] T064 Final build and deployment verification with sample gallery
+- [X] T063 Run through quickstart.md scenarios to validate all workflows
+- [X] T064 Final build and deployment verification with sample gallery
 
 ---
 

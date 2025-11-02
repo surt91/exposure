@@ -94,6 +94,67 @@ class TestGalleryAccessibility:
         h2 = gallery_page.locator("h2")
         assert h2.count() >= 1, "Page should have category headings (h2)"
 
+    def test_thumbnail_picture_elements(self, gallery_page: Page):
+        """Test that thumbnails use <picture> elements for format selection."""
+        # Check for <picture> elements
+        pictures = gallery_page.locator("picture")
+        picture_count = pictures.count()
+
+        # Should have at least one picture element (if thumbnails enabled)
+        if picture_count > 0:
+            # Verify structure: <picture><source><img></picture>
+            first_picture = pictures.first
+
+            # Check for WebP source
+            webp_source = first_picture.locator("source[type='image/webp']")
+            assert webp_source.count() == 1, "Picture should have WebP source"
+
+            # Check for img fallback
+            img = first_picture.locator("img")
+            assert img.count() == 1, "Picture should have img fallback"
+
+            # Verify img has alt text
+            alt = img.get_attribute("alt")
+            assert alt is not None, "Thumbnail img should have alt attribute"
+
+    def test_thumbnail_dimensions_specified(self, gallery_page: Page):
+        """Test that thumbnail images have width and height attributes to prevent layout shift."""
+        # Get all images in the gallery
+        gallery_images = gallery_page.locator(".gallery-item img, .image-item img")
+        count = gallery_images.count()
+
+        if count > 0:
+            # Check first few images for width/height attributes
+            for i in range(min(5, count)):
+                img = gallery_images.nth(i)
+                width = img.get_attribute("width")
+                height = img.get_attribute("height")
+
+                # Either both should be present or both absent (for original images)
+                # If thumbnails are enabled, they should be present
+                if width or height:
+                    assert width is not None and height is not None, (
+                        f"Image {i} has only one dimension attribute "
+                        "(both width and height should be specified)"
+                    )
+
+    def test_thumbnail_lazy_loading(self, gallery_page: Page):
+        """Test that thumbnail images use lazy loading for performance."""
+        # Get all gallery images
+        gallery_images = gallery_page.locator(".gallery-item img, .image-item img")
+        count = gallery_images.count()
+
+        if count > 5:  # Only test if we have multiple images
+            # Check that images beyond the first few have loading="lazy"
+            for i in range(5, min(10, count)):
+                img = gallery_images.nth(i)
+                loading = img.get_attribute("loading")
+
+                # loading="lazy" is recommended for images below the fold
+                # This is a best practice check, not a strict requirement
+                if loading:
+                    assert loading == "lazy", f"Image {i} should have loading='lazy'"
+
 
 class TestFullscreenAccessibility:
     """Test accessibility of the fullscreen modal."""

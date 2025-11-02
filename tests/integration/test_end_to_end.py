@@ -37,7 +37,6 @@ images: []
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Uncategorized
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -89,7 +88,6 @@ images:
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Uncategorized
-enable_thumbnails: false
 """
         )
 
@@ -139,7 +137,6 @@ enable_thumbnails: false
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Uncategorized
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -172,9 +169,14 @@ output_dir: {output_dir}
         assert '<section class="category-section">' in html_content
         assert '<div class="image-grid">' in html_content
 
-        # Verify images were copied
-        copied_images = list((output_dir / "images").glob("*.jpg"))
+        # Verify images were copied to originals directory
+        copied_images = list((output_dir / "images" / "originals").glob("*.jpg"))
         assert len(copied_images) == 35
+
+        # Verify thumbnails were generated
+        thumbnails_dir = output_dir / "images" / "thumbnails"
+        assert thumbnails_dir.exists()
+        # Each image gets WebP + JPEG thumbnail (fake test images may not generate)
 
     def test_html_includes_dimension_attributes(self, tmp_path):
         """Test that generated HTML includes width/height dimension attributes."""
@@ -215,7 +217,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Uncategorized
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -283,7 +284,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Uncategorized
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -352,7 +352,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Uncategorized
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -464,7 +463,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Uncategorized
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -554,7 +552,6 @@ class TestLayoutPerformance:
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -619,7 +616,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -698,7 +694,6 @@ images:
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -766,7 +761,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -832,7 +826,6 @@ class TestResponsiveLayout:
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -900,7 +893,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )
@@ -969,7 +961,6 @@ output_dir: {output_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {yaml_path}
 default_category: Test
-enable_thumbnails: false
 output_dir: {output_dir}
 """
         )

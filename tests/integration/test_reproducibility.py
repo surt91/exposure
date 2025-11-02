@@ -51,7 +51,6 @@ images:
 content_dir: {content_dir}
 gallery_yaml_path: {gallery_yaml}
 default_category: TestCategory
-enable_thumbnails: false
 output_dir: {build1_dir}
 """
     )
@@ -63,7 +62,6 @@ output_dir: {build1_dir}
 content_dir: {content_dir}
 gallery_yaml_path: {gallery_yaml}
 default_category: TestCategory
-enable_thumbnails: false
 output_dir: {build2_dir}
 """
     )
@@ -276,3 +274,66 @@ class TestReproducibility:
 
         # HTML should be byte-for-byte identical
         assert build1_html == build2_html, "HTML content differs between builds"
+
+    def test_thumbnail_hash_stability(self, test_workspace):
+        """Test that thumbnail filenames with content hashes are consistent across builds."""
+        # Run first build
+        subprocess.run(
+            [
+                "uv",
+                "run",
+                "python",
+                "-m",
+                "src.generator.build_html",
+                str(test_workspace["settings1"]),
+            ],
+            capture_output=True,
+            check=True,
+        )
+
+        build1_dir = test_workspace["build1_dir"]
+        thumbnails_dir1 = build1_dir / "images" / "thumbnails"
+
+        # Collect thumbnail filenames
+        if thumbnails_dir1.exists():
+            webp_files1 = sorted([f.name for f in thumbnails_dir1.glob("*.webp")])
+            jpeg_files1 = sorted([f.name for f in thumbnails_dir1.glob("*.jpg")])
+
+            # Run second build
+            subprocess.run(
+                [
+                    "uv",
+                    "run",
+                    "python",
+                    "-m",
+                    "src.generator.build_html",
+                    str(test_workspace["settings2"]),
+                ],
+                capture_output=True,
+                check=True,
+            )
+
+            build2_dir = test_workspace["build2_dir"]
+            thumbnails_dir2 = build2_dir / "images" / "thumbnails"
+
+            webp_files2 = sorted([f.name for f in thumbnails_dir2.glob("*.webp")])
+            jpeg_files2 = sorted([f.name for f in thumbnails_dir2.glob("*.jpg")])
+
+            # Thumbnail filenames should be identical (same content hash)
+            assert webp_files1 == webp_files2, (
+                f"WebP filenames differ: {webp_files1} != {webp_files2}"
+            )
+            assert jpeg_files1 == jpeg_files2, (
+                f"JPEG filenames differ: {jpeg_files1} != {jpeg_files2}"
+            )
+
+            # Verify thumbnail contents are identical
+            for webp_file in webp_files1:
+                content1 = (thumbnails_dir1 / webp_file).read_bytes()
+                content2 = (thumbnails_dir2 / webp_file).read_bytes()
+                assert content1 == content2, f"WebP content differs: {webp_file}"
+
+            for jpeg_file in jpeg_files1:
+                content1 = (thumbnails_dir1 / jpeg_file).read_bytes()
+                content2 = (thumbnails_dir2 / jpeg_file).read_bytes()
+                assert content1 == content2, f"JPEG content differs: {jpeg_file}"

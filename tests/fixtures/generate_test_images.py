@@ -45,6 +45,53 @@ def create_test_image(path: Path, width: int, height: int, color: tuple, label: 
     print(f"Created {path.name}: {width}x{height} (aspect ratio: {width / height:.2f})")
 
 
+def generate_test_images(
+    output_dir: Path, count: int, sizes: list[tuple[int, int]] | None = None
+) -> list[Path]:
+    """Generate multiple test images for testing.
+
+    Args:
+        output_dir: Directory to save images
+        count: Number of images to generate
+        sizes: List of (width, height) tuples to cycle through. Defaults to common sizes.
+
+    Returns:
+        List of paths to generated images
+    """
+    if sizes is None:
+        sizes = [(4000, 3000), (3000, 4000), (3000, 2000), (2000, 3000)]
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    colors = [
+        (100, 150, 200),  # Blue
+        (200, 100, 100),  # Red
+        (100, 200, 100),  # Green
+        (200, 150, 100),  # Orange
+        (150, 100, 200),  # Purple
+        (200, 200, 100),  # Yellow
+    ]
+
+    generated = []
+    for i in range(count):
+        width, height = sizes[i % len(sizes)]
+        color = colors[i % len(colors)]
+
+        filename = f"test_img_{i:04d}.jpg"
+        path = output_dir / filename
+
+        img = Image.new("RGB", (width, height), color)
+        draw = ImageDraw.Draw(img)
+
+        # Add simple label
+        text = f"Image {i}"
+        draw.text((10, 10), text, fill=(255, 255, 255))
+
+        img.save(path, "JPEG", quality=85)
+        generated.append(path)
+
+    return generated
+
+
 def main():
     """Generate all test fixture images."""
     fixtures_dir = Path(__file__).parent

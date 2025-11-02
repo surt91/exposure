@@ -50,7 +50,6 @@ class TestAssetBudgets:
             f"content_dir: {content_dir}\n"
             f"gallery_yaml_path: {gallery_yaml}\n"
             f"default_category: Uncategorized\n"
-            f"enable_thumbnails: false\n"
             f"output_dir: {output_dir}\n"
         )
 
@@ -174,7 +173,6 @@ class TestAssetBudgets:
             f"content_dir: {content_dir}\n"
             f"gallery_yaml_path: {gallery_yaml}\n"
             f"default_category: Uncategorized\n"
-            f"enable_thumbnails: false\n"
             f"output_dir: {output_dir}\n"
         )
 
@@ -195,3 +193,188 @@ class TestAssetBudgets:
                 f"{html_size} > {MAX_HTML_SIZE}. "
                 f"This is expected and requires pagination/virtualization."
             )
+
+
+class TestThumbnailPerformance:
+    """Test thumbnail generation performance and file size reduction."""
+
+    @pytest.fixture
+    def gallery_with_real_images(self, tmp_path):
+        """Create a test gallery with real images for thumbnail testing."""
+        from tests.fixtures.generate_test_images import generate_test_images
+
+        content_dir = tmp_path / "content"
+        config_dir = tmp_path / "config"
+        output_dir = tmp_path / "dist"
+
+        content_dir.mkdir()
+        config_dir.mkdir()
+        output_dir.mkdir()
+
+        # Generate real test images (various sizes)
+        image_count = 100
+        image_files = generate_test_images(
+            output_dir=content_dir,
+            count=image_count,
+            sizes=[(4000, 3000), (3000, 4000), (5000, 3000), (2000, 1500)],
+        )
+
+        # Create gallery.yaml
+        gallery_yaml = config_dir / "gallery.yaml"
+        yaml_content = "categories:\n  - TestCategory\nimages:\n"
+        for img_file in image_files:
+            yaml_content += f"  - filename: {img_file.name}\n"
+            yaml_content += "    category: TestCategory\n"
+            yaml_content += f"    title: {img_file.stem}\n"
+            yaml_content += "    description: Test image\n"
+
+        gallery_yaml.write_text(yaml_content)
+
+        # Create settings.yaml with thumbnails enabled
+        settings_yaml = config_dir / "settings.yaml"
+        settings_yaml.write_text(
+            f"content_dir: {content_dir}\n"
+            f"gallery_yaml_path: {gallery_yaml}\n"
+            f"default_category: Uncategorized\n"
+            f"output_dir: {output_dir}\n"
+        )
+
+        return {
+            "content_dir": content_dir,
+            "config_dir": config_dir,
+            "output_dir": output_dir,
+            "settings_yaml": settings_yaml,
+            "image_files": image_files,
+            "image_count": image_count,
+        }
+
+    def test_thumbnail_performance_benchmark(self, gallery_with_real_images):
+        """Test that thumbnail generation for 100 images completes in <2 minutes."""
+        import time
+
+        settings_yaml = gallery_with_real_images["settings_yaml"]
+        image_count = gallery_with_real_images["image_count"]
+
+        # Measure build time
+        start_time = time.time()
+        build_gallery(settings_yaml)
+        elapsed_time = time.time() - start_time
+
+        print("\n=== Thumbnail Performance Benchmark ===")
+        print(f"Images: {image_count}")
+        print(f"Build time: {elapsed_time:.2f}s")
+        print(f"Average: {elapsed_time / image_count * 1000:.1f}ms per image")
+
+        # Should complete in <2 minutes (120 seconds)
+        max_time = 120
+        assert elapsed_time < max_time, (
+            f"Thumbnail generation too slow: {elapsed_time:.1f}s > {max_time}s "
+            f"for {image_count} images"
+        )
+
+        # Verify thumbnails were actually generated
+        thumbnails_dir = gallery_with_real_images["output_dir"] / "images" / "thumbnails"
+        assert thumbnails_dir.exists(), "Thumbnails directory not created"
+
+        webp_count = len(list(thumbnails_dir.glob("*.webp")))
+        jpeg_count = len(list(thumbnails_dir.glob("*.jpg")))
+
+        assert webp_count == image_count, f"Expected {image_count} WebP files, got {webp_count}"
+        assert jpeg_count == image_count, f"Expected {image_count} JPEG files, got {jpeg_count}"
+
+    def test_thumbnail_file_size_reduction(self, gallery_with_real_images):
+        """Test that thumbnails achieve 90%+ file size reduction vs originals."""
+        settings_yaml = gallery_with_real_images["settings_yaml"]
+
+        # Build gallery with thumbnails
+        build_gallery(settings_yaml)
+
+        # Calculate size reduction
+        originals_dir = gallery_with_real_images["output_dir"] / "images" / "originals"
+        thumbnails_dir = gallery_with_real_images["output_dir"] / "images" / "thumbnails"
+
+        # Get total size of originals
+        original_total = 0
+        for img_file in originals_dir.glob("*"):
+            if img_file.is_file():
+                original_total += img_file.stat().st_size
+
+        # Get total size of thumbnails (WebP only for comparison)
+        thumbnail_total = 0
+        for img_file in thumbnails_dir.glob("*.webp"):
+            thumbnail_total += img_file.stat().st_size
+
+        # Calculate reduction percentage
+        reduction_percent = ((original_total - thumbnail_total) / original_total) * 100
+
+        print("\n=== File Size Reduction ===")
+        print(f"Original images: {original_total / 1024 / 1024:.2f} MB")
+        print(f"Thumbnails (WebP): {thumbnail_total / 1024 / 1024:.2f} MB")
+        print(f"Reduction: {reduction_percent:.1f}%")
+
+        # Should achieve 90%+ reduction
+        min_reduction = 90.0
+        assert reduction_percent >= min_reduction, (
+            f"File size reduction below target: {reduction_percent:.1f}% < {min_reduction}%"
+        )
+
+    def test_thumbnail_incremental_build(self, gallery_with_real_images):
+        """Test that incremental builds skip unchanged images and complete quickly."""
+        import time
+
+        settings_yaml = gallery_with_real_images["settings_yaml"]
+        image_count = gallery_with_real_images["image_count"]
+
+        # First build (full)
+        print("\n=== Incremental Build Test ===")
+        start_time = time.time()
+        build_gallery(settings_yaml)
+        first_build_time = time.time() - start_time
+        print(f"First build: {first_build_time:.2f}s")
+
+        # Second build (should be incremental)
+        start_time = time.time()
+        build_gallery(settings_yaml)
+        second_build_time = time.time() - start_time
+        print(f"Second build: {second_build_time:.2f}s")
+
+        # Second build should be much faster (<10 seconds for 100 images)
+        max_incremental_time = 10
+        assert second_build_time < max_incremental_time, (
+            f"Incremental build too slow: {second_build_time:.1f}s > {max_incremental_time}s "
+            f"for {image_count} images"
+        )
+
+        # Second build should be at least 5x faster than first build
+        speedup = first_build_time / second_build_time
+        print(f"Speedup: {speedup:.1f}x")
+        assert speedup >= 5.0, f"Incremental build not fast enough: {speedup:.1f}x < 5x"
+
+    def test_webp_vs_jpeg_savings(self, gallery_with_real_images):
+        """Test that WebP thumbnails are 25-35% smaller than JPEG thumbnails."""
+        settings_yaml = gallery_with_real_images["settings_yaml"]
+
+        # Build gallery with thumbnails
+        build_gallery(settings_yaml)
+
+        thumbnails_dir = gallery_with_real_images["output_dir"] / "images" / "thumbnails"
+
+        # Calculate total sizes
+        webp_total = sum(f.stat().st_size for f in thumbnails_dir.glob("*.webp"))
+        jpeg_total = sum(f.stat().st_size for f in thumbnails_dir.glob("*.jpg"))
+
+        # Calculate WebP savings
+        savings_percent = ((jpeg_total - webp_total) / jpeg_total) * 100
+
+        print("\n=== WebP vs JPEG Comparison ===")
+        print(f"WebP total: {webp_total / 1024 / 1024:.2f} MB")
+        print(f"JPEG total: {jpeg_total / 1024 / 1024:.2f} MB")
+        print(f"WebP savings: {savings_percent:.1f}%")
+
+        # Should achieve 25-35% savings
+        min_savings = 25.0
+        max_savings = 35.0
+        assert min_savings <= savings_percent <= max_savings * 1.5, (
+            f"WebP savings outside expected range: {savings_percent:.1f}% "
+            f"(expected {min_savings}-{max_savings}%)"
+        )

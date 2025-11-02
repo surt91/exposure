@@ -70,6 +70,46 @@ class ThumbnailGenerator:
         # Check cache if enabled
         if self.config.enable_cache and not self.cache.should_regenerate(source_path):
             self.logger.debug(f"Skipping {source_path.name} (cached, unchanged)")
+
+            # Reconstruct ThumbnailImage from cache entry
+            cache_entry = self.cache.entries.get(str(source_path))
+            if cache_entry:
+                webp_path = Path(cache_entry.webp_path)
+                jpeg_path = Path(cache_entry.jpeg_path)
+
+                # Get file sizes and dimensions
+                if webp_path.exists() and jpeg_path.exists():
+                    webp_size = webp_path.stat().st_size
+                    jpeg_size = jpeg_path.stat().st_size
+
+                    # Extract dimensions from WebP file
+                    try:
+                        with PILImage.open(webp_path) as thumb:
+                            thumb_width = thumb.width
+                            thumb_height = thumb.height
+                    except Exception:
+                        # If we can't open the thumbnail, skip cache hit
+                        self.logger.warning(
+                            f"Cached thumbnail unreadable, regenerating: {source_path.name}"
+                        )
+                        # Fall through to regeneration
+                    else:
+                        # Return cached thumbnail info
+                        return ThumbnailImage(
+                            source_filename=source_path.name,
+                            source_path=source_path,
+                            webp_path=webp_path,
+                            jpeg_path=jpeg_path,
+                            width=thumb_width,
+                            height=thumb_height,
+                            webp_size_bytes=webp_size,
+                            jpeg_size_bytes=jpeg_size,
+                            source_size_bytes=source_path.stat().st_size,
+                            content_hash=cache_entry.content_hash,
+                            generated_at=cache_entry.thumbnail_generated_at,
+                        )
+
+            # If cache entry missing or files don't exist, fall through to regeneration
             return None
 
         try:
@@ -185,13 +225,24 @@ class ThumbnailGenerator:
         """
         successful = []
         failed = []
+        generated_count = 0
+        cached_count = 0
         total = len(source_paths)
 
         for i, source_path in enumerate(source_paths, start=1):
             try:
+                # Track initial cache state
+                needs_regen = not self.config.enable_cache or self.cache.should_regenerate(
+                    source_path
+                )
+
                 thumbnail = self.generate_thumbnail(source_path)
                 if thumbnail:
                     successful.append(thumbnail)
+                    if needs_regen:
+                        generated_count += 1
+                    else:
+                        cached_count += 1
             except Exception as e:
                 self.logger.warning(f"Failed to process {source_path.name}: {e}")
                 failed.append(source_path)
@@ -205,9 +256,8 @@ class ThumbnailGenerator:
             self.save_cache()
 
         # Log summary
-        cached_count = total - len(successful) - len(failed)
         self.logger.info(
-            f"Thumbnails: {len(successful)} generated, {cached_count} cached, {len(failed)} failed"
+            f"Thumbnails: {generated_count} generated, {cached_count} cached, {len(failed)} failed"
         )
 
         return (successful, failed)
