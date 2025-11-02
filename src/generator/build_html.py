@@ -228,7 +228,7 @@ def get_default_title() -> str:
 
 def copy_banner_image(config: GalleryConfig) -> str | None:
     """
-    Copy banner image to output directory.
+    Copy banner image to output directory with metadata stripping.
 
     Args:
         config: Gallery configuration with optional banner_image
@@ -239,22 +239,22 @@ def copy_banner_image(config: GalleryConfig) -> str | None:
     if not config.banner_image:
         return None
 
+    from .assets import copy_with_hash
     from .utils import ensure_directory
 
     # Create banner output directory
     banner_output_dir = config.output_dir / "images" / "banner"
     ensure_directory(banner_output_dir)
 
-    # Copy banner to output
-    import shutil
-
-    dest_path = banner_output_dir / config.banner_image.name
-    shutil.copy2(config.banner_image, dest_path)
+    # Copy banner to output with metadata stripping
+    dest_path = copy_with_hash(
+        config.banner_image, banner_output_dir, preserve_name=True, strip_metadata=True
+    )
 
     logger.info("Copied banner image: %s", config.banner_image.name)
 
     # Return relative URL for template
-    return f"images/banner/{config.banner_image.name}"
+    return f"images/banner/{dest_path.name}"
 
 
 def _get_static_dir() -> Path:
