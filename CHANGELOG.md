@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Banner image displayed at top of gallery spanning full viewport width
 - Responsive banner height: 40vh (desktop), 30vh (tablet), 25vh (mobile)
 - Gallery title with enhanced typography: 3rem font, 700 weight, text shadow for readability
+- **Gallery subtitle** - Optional descriptive text displayed below the title
+- Subtitle styling: 1.5rem font, 400 weight, 0.9 opacity for secondary emphasis
+- Subtitle requires title to be present (semantic correctness)
+- Subtitle validation: max 300 characters, empty/whitespace treated as None
 - Title overlay on banner with gradient background for contrast
 - CSS custom properties for banner height customization
 - Backward compatible - galleries without banner/title show simple header

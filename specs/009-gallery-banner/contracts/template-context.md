@@ -27,6 +27,9 @@ The existing template context is extended with the following fields:
     # MODIFIED: Gallery title (now optional, was previously always set)
     "gallery_title": Optional[str],
 
+    # NEW: Gallery subtitle (optional, requires title)
+    "gallery_subtitle": Optional[str],
+
     # NEW: Default title from i18n (fallback)
     "default_title": str,
 }
@@ -83,6 +86,31 @@ The existing template context is extended with the following fields:
 1. Use in banner title overlay if banner present
 2. Fall back to `default_title` if `None`
 3. Maintain proper heading hierarchy (`<h1>`)
+
+---
+
+### `gallery_subtitle`
+
+**Type**: `Optional[str]`
+**Required**: No
+**Format**: Plain text (pre-escaped for HTML)
+**Example**: `"Showcasing my latest creations and builds"`
+
+**Contract**:
+- MAY be `None` (indicates no subtitle configured)
+- MUST be properly escaped for HTML if provided
+- MUST NOT exceed 300 characters
+- MUST NOT be empty string or whitespace-only
+- SHOULD only be displayed when `gallery_title` is also present
+
+**Provider Responsibilities** (`build_html.py`):
+1. Pass through `config.gallery_subtitle` as-is (Jinja2 auto-escapes)
+2. Set to `None` if not configured in settings
+
+**Consumer Responsibilities** (`index.html.j2`):
+1. Only render subtitle if `gallery_title` is also present
+2. Display with secondary styling (smaller font, lighter weight)
+3. Position beneath title in banner overlay
 
 ---
 
@@ -182,6 +210,7 @@ The existing template context is extended with the following fields:
 {
     "banner_image": None,
     "gallery_title": "My 3D Printing Gallery",
+    "gallery_subtitle": None,
     "default_title": "Gallery",
 }
 ```
@@ -190,6 +219,55 @@ The existing template context is extended with the following fields:
 ```html
 <header>
     <h1>My 3D Printing Gallery</h1>
+</header>
+```
+
+---
+
+### Scenario 5: Banner with Title and Subtitle
+
+**Input**:
+```python
+{
+    "banner_image": "images/banner/banner.jpg",
+    "gallery_title": "My 3D Printing Gallery",
+    "gallery_subtitle": "Showcasing my latest creations and builds",
+    "default_title": "Gallery",
+}
+```
+
+**Expected Output**:
+```html
+<header>
+    <div class="gallery-banner">
+        <img src="images/banner/banner.jpg" alt="Banner for My 3D Printing Gallery" class="banner-image">
+        <h1 class="banner-title">My 3D Printing Gallery</h1>
+        <p class="banner-subtitle">Showcasing my latest creations and builds</p>
+    </div>
+</header>
+```
+
+---
+
+### Scenario 6: Subtitle Without Title (Not Displayed)
+
+**Input**:
+```python
+{
+    "banner_image": "images/banner/banner.jpg",
+    "gallery_title": None,
+    "gallery_subtitle": "This should not appear",
+    "default_title": "Gallery",
+}
+```
+
+**Expected Output**:
+```html
+<header>
+    <div class="gallery-banner">
+        <img src="images/banner/banner.jpg" alt="Gallery banner" class="banner-image">
+        <!-- No title or subtitle rendered -->
+    </div>
 </header>
 ```
 
@@ -212,10 +290,14 @@ The template MUST implement the following logic:
         {% if gallery_title %}
         {# Title as overlay on banner #}
         <h1 class="banner-title">{{ gallery_title }}</h1>
+        {% if gallery_subtitle %}
+        {# Subtitle below title (only if title present) #}
+        <p class="banner-subtitle">{{ gallery_subtitle }}</p>
+        {% endif %}
         {% endif %}
     </div>
     {% else %}
-    {# No banner: simple header with title #}
+    {# No banner: simple header with title (subtitle not shown in simple header) #}
     <h1>{{ gallery_title if gallery_title else default_title }}</h1>
     {% endif %}
 </header>
@@ -231,9 +313,10 @@ The template relies on CSS classes that MUST be defined in `style.css`:
 
 | Class Name | Purpose | Contract |
 |-----------|---------|----------|
-| `.gallery-banner` | Container for banner image and title overlay | Position: relative; width: 100% |
+| `.gallery-banner` | Container for banner image and title/subtitle overlay | Position: relative; width: 100% |
 | `.banner-image` | Banner image styling | Display: block; width: 100%; object-fit: cover; height: 40vh (responsive) |
-| `.banner-title` | Title overlay on banner | Position: absolute; bottom: 2rem; font-size: 3rem (responsive) |
+| `.banner-title` | Title overlay on banner | Position: absolute; bottom: 4rem (or 2rem if no subtitle); font-size: 3rem (responsive) |
+| `.banner-subtitle` | Subtitle overlay below title | Position: absolute; bottom: 0.5rem; font-size: 1.5rem; opacity: 0.9 |
 
 ### CSS Contract Example
 
@@ -308,7 +391,8 @@ The build script MUST validate:
 2. ✅ If `banner_image` provided, output directory `images/banner/` is created
 3. ✅ If `banner_image` provided, file is successfully copied to output
 4. ✅ `gallery_title` does not exceed 200 characters
-5. ✅ `default_title` is never empty
+5. ✅ `gallery_subtitle` does not exceed 300 characters
+6. ✅ `default_title` is never empty
 
 ### Template Validation
 
@@ -316,7 +400,8 @@ The template MUST handle:
 1. ✅ `banner_image` being `None` (render simple header)
 2. ✅ `gallery_title` being `None` (use `default_title`)
 3. ✅ Both `banner_image` and `gallery_title` being `None` (simple header with default title)
-4. ✅ Special characters in `gallery_title` (Jinja2 auto-escapes)
+4. ✅ `gallery_subtitle` present but `gallery_title` is `None` (subtitle not displayed)
+5. ✅ Special characters in `gallery_title` and `gallery_subtitle` (Jinja2 auto-escapes)
 
 ---
 
@@ -346,7 +431,7 @@ The template MUST handle:
 ### Unit Tests
 
 Mock `build_html.py` providing various context combinations:
-1. Test all 4 scenarios documented above
+1. Test all 6 scenarios documented above
 2. Test HTML output matches expected structure
 3. Test CSS classes are correctly applied
 4. Test alt text generation logic

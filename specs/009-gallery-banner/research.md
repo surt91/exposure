@@ -384,6 +384,151 @@ Use **semantic `<header>` element with proper heading hierarchy** and `alt` text
 
 ---
 
+## Q9: Subtitle Typography and Positioning
+
+**Question**: How should the subtitle be styled and positioned relative to the title to maintain visual hierarchy?
+
+### Decision
+Use **smaller font size with lighter weight positioned directly below title** with reduced opacity for secondary emphasis.
+
+### Rationale
+1. **Visual Hierarchy**: Subtitle must be clearly secondary to title through size, weight, and opacity differences.
+2. **Readability**: Still needs to be readable on banner gradient overlay, so white text with text-shadow like title.
+3. **Spacing**: Minimal gap between title and subtitle creates visual grouping as a unit.
+4. **Consistency**: Matches web design best practices for hero sections with title/subtitle pairs.
+
+### Implementation Approach
+```css
+.banner-subtitle {
+    position: absolute;
+    bottom: 0.5rem; /* Just below title */
+    left: 2rem;
+    right: 2rem;
+    font-size: 1.5rem;
+    font-weight: 400; /* Normal weight vs title's 700 */
+    line-height: 1.4;
+    color: white;
+    opacity: 0.9; /* Slightly transparent for secondary emphasis */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    margin: 0;
+    z-index: 2;
+}
+
+.banner-title {
+    /* Adjust bottom positioning to make room for subtitle */
+    bottom: 4rem; /* Was 2rem, increased for subtitle */
+}
+
+@media (max-width: 768px) {
+    .banner-subtitle {
+        font-size: 1.125rem;
+        left: 1rem;
+        right: 1rem;
+    }
+
+    .banner-title {
+        bottom: 3rem; /* Less space on mobile */
+    }
+}
+```
+
+### Alternatives Considered
+- **Same font size as title**: Rejected because it would compete with title and break visual hierarchy.
+- **Different color (e.g., light gray)**: Rejected because on varying banner backgrounds, a single color wouldn't always have sufficient contrast. White with opacity maintains consistency.
+- **Positioned above title**: Rejected as unconventional. Standard web pattern is title then subtitle.
+- **Separate line with divider**: Rejected as unnecessarily complex. Simple spacing is sufficient.
+
+---
+
+## Q10: Subtitle Dependency on Title
+
+**Question**: Should subtitle be displayable without a title, or should it require a title to be present?
+
+### Decision
+**Subtitle requires title to be present** - only display subtitle when gallery_title is also configured.
+
+### Rationale
+1. **Semantic Correctness**: A subtitle by definition is supplementary to a title. Displaying subtitle without title is semantically incorrect.
+2. **Visual Hierarchy**: Subtitle styling (smaller, lighter) assumes presence of a larger, bolder title above it. Without title, subtitle would look oddly small.
+3. **Configuration Clarity**: Makes the dependency explicit, preventing user confusion about why subtitle alone doesn't work.
+4. **Simplified Logic**: Clear if/then: if title exists, check for subtitle. If no title, skip subtitle entirely.
+
+### Implementation Approach
+```jinja2
+{% if banner_image %}
+<div class="gallery-banner">
+    <img src="{{ banner_image }}" alt="..." class="banner-image">
+    {% if gallery_title %}
+    <h1 class="banner-title">{{ gallery_title }}</h1>
+    {% if gallery_subtitle %}
+    <p class="banner-subtitle">{{ gallery_subtitle }}</p>
+    {% endif %}
+    {% endif %}
+</div>
+{% else %}
+<h1>{{ gallery_title or default_title }}</h1>
+{# No subtitle display in simple header - requires banner context #}
+{% endif %}
+```
+
+### Alternatives Considered
+- **Subtitle without title**: Rejected as semantically incorrect and visually awkward.
+- **Promote subtitle to title if no title**: Rejected as it would confuse user intent. If they want a title, they should configure gallery_title.
+- **Display subtitle in simple header**: Rejected because simple header should remain simple. Subtitle is a banner enhancement feature.
+
+---
+
+## Q11: Subtitle Configuration Validation
+
+**Question**: What validation rules should apply to the subtitle field?
+
+### Decision
+Use **same validation as title** - optional field with length constraints and whitespace trimming.
+
+### Rationale
+1. **Consistency**: Subtitle and title are similar text fields, should have similar validation.
+2. **Length Limit**: Subtitles should be concise (recommended 50-100 chars, max 300 for edge cases).
+3. **Whitespace Handling**: Empty or whitespace-only subtitles should be treated as None (not configured).
+4. **Type Safety**: Pydantic validator ensures clean string or None.
+
+### Implementation Approach
+```python
+gallery_subtitle: Optional[str] = Field(
+    default=None,
+    description="Gallery subtitle displayed below title (requires gallery_title)"
+)
+
+@field_validator("gallery_subtitle", mode="before")
+@classmethod
+def validate_gallery_subtitle(cls, v):
+    """
+    Validate gallery subtitle if provided.
+
+    Rules:
+    - None is valid (no subtitle)
+    - If string provided, must not be empty or whitespace-only
+    - Length limit for reasonable display
+    """
+    if v is None:
+        return None
+
+    if isinstance(v, str):
+        v = v.strip()
+        if not v:
+            return None  # Treat empty as None
+        if len(v) > 300:
+            raise ValueError("Gallery subtitle too long (max 300 characters)")
+
+    return v
+```
+
+### Alternatives Considered
+- **No validation**: Rejected because unlimited length could break layout.
+- **Shorter max length (100 chars)**: Considered but rejected to allow flexibility for descriptive subtitles.
+- **Error on empty**: Rejected because treating empty as None is more user-friendly (allows easy disabling).
+
+---
+
 ## Summary of Technical Decisions
 
 | Decision Area | Choice | Key Rationale |
@@ -391,6 +536,9 @@ Use **semantic `<header>` element with proper heading hierarchy** and `alt` text
 | Banner Cropping | CSS object-fit: cover | Simple, flexible, no build-time processing |
 | Banner Height | Viewport-relative (vh) | Responsive, scales naturally across devices |
 | Title Styling | Overlay on banner with gradient | Readable, no external fonts, dark mode compatible |
+| Subtitle Styling | Smaller font, lighter weight, below title | Secondary visual hierarchy, maintains readability |
+| Subtitle Dependency | Requires title to be present | Semantically correct, prevents awkward standalone subtitle |
+| Subtitle Validation | Optional with 300 char limit | Same pattern as title, flexible but bounded |
 | Configuration Location | GalleryConfig in settings.yaml | Site-wide setting, type-safe, flexible |
 | Asset Handling | Static asset copy | Above-fold image needs quality, not thumbnails |
 | Backward Compatibility | Optional fields | Existing galleries work without changes |

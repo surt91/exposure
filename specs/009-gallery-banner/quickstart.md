@@ -47,6 +47,11 @@ class GalleryConfig(BaseSettings):
         max_length=200,
         description="Gallery title displayed prominently in banner or header"
     )
+
+    gallery_subtitle: Optional[str] = Field(
+        default=None,
+        description="Gallery subtitle displayed below title (requires gallery_title)"
+    )
 ```
 
 #### 1.2: Add Field Validators
@@ -94,6 +99,22 @@ def validate_gallery_title(cls, v):
             raise ValueError("Gallery title cannot be empty or whitespace-only")
         if len(v) > 200:
             raise ValueError("Gallery title must be 200 characters or less")
+
+    return v
+
+@field_validator("gallery_subtitle", mode="before")
+@classmethod
+def validate_gallery_subtitle(cls, v):
+    """Validate gallery subtitle if provided."""
+    if v is None:
+        return None
+
+    if isinstance(v, str):
+        v = v.strip()
+        if not v:
+            return None  # Treat empty as None
+        if len(v) > 300:
+            raise ValueError("Gallery subtitle must be 300 characters or less")
 
     return v
 ```
@@ -234,10 +255,13 @@ Replace the existing `<header>` section:
         >
         {% if gallery_title %}
         <h1 class="banner-title">{{ gallery_title }}</h1>
+        {% if gallery_subtitle %}
+        <p class="banner-subtitle">{{ gallery_subtitle }}</p>
+        {% endif %}
         {% endif %}
     </div>
     {% else %}
-    {# No banner: simple header with title #}
+    {# No banner: simple header with title (subtitle not shown in simple header) #}
     <h1>{{ gallery_title if gallery_title else default_title }}</h1>
     {% endif %}
 </header>
@@ -294,7 +318,7 @@ Add at the end of the file (or in appropriate section):
 
 .banner-title {
     position: absolute;
-    bottom: 2rem;
+    bottom: 4rem; /* Increased to make room for subtitle */
     left: 2rem;
     right: 2rem;
     font-size: 3rem;
@@ -302,6 +326,21 @@ Add at the end of the file (or in appropriate section):
     line-height: 1.2;
     color: white;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    margin: 0;
+    z-index: 2;
+}
+
+.banner-subtitle {
+    position: absolute;
+    bottom: 0.5rem; /* Below title */
+    left: 2rem;
+    right: 2rem;
+    font-size: 1.5rem;
+    font-weight: 400; /* Normal weight */
+    line-height: 1.4;
+    color: white;
+    opacity: 0.9; /* Slightly transparent for secondary emphasis */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
     margin: 0;
     z-index: 2;
 }
@@ -324,7 +363,13 @@ Add at the end of the file (or in appropriate section):
 
     .banner-title {
         font-size: 2rem;
-        bottom: 1rem;
+        bottom: 3rem; /* Adjusted for subtitle */
+        left: 1rem;
+        right: 1rem;
+    }
+
+    .banner-subtitle {
+        font-size: 1.125rem;
         left: 1rem;
         right: 1rem;
     }
@@ -333,6 +378,10 @@ Add at the end of the file (or in appropriate section):
 @media (max-width: 480px) {
     .banner-title {
         font-size: 1.5rem;
+    }
+
+    .banner-subtitle {
+        font-size: 1rem;
     }
 }
 

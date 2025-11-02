@@ -22,6 +22,10 @@
 {% if gallery_title %}
             {# Title as overlay on banner #}
             <h1 class="banner-title">{{ gallery_title }}</h1>
+{% if gallery_subtitle %}
+            {# Subtitle below title (only if title present) #}
+            <p class="banner-subtitle">{{ gallery_subtitle }}</p>
+{% endif %}
 {% endif %}
         </div>
 {% else %}

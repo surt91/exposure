@@ -465,6 +465,7 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     html = template.render(
         banner_image=banner_image_url,
         gallery_title=config.gallery_title,
+        gallery_subtitle=config.gallery_subtitle,
         default_title=default_title,
         categories=template_categories,
         css_href=css_href,

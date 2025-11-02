@@ -41,6 +41,24 @@ Gallery owners need to display a prominent, stylistically enhanced title at the 
 
 ---
 
+### User Story 4 - Display Gallery Subtitle (Priority: P3)
+
+Gallery owners need to display a descriptive subtitle under the main title to provide additional context, tagline, or description that complements the gallery name.
+
+**Why this priority**: The subtitle is an enhancement to the title feature that provides additional information. It can only be displayed when a title exists, making it dependent on User Story 2. While valuable for comprehensive branding, it's not essential for basic functionality.
+
+**Independent Test**: Can be fully tested by configuring a subtitle text in the gallery settings alongside a title and verifying it displays with appropriate secondary styling beneath the title. Delivers supplementary context value that enhances but doesn't replace the title.
+
+**Acceptance Scenarios**:
+
+1. **Given** a gallery with both title and subtitle configured, **When** a visitor opens the gallery, **Then** the subtitle displays beneath the title with secondary styling (smaller font, lighter weight)
+2. **Given** a gallery with a subtitle but no title configured, **When** a visitor opens the gallery, **Then** the subtitle is not displayed (requires title to be present)
+3. **Given** a very long subtitle text, **When** displayed on narrow viewports, **Then** the subtitle wraps appropriately without breaking the layout
+4. **Given** a gallery with only title configured (no subtitle), **When** a visitor opens the gallery, **Then** only the title displays without extra spacing for subtitle
+5. **Given** a gallery with banner, title, and subtitle, **When** a visitor views on mobile, **Then** both title and subtitle remain readable with appropriate responsive sizing
+
+---
+
 ### User Story 3 - Configure Banner and Title (Priority: P1)
 
 Gallery owners need to specify their banner image and title through configuration files so they can customize their gallery's appearance without technical complexity.
@@ -83,12 +101,18 @@ Gallery owners need to specify their banner image and title through configuratio
 - **FR-009**: System MUST properly escape and display special characters in the title text
 - **FR-010**: System MUST maintain visual hierarchy with the banner/title section distinct from the photo gallery content
 - **FR-011**: System MUST ensure banner and title styling is consistent with the existing gallery theme (including dark mode support)
+- **FR-012**: System MUST display a subtitle text with secondary styling beneath the title when both are configured
+- **FR-013**: System MUST allow gallery owners to configure the subtitle text in the configuration file
+- **FR-014**: System MUST only display subtitle when a title is also configured (subtitle requires title)
+- **FR-015**: System MUST properly escape and display special characters in the subtitle text
+- **FR-016**: System MUST style subtitle as visually secondary to the title (smaller font size, lighter weight)
 
 ### Key Entities
 
 - **Banner Configuration**: Contains the file path to the banner image, validation rules for the path, and optional cropping preferences
 - **Title Configuration**: Contains the title text string, styling preferences, and position settings relative to the banner
-- **Gallery Metadata**: Extended to include banner and title configuration as optional fields that enhance the standard gallery properties
+- **Subtitle Configuration**: Contains the subtitle text string with secondary styling preferences, dependent on title being present
+- **Gallery Metadata**: Extended to include banner, title, and subtitle configuration as optional fields that enhance the standard gallery properties
 
 ## Success Criteria *(mandatory)*
 
@@ -100,6 +124,7 @@ Gallery owners need to specify their banner image and title through configuratio
 - **SC-004**: 100% of galleries continue to function correctly when banner and title are not configured (backward compatibility)
 - **SC-005**: Banner images load and display within 3 seconds on standard broadband connections (10 Mbps)
 - **SC-006**: Title text remains readable and properly formatted across all supported viewport sizes without horizontal scrolling
+- **SC-007**: Subtitle displays correctly beneath title with visually secondary styling that maintains visual hierarchy
 
 ## Assumptions
 

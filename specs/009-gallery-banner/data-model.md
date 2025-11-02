@@ -22,6 +22,7 @@ This document defines the data entities and their relationships for the gallery 
 |-----------|------|----------|---------|------------------|-------------|
 | `banner_image` | `Optional[Path]` | No | `None` | Must exist if provided; can be absolute or relative to `content_dir` | Path to banner image file |
 | `gallery_title` | `Optional[str]` | No | `None` | Min length: 1 if provided; Max length: 200 | Gallery title displayed in banner or header |
+| `gallery_subtitle` | `Optional[str]` | No | `None` | Max length: 300; whitespace-only treated as None | Gallery subtitle displayed below title (requires title) |
 
 ### Existing Fields (Context)
 
@@ -95,6 +96,29 @@ def validate_gallery_title(cls, v):
             raise ValueError("Gallery title too long (max 200 characters)")
 
     return v
+
+@field_validator("gallery_subtitle", mode="before")
+@classmethod
+def validate_gallery_subtitle(cls, v):
+    """
+    Validate gallery subtitle if provided.
+
+    Rules:
+    - None is valid (no subtitle)
+    - If string provided, empty/whitespace-only treated as None
+    - Length limit for reasonable display
+    """
+    if v is None:
+        return None
+
+    if isinstance(v, str):
+        v = v.strip()
+        if not v:
+            return None  # Treat empty as None
+        if len(v) > 300:
+            raise ValueError("Gallery subtitle too long (max 300 characters)")
+
+    return v
 ```
 
 ### Configuration Sources
@@ -122,9 +146,10 @@ Per pydantic-settings, configuration can come from (in priority order):
 
 ```python
 {
-    "banner_image": Optional[str],  # Relative URL: "images/banner/filename.jpg"
-    "gallery_title": Optional[str],  # Title text or None
-    "default_title": str,            # Fallback title from i18n
+    "banner_image": Optional[str],    # Relative URL: "images/banner/filename.jpg"
+    "gallery_title": Optional[str],   # Title text or None
+    "gallery_subtitle": Optional[str], # Subtitle text or None (requires title)
+    "default_title": str,              # Fallback title from i18n
 }
 ```
 
@@ -134,6 +159,7 @@ Per pydantic-settings, configuration can come from (in priority order):
 |-----------|------|--------|-------------|
 | `banner_image` | `Optional[str]` | Computed from `config.banner_image` | Relative URL to banner in output directory; `None` if not configured |
 | `gallery_title` | `Optional[str]` | `config.gallery_title` | Title text; `None` if not configured |
+| `gallery_subtitle` | `Optional[str]` | `config.gallery_subtitle` | Subtitle text; `None` if not configured; only displayed when title present |
 | `default_title` | `str` | i18n translation | Localized default title (e.g., "Gallery" or "Galerie") |
 
 ### Derivation Logic
@@ -165,6 +191,7 @@ def prepare_banner_context(config: GalleryConfig, output_dir: Path) -> dict:
     return {
         "banner_image": banner_image_url,
         "gallery_title": config.gallery_title,
+        "gallery_subtitle": config.gallery_subtitle,
         "default_title": default_title,
     }
 ```
@@ -288,12 +315,13 @@ banner_image: "banner.jpg"  # Relative to content_dir
 
 ### Full Configuration
 ```yaml
-# settings.yaml - banner with title
+# settings.yaml - banner with title and subtitle
 content_dir: "content/"
 gallery_yaml_path: "config/gallery.yaml"
 default_category: "Uncategorized"
 banner_image: "/absolute/path/to/banner.jpg"  # Absolute path
 gallery_title: "My 3D Printing Gallery"
+gallery_subtitle: "Showcasing my latest creations and builds"
 ```
 
 ### Environment Variable Override
@@ -311,8 +339,10 @@ export EXPOSURE_GALLERY_TITLE="Production Gallery"
 |--------|-------|------------|
 | GalleryConfig | banner_image | Optional; if provided must be existing file; resolved relative to content_dir if not absolute |
 | GalleryConfig | gallery_title | Optional; if provided must be 1-200 chars, not whitespace-only |
+| GalleryConfig | gallery_subtitle | Optional; if provided max 300 chars; whitespace-only treated as None |
 | BannerData | banner_image | Optional string (URL); valid if None or matches pattern `images/banner/*.{jpg,png,gif,webp}` |
 | BannerData | gallery_title | Optional string; valid if None or non-empty |
+| BannerData | gallery_subtitle | Optional string; valid if None or non-empty; only displayed if gallery_title present |
 | BannerData | default_title | Required string; never empty (from i18n) |
 
 ---
@@ -354,8 +384,8 @@ gallery_title: "Gallery Name"
 ## Summary
 
 The data model is intentionally minimal:
-- **2 new optional fields** in existing GalleryConfig model
-- **3 derived fields** in template context dictionary
+- **3 new optional fields** in existing GalleryConfig model (banner_image, gallery_title, gallery_subtitle)
+- **4 derived fields** in template context dictionary (banner_image URL, gallery_title, gallery_subtitle, default_title)
 - **Simple validation** via Pydantic field validators
 - **Zero breaking changes** to existing configurations
 - **Type-safe** with Pydantic type checking

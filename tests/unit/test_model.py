@@ -403,6 +403,70 @@ class TestGalleryConfig:
                 gallery_title="x" * 201,
             )
 
+    def test_gallery_subtitle_valid(self, tmp_path):
+        """Test gallery_subtitle with valid string."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            gallery_subtitle="My subtitle",
+        )
+        assert config.gallery_subtitle == "My subtitle"
+
+    def test_gallery_subtitle_none(self, tmp_path):
+        """Test that gallery_subtitle can be None."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            gallery_subtitle=None,
+        )
+        assert config.gallery_subtitle is None
+
+    def test_gallery_subtitle_empty_becomes_none(self, tmp_path):
+        """Test that empty/whitespace subtitle becomes None."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        config = GalleryConfig(
+            content_dir=content_dir,
+            gallery_yaml_path=yaml_path,
+            default_category="Test",
+            gallery_subtitle="   ",
+        )
+        assert config.gallery_subtitle is None
+
+    def test_gallery_subtitle_too_long(self, tmp_path):
+        """Test validation error for too long gallery_subtitle."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+
+        yaml_path = tmp_path / "gallery.yaml"
+        yaml_path.write_text("categories: []")
+
+        with pytest.raises(ValidationError, match="300 characters"):
+            GalleryConfig(
+                content_dir=content_dir,
+                gallery_yaml_path=yaml_path,
+                default_category="Test",
+                gallery_subtitle="x" * 301,
+            )
+
 
 class TestYamlEntry:
     """Tests for YamlEntry model."""

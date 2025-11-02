@@ -283,6 +283,11 @@ class GalleryConfig(BaseSettings):
         description="Gallery title displayed prominently in banner or header",
         examples=["My 3D Printing Gallery", "Nature Photography"],
     )
+    gallery_subtitle: Optional[str] = Field(
+        default=None,
+        description="Gallery subtitle displayed below title (requires gallery_title)",
+        examples=["Showcasing my latest creations", "A journey through landscapes"],
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="EXPOSURE_",
@@ -362,6 +367,22 @@ class GalleryConfig(BaseSettings):
                 raise ValueError("Gallery title cannot be empty or whitespace-only")
             if len(v) > 200:
                 raise ValueError("Gallery title must be 200 characters or less")
+
+        return v
+
+    @field_validator("gallery_subtitle", mode="before")
+    @classmethod
+    def validate_gallery_subtitle(cls, v):
+        """Validate gallery subtitle if provided."""
+        if v is None:
+            return None
+
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return None  # Treat empty as None
+            if len(v) > 300:
+                raise ValueError("Gallery subtitle must be 300 characters or less")
 
         return v
 

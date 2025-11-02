@@ -152,6 +152,7 @@ log_level: INFO                        # Logging verbosity (DEBUG, INFO, WARNING
 # Optional: Gallery banner and title
 banner_image: banner.jpg               # Path to banner image (relative to content_dir or absolute)
 gallery_title: My Gallery              # Gallery title displayed prominently in banner or header
+gallery_subtitle: A showcase of my work  # Gallery subtitle displayed below title (optional, requires gallery_title)
 ```
 
 ### Thumbnail Generation
