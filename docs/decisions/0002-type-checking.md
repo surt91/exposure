@@ -1,12 +1,12 @@
 # ADR 0002: Type Checking with ty from Astral
 
-**Status**: Accepted  
-**Date**: 2025-11-01  
-**Deciders**: fotoview development team
+**Status**: Accepted
+**Date**: 2025-11-01
+**Deciders**: exposure development team
 
 ## Context
 
-The fotoview codebase needs static type checking to:
+The exposure codebase needs static type checking to:
 - Catch type-related bugs during development
 - Improve code documentation through type annotations
 - Enforce type safety through CI gates

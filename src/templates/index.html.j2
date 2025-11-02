@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="{{ gallery_title }}">
+    <meta name="generator" content="Exposure">
+    <title>{{ gallery_title }}</title>
+    <link rel="stylesheet" href="{{ css_href }}">
+</head>
+<body>
+    <header>
+        <h1>{{ gallery_title }}</h1>
+    </header>
+
+    <main class="gallery">
+{% for category in categories %}
+        <section class="category-section">
+            <h2>{{ category['name'] }}</h2>
+            <div class="image-grid">
+{% for image in category['images'] %}
+                <div
+                    class="image-item"
+                    data-filename="{{ image['filename'] }}"
+                    data-category="{{ image['category'] }}"
+                    data-title="{{ image['title'] }}"
+                    data-description="{{ image['description'] }}"
+                >
+                    <img
+                        src="{{ image['src'] }}"
+                        alt="{{ image['alt_text'] }}"
+                        loading="lazy"
+                    />
+{% if image['title'] %}
+                    <div class="image-caption">{{ image['title'] }}</div>
+{% endif %}
+                </div>
+{% endfor %}
+            </div>
+        </section>
+{% endfor %}
+    </main>{% include 'fullscreen.html.j2' %}
+
+    <script src="{{ js_href }}"></script>
+</body>
+</html>

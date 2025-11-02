@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-11-02
+
+### Changed
+- **Renamed project from "fotoview" to "exposure"**
+- Simplified CLI command from `uv run python -m src.generator.build_html` to `uv run exposure`
+- Environment variable prefix changed from `FOTOVIEW_*` to `EXPOSURE_*`
+- Updated all documentation, translations, and meta tags to reflect new branding
+- Logger name changed from "fotoview" to "exposure"
+- Package name in pyproject.toml updated to "exposure"
+
+### Added
+- Console script entry point `exposure` for simplified command-line invocation
+
+### Breaking Changes
+- Environment variables with `FOTOVIEW_*` prefix are no longer recognized - use `EXPOSURE_*` instead
+- Package name changed - reinstall with `uv sync` required
+
+### Migration Guide
+- Update any scripts or CI/CD pipelines to use `uv run exposure` instead of `uv run python -m src.generator.build_html`
+- Replace `FOTOVIEW_*` environment variables with `EXPOSURE_*` equivalents
+- The old module invocation `python -m src.generator.build_html` still works as a Python language feature
+
 ### Added
 - Initial project structure
 - Python package configuration with uv
@@ -20,8 +42,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced accessibility with WCAG 2.1 AA compliant contrast ratios
 - Browser color scheme integration via `<meta name="color-scheme">`
 - Architecture decision record for dark mode approach (ADR 0003)
+- **Internationalization (i18n) support** with Babel/gettext
+- German locale (de) translations for all UI strings
+- `locale` configuration field in settings.yaml
+- Automatic fallback to English for unsupported locales
+- Translation infrastructure with pybabel workflow
+- **Pydantic v2 data models** for automatic validation and type safety
+- **Jinja2 templating** replacing string concatenation for HTML generation
+- **Standard Python logging** replacing print() statements with configurable levels
+- **Pydantic Settings** for enhanced configuration management
+- Environment variable support for all settings (FOTOVIEW_* prefix)
+- Architecture decision record for library modernization (ADR 0005)
 
 ### Changed
+- Migrated all dataclass models to Pydantic BaseModel (Image, Category, YamlEntry, GalleryConfig)
+- Replaced HTML string building with Jinja2 templates
+- Replaced print() statements with logger calls throughout codebase
+- Configuration now supports environment variable overrides with validation
+- Improved error messages for configuration validation failures
 
 ### Deprecated
 

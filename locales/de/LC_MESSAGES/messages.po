@@ -1,0 +1,104 @@
+# German translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-11-02 10:08+0100\n"
+"PO-Revision-Date: 2025-11-01 23:37+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: src/generator/build_html.py:74
+#, python-format
+msgid "Scanning images in %s..."
+msgstr "Scanne Bilder in %s..."
+
+#: src/generator/build_html.py:76
+#, python-format
+msgid "Found %d image files"
+msgstr "%d Bilddateien gefunden"
+
+#: src/generator/build_html.py:81
+#, python-format
+msgid "%d invalid images skipped"
+msgstr "%d ungültige Bilder übersprungen"
+
+#: src/generator/build_html.py:86
+msgid "Duplicate filenames detected:"
+msgstr "Doppelte Dateinamen erkannt:"
+
+#: src/generator/build_html.py:89
+msgid "Cannot proceed with duplicate filenames"
+msgstr "Kann nicht mit doppelten Dateinamen fortfahren"
+
+#: src/generator/build_html.py:98
+#, python-format
+msgid "Added %d stub entries to YAML"
+msgstr "%d Platzhalter-Einträge zu YAML hinzugefügt"
+
+#: src/generator/build_html.py:112
+#, python-format
+msgid "No YAML entry for %s, using defaults"
+msgstr "Kein YAML-Eintrag für %s, verwende Standardwerte"
+
+#: src/generator/build_html.py:162
+#, python-format
+msgid "Unknown category '%s' for %s"
+msgstr "Unbekannte Kategorie '%s' für %s"
+
+#: src/generator/build_html.py:274
+msgid "Exposure Gallery Generator"
+msgstr "Exposure Galerie-Generator"
+
+#: src/generator/build_html.py:282
+#, python-format
+msgid "Loaded %d images across %d categories"
+msgstr "%d Bilder in %d Kategorien geladen"
+
+#: src/generator/build_html.py:288
+msgid "Generating gallery HTML..."
+msgstr "Generiere Galerie-HTML..."
+
+#: src/generator/build_html.py:296
+#, python-format
+msgid "✓ Generated %s"
+msgstr "✓ %s generiert"
+
+#: src/generator/build_html.py:297
+#, python-format
+msgid "  HTML size: %d bytes"
+msgstr "  HTML-Größe: %d Bytes"
+
+#: src/generator/build_html.py:299
+msgid "Categories:"
+msgstr "Kategorien:"
+
+#: src/generator/build_html.py:301
+#, python-format
+msgid "%d images"
+msgstr "%d Bilder"
+
+#: src/generator/build_html.py:303
+msgid "✓ Gallery built successfully!"
+msgstr "✓ Galerie erfolgreich erstellt!"
+
+#: src/generator/build_html.py:304
+#, python-format
+msgid "  Output: %s"
+msgstr "  Ausgabe: %s"
+
+#: src/generator/build_html.py:321
+#, python-format
+msgid "Error: %s"
+msgstr "Fehler: %s"
+

@@ -1,42 +1,53 @@
 """Build HTML gallery from images and YAML metadata."""
 
+import logging
 import sys
 from pathlib import Path
 
-import yaml
-
+# Import model module to set the yaml file path
+from . import model
+from .i18n import _
 from .model import Category, GalleryConfig, Image
 from .scan import detect_duplicates, discover_images, filter_valid_images, get_image_dimensions
 from .yaml_sync import append_stub_entries, get_entry_map, load_gallery_yaml
 
+logger = logging.getLogger("exposure")
+
 
 def load_config(settings_path: Path) -> GalleryConfig:
     """
-    Load configuration from settings.yaml.
+    Load configuration from settings.yaml and environment variables.
+
+    Uses pydantic-settings to automatically load and merge configuration from:
+    1. Environment variables (EXPOSURE_* prefix) - highest priority
+    2. .env file (if present)
+    3. YAML settings file - lowest priority
+
+    Examples:
+        # Override locale via environment variable:
+        EXPOSURE_LOCALE=de uv run exposure
+
+        # Override log level:
+        EXPOSURE_LOG_LEVEL=DEBUG uv run exposure
 
     Args:
         settings_path: Path to settings.yaml file
 
     Returns:
-        GalleryConfig object
+        GalleryConfig object with automatic environment variable support.
 
     Raises:
         FileNotFoundError: If settings file doesn't exist
-        ValueError: If configuration is invalid
+        pydantic.ValidationError: If configuration is invalid with detailed field errors
     """
     if not settings_path.exists():
         raise FileNotFoundError(f"Settings file not found: {settings_path}")
 
-    with open(settings_path, "r") as f:
-        settings = yaml.safe_load(f)
+    # Set the module-level YAML file path
+    model._yaml_settings_file = settings_path
 
-    return GalleryConfig(
-        content_dir=Path(settings["content_dir"]),
-        gallery_yaml_path=Path(settings["gallery_yaml_path"]),
-        default_category=settings["default_category"],
-        enable_thumbnails=settings.get("enable_thumbnails", False),
-        output_dir=Path(settings.get("output_dir", "dist")),
-    )
+    # Pydantic-settings will automatically load YAML and merge with env vars
+    return GalleryConfig()  # type: ignore[call-arg]
 
 
 def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
@@ -60,22 +71,22 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
         ValueError: If duplicate filenames found or other validation errors
     """
     # Discover images
-    print(f"Scanning images in {config.content_dir}...")
+    logger.info(_("Scanning images in %s..."), config.content_dir)
     image_paths = discover_images(config.content_dir)
-    print(f"Found {len(image_paths)} image files")
+    logger.info(_("Found %d image files"), len(image_paths))
 
     # Filter valid images
     valid_paths = filter_valid_images(image_paths)
     if len(valid_paths) < len(image_paths):
-        print(f"Warning: {len(image_paths) - len(valid_paths)} invalid images skipped")
+        logger.warning(_("%d invalid images skipped"), len(image_paths) - len(valid_paths))
 
     # Check for duplicates
     duplicates = detect_duplicates(valid_paths)
     if duplicates:
-        print("Error: Duplicate filenames detected:")
+        logger.error(_("Duplicate filenames detected:"))
         for filename, paths in duplicates.items():
-            print(f"  {filename}: {', '.join(str(p) for p in paths)}")
-        raise ValueError("Cannot proceed with duplicate filenames")
+            logger.error("  %s: %s", filename, ", ".join(str(p) for p in paths))
+        raise ValueError(_("Cannot proceed with duplicate filenames"))
 
     # Load YAML
     categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
@@ -84,7 +95,7 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
     filenames = [p.name for p in valid_paths]
     stubs_added = append_stub_entries(config.gallery_yaml_path, filenames, config.default_category)
     if stubs_added > 0:
-        print(f"Added {stubs_added} stub entries to YAML")
+        logger.info(_("Added %d stub entries to YAML"), stubs_added)
         # Reload after stub addition
         categories, yaml_entries = load_gallery_yaml(config.gallery_yaml_path)
 
@@ -98,7 +109,7 @@ def scan_and_sync(config: GalleryConfig) -> tuple[list[str], list[Image]]:
 
         if entry is None:
             # This shouldn't happen after stub generation, but handle gracefully
-            print(f"Warning: No YAML entry for {filename}, using defaults")
+            logger.warning(_("No YAML entry for %s, using defaults"), filename)
             entry_category = config.default_category
             entry_title = ""
             entry_description = ""
@@ -148,7 +159,7 @@ def organize_by_category(category_names: list[str], images: list[Image]) -> list
         cat = category_map.get(image.category)
         if cat is None:
             # This shouldn't happen if YAML is valid, but handle gracefully
-            print(f"Warning: Unknown category '{image.category}' for {image.filename}")
+            logger.warning(_("Unknown category '%s' for %s"), image.category, image.filename)
             continue
         cat.add_image(image)
 
@@ -160,7 +171,7 @@ def organize_by_category(category_names: list[str], images: list[Image]) -> list
 
 def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> str:
     """
-    Generate HTML for the gallery from categories.
+    Generate HTML for the gallery from categories using Jinja2 templates.
 
     Args:
         categories: List of Category objects with images
@@ -169,11 +180,23 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     Returns:
         Generated HTML string
     """
-    from .assets import copy_with_hash, write_with_hash
+    from jinja2 import Environment, FileSystemLoader
 
-    # Read templates
-    template_path = Path(__file__).parent.parent / "templates" / "index.html.tpl"
-    fullscreen_path = Path(__file__).parent.parent / "templates" / "fullscreen.html.part"
+    from .assets import copy_with_hash, write_with_hash
+    from .i18n import setup_i18n
+
+    # Setup internationalization
+    translations = setup_i18n(config.locale)
+
+    # Setup Jinja2 environment with i18n extension
+    templates_dir = Path(__file__).parent.parent / "templates"
+    env = Environment(
+        loader=FileSystemLoader(templates_dir),
+        autoescape=True,
+        extensions=["jinja2.ext.i18n"],
+    )
+    env.install_gettext_translations(translations)  # type: ignore[attr-defined]
+    template = env.get_template("index.html.j2")
 
     # CSS sources
     gallery_css = Path(__file__).parent.parent / "static" / "css" / "gallery.css"
@@ -183,11 +206,6 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     gallery_js = Path(__file__).parent.parent / "static" / "js" / "gallery.js"
     a11y_js = Path(__file__).parent.parent / "static" / "js" / "a11y.js"
     fullscreen_js = Path(__file__).parent.parent / "static" / "js" / "fullscreen.js"
-
-    with open(template_path, "r") as f:
-        template = f.read()
-    with open(fullscreen_path, "r") as f:
-        fullscreen_modal = f.read()
 
     # Combine CSS files
     css_content = gallery_css.read_text(encoding="utf-8")
@@ -208,62 +226,38 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     css_href = css_output.name
     js_href = js_output.name
 
-    # Build gallery sections HTML
-    sections_html = []
+    # Copy images and build image data for template
+    # We need to create a modified category structure with hashed image paths
+    template_categories = []
     for category in categories:
-        # Skip empty categories
-        if not category.images:
-            continue
-
-        section_html = ['        <section class="category-section">']
-        section_html.append(f"            <h2>{category.name}</h2>")
-        section_html.append('            <div class="image-grid">')
-
+        template_images = []
         for image in category.images:
-            # Copy image to dist
+            # Copy image and get hashed filename
             img_dest = copy_with_hash(image.file_path, config.output_dir / "images")
             img_href = f"images/{img_dest.name}"
-            alt_text = image.alt_text
 
-            # Escape HTML in data attributes
-            title_escaped = image.title.replace('"', "&quot;") if image.title else ""
-            desc_escaped = image.description.replace('"', "&quot;") if image.description else ""
-
-            # Build image HTML with data attributes for fullscreen
-            img_html = (
-                f'                <div class="image-item" '
-                f'data-category="{category.name}" data-filename="{image.filename}"'
-            )
-            if title_escaped:
-                img_html += f' data-title="{title_escaped}"'
-            if desc_escaped:
-                img_html += f' data-description="{desc_escaped}"'
-            img_html += ">"
-            img_html += (
-                f'\n                    <img src="{img_href}" alt="{alt_text}" loading="lazy" />'
+            # Create image dict with hashed path for template
+            template_images.append(
+                {
+                    "filename": image.filename,
+                    "src": img_href,
+                    "category": image.category,
+                    "title": image.title,
+                    "description": image.description,
+                    "alt_text": image.alt_text,
+                    "width": image.width,
+                    "height": image.height,
+                }
             )
 
-            # Optional caption overlay
-            if image.title:
-                img_html += f'\n                    <div class="image-caption">{image.title}</div>'
+        template_categories.append({"name": category.name, "images": template_images})
 
-            img_html += "\n                </div>"
-            section_html.append(img_html)
-
-        section_html.append("            </div>")
-        section_html.append("        </section>")
-        sections_html.append("\n".join(section_html))
-
-    gallery_sections = "\n".join(sections_html)
-
-    # Fill template
-    html = template.format(
-        title="Image Gallery",
-        description="Modern responsive image gallery",
+    # Render template with data
+    html = template.render(
+        gallery_title="Image Gallery",
+        categories=template_categories,
         css_href=css_href,
         js_href=js_href,
-        gallery_sections=gallery_sections,
-        fullscreen_modal=fullscreen_modal if fullscreen_modal.strip() else "",
     )
 
     return html
@@ -276,22 +270,32 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     Args:
         config_path: Path to settings.yaml configuration file
     """
-    print("=" * 60)
-    print("Fotoview Gallery Generator")
-    print("=" * 60)
-
-    # Load configuration
+    # Load configuration first to get locale
     config = load_config(config_path)
+
+    # Setup internationalization before any translated messages
+    from .i18n import setup_i18n
+
+    setup_i18n(config.locale)
+
+    # ASCII art banner
+    logger.info("")
+    logger.info("  _____ __  __ ____   ___  ____  _   _ ____  _____ ")
+    logger.info(" | ____|\\ \\/ /|  _ \\ / _ \\/ ___|| | | |  _ \\| ____|")
+    logger.info(" |  _|   \\  / | |_) | | | \\___ \\| | | | |_) |  _|  ")
+    logger.info(" | |___  /  \\ |  __/| |_| |___) | |_| |  _ <| |___ ")
+    logger.info(" |_____|/_/\\_\\|_|    \\___/|____/ \\___/|_| \\_\\_____|")
+    logger.info("")
 
     # Scan and sync
     category_names, images = scan_and_sync(config)
-    print(f"Loaded {len(images)} images across {len(category_names)} categories")
+    logger.info(_("Loaded %d images across %d categories"), len(images), len(category_names))
 
     # Organize by category
     categories = organize_by_category(category_names, images)
 
     # Generate HTML
-    print("\nGenerating gallery HTML...")
+    logger.info(_("Generating gallery HTML..."))
     html = generate_gallery_html(categories, config)
 
     # Write index.html
@@ -299,19 +303,24 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
 
-    print(f"✓ Generated {output_path}")
-    print(f"  HTML size: {len(html)} bytes")
+    logger.info(_("✓ Generated %s"), output_path)
+    logger.info(_("  HTML size: %d bytes"), len(html))
 
-    print("\nCategories:")
+    logger.info(_("Categories:"))
     for cat in categories:
-        print(f"  {cat.name}: {len(cat.images)} images")
+        logger.info("  %s: %s", cat.name, _("%d images") % len(cat.images))
 
-    print("\n✓ Gallery built successfully!")
-    print(f"  Output: {config.output_dir.absolute()}")
+    logger.info(_("✓ Gallery built successfully!"))
+    logger.info(_("  Output: %s"), config.output_dir.absolute())
 
 
 def main() -> None:
     """CLI entry point."""
+    from . import setup_logging
+
+    # Setup logging
+    setup_logging()
+
     config_path = Path("config/settings.yaml")
     if len(sys.argv) > 1:
         config_path = Path(sys.argv[1])
@@ -319,7 +328,7 @@ def main() -> None:
     try:
         build_gallery(config_path)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        logger.error(_("Error: %s"), e)
         sys.exit(1)
 
 

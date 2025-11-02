@@ -1,6 +1,6 @@
 # Hosting and Security Configuration
 
-This document provides security configuration guidance for hosting the Fotoview gallery.
+This document provides security configuration guidance for hosting the Exposure gallery.
 
 ## Content Security Policy (CSP)
 
@@ -34,7 +34,7 @@ Add to your server block:
 server {
     listen 80;
     server_name yourdomain.com;
-    root /path/to/fotoview/dist;
+    root /path/to/exposure/dist;
 
     # Security Headers
     add_header Content-Security-Policy "default-src 'none'; img-src 'self' data:; script-src 'self'; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';" always;
