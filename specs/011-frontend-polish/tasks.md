@@ -40,7 +40,7 @@ This is a single-project static site generator:
 
 **⚠️ CRITICAL**: This fixes the root cause of horizontal scrolling and simplifies all subsequent CSS work
 
-- [ ] T001 Refactor body padding architecture in src/static/css/gallery.css (remove body padding, add padding to .gallery container, simplify .gallery-banner width calculation, remove negative margins)
+- [X] T001 Refactor body padding architecture in src/static/css/gallery.css (remove body padding, add padding to .gallery container, simplify .gallery-banner width calculation, remove negative margins)
 
 **Checkpoint**: CSS architecture simplified - user story implementation can now begin in parallel
 
@@ -54,15 +54,15 @@ This is a single-project static site generator:
 
 ### Implementation for User Story 1
 
-- [ ] T002 [P] [US1] Flatten images array structure in src/static/js/fullscreen.js (create allImages flat array on init, assign globalIndex to each image across all categories)
-- [ ] T003 [P] [US1] Add touch event state variables in src/static/js/fullscreen.js (touchStartX, touchStartY, touchEndX, touchEndY, touchStartTime, touchEndTime)
-- [ ] T004 [US1] Implement handleTouchStart function in src/static/js/fullscreen.js (record touch coordinates and timestamp on touchstart event)
-- [ ] T005 [US1] Implement handleTouchEnd function in src/static/js/fullscreen.js (record final coordinates and timestamp on touchend event, call handleSwipeGesture)
-- [ ] T006 [US1] Implement handleSwipeGesture function in src/static/js/fullscreen.js (calculate deltaX/deltaY, validate angle threshold <30° or >150°, validate minimum distance >50px, call showNextImage or showPreviousImage)
-- [ ] T007 [US1] Attach touch event listeners in src/static/js/fullscreen.js (addEventListener touchstart and touchend to #fullscreen-modal)
-- [ ] T008 [US1] Update showNextImage function in src/static/js/fullscreen.js (use modulo arithmetic for wrapping: (currentIndex + 1) % allImages.length)
-- [ ] T009 [US1] Update showPreviousImage function in src/static/js/fullscreen.js (use modulo arithmetic for wrapping: (currentIndex - 1 + allImages.length) % allImages.length)
-- [ ] T010 [US1] Update openFullscreen to use category label from image data in src/static/js/fullscreen.js (modalCategory.textContent = imageItem.categoryName for cross-category navigation)
+- [X] T002 [P] [US1] Flatten images array structure in src/static/js/fullscreen.js (create allImages flat array on init, assign globalIndex to each image across all categories)
+- [X] T003 [P] [US1] Add touch event state variables in src/static/js/fullscreen.js (touchStartX, touchStartY, touchEndX, touchEndY, touchStartTime, touchEndTime)
+- [X] T004 [US1] Implement handleTouchStart function in src/static/js/fullscreen.js (record touch coordinates and timestamp on touchstart event)
+- [X] T005 [US1] Implement handleTouchEnd function in src/static/js/fullscreen.js (record final coordinates and timestamp on touchend event, call handleSwipeGesture)
+- [X] T006 [US1] Implement handleSwipeGesture function in src/static/js/fullscreen.js (calculate deltaX/deltaY, validate angle threshold <30° or >150°, validate minimum distance >50px, call showNextImage or showPreviousImage)
+- [X] T007 [US1] Attach touch event listeners in src/static/js/fullscreen.js (addEventListener touchstart and touchend to #fullscreen-modal)
+- [X] T008 [US1] Update showNextImage function in src/static/js/fullscreen.js (use modulo arithmetic for wrapping: (currentIndex + 1) % allImages.length)
+- [X] T009 [US1] Update showPreviousImage function in src/static/js/fullscreen.js (use modulo arithmetic for wrapping: (currentIndex - 1 + allImages.length) % allImages.length)
+- [X] T010 [US1] Update openFullscreen to use category label from image data in src/static/js/fullscreen.js (modalCategory.textContent = imageItem.categoryName for cross-category navigation)
 
 **Checkpoint**: Mobile users can swipe through all images seamlessly with category labels updating automatically
 
@@ -76,12 +76,12 @@ This is a single-project static site generator:
 
 ### Implementation for User Story 2
 
-- [ ] T011 [P] [US2] Add data attributes to gallery.html template in src/templates/gallery.html (data-thumbnail-src="{{ image.thumbnail_url }}", data-original-src="{{ image.url }}", data-category="{{ image.category }}")
-- [ ] T012 [P] [US2] Add currentImageLoader variable in src/static/js/fullscreen.js (global variable to track Image() preloader, initialized to null)
-- [ ] T013 [US2] Update openFullscreen to display thumbnail immediately in src/static/js/fullscreen.js (set modalImg.src to thumbnailSrc from data attribute, remove 'loaded' class)
-- [ ] T014 [US2] Implement Image() preloader in openFullscreen in src/static/js/fullscreen.js (create new Image(), set onload handler to swap src and add 'loaded' class, set onerror handler, assign originalSrc)
-- [ ] T015 [US2] Add load cancellation logic in openFullscreen in src/static/js/fullscreen.js (null out currentImageLoader before starting new load to cancel previous)
-- [ ] T016 [P] [US2] Add CSS transition for thumbnail-to-original swap in src/static/css/fullscreen.css (#modal-image transition opacity 0.3s, :not(.loaded) opacity 0.95, .loaded opacity 1)
+- [X] T011 [P] [US2] Add data attributes to gallery.html template in src/templates/index.html.j2 (data-thumbnail-src="{{ image.thumbnail_jpeg_href }}", data-original-src="{{ image.url }}", data-category="{{ image.category }}")
+- [X] T012 [P] [US2] Add currentImageLoader variable in src/static/js/fullscreen.js (global variable to track Image() preloader, initialized to null)
+- [X] T013 [US2] Update openFullscreen to display thumbnail immediately in src/static/js/fullscreen.js (set modalImg.src to thumbnailSrc from data attribute, remove 'loaded' class)
+- [X] T014 [US2] Implement Image() preloader in openFullscreen in src/static/js/fullscreen.js (create new Image(), set onload handler to swap src and add 'loaded' class, set onerror handler, assign originalSrc)
+- [X] T015 [US2] Add load cancellation logic in openFullscreen in src/static/js/fullscreen.js (null out currentImageLoader before starting new load to cancel previous)
+- [X] T016 [P] [US2] Add CSS transition for thumbnail-to-original swap in src/static/css/fullscreen.css (#modal-image transition opacity 0.3s, :not(.loaded) opacity 0.95, .loaded opacity 1)
 
 **Checkpoint**: Users see immediate thumbnail display, smooth transition to original, no blank screens while loading
 
@@ -95,9 +95,9 @@ This is a single-project static site generator:
 
 ### Implementation for User Story 3
 
-- [ ] T017 [P] [US3] Add overflow-x hidden to body in src/static/css/gallery.css (overflow-x: hidden, max-width: 100vw)
-- [ ] T018 [P] [US3] Update header:has(.gallery-banner) selector in src/static/css/gallery.css (remove negative margin-left, margin-right, margin-top since body padding is removed)
-- [ ] T019 [US3] Add padding to header:not(:has(.gallery-banner)) in src/static/css/gallery.css (padding: calc(var(--spacing-unit) * 2) var(--spacing-unit) for spacing when banner absent)
+- [X] T017 [P] [US3] Add overflow-x hidden to body in src/static/css/gallery.css (overflow-x: hidden, max-width: 100vw) - DONE IN T001
+- [X] T018 [P] [US3] Update header:has(.gallery-banner) selector in src/static/css/gallery.css (remove negative margin-left, margin-right, margin-top since body padding is removed) - DONE IN T001
+- [X] T019 [US3] Add padding to header:not(:has(.gallery-banner)) in src/static/css/gallery.css (padding: calc(var(--spacing-unit) * 2) var(--spacing-unit) for spacing when banner absent) - DONE IN T001
 
 **Checkpoint**: Gallery displays without horizontal scrolling on all mobile viewport sizes (320px-768px)
 
@@ -111,10 +111,10 @@ This is a single-project static site generator:
 
 ### Implementation for User Story 4
 
-- [ ] T020 [P] [US4] Increase desktop image max-height in src/static/css/fullscreen.css (.modal-content img max-height: 80vh, increased from 70vh)
-- [ ] T021 [P] [US4] Increase mobile image max-height in src/static/css/fullscreen.css (@media (max-width: 768px) .modal-content img max-height: 75vh, increased from 60vh)
-- [ ] T022 [P] [US4] Reduce category label prominence in src/static/css/fullscreen.css (.modal-category font-size: 0.75rem, opacity: 0.7)
-- [ ] T023 [US4] Optimize metadata spacing in src/static/css/fullscreen.css (.modal-metadata margin-top: 1rem reduced from 1.5rem, add padding: 0 1rem for mobile)
+- [X] T020 [P] [US4] Increase desktop image max-height in src/static/css/fullscreen.css (.modal-content img max-height: 80vh, increased from 70vh)
+- [X] T021 [P] [US4] Increase mobile image max-height in src/static/css/fullscreen.css (@media (max-width: 768px) .modal-content img max-height: 75vh, increased from 60vh)
+- [X] T022 [P] [US4] Reduce category label prominence in src/static/css/fullscreen.css (.modal-category font-size: 0.75rem, opacity: 0.7)
+- [X] T023 [US4] Optimize metadata spacing in src/static/css/fullscreen.css (.modal-metadata margin-top: 1rem reduced from 1.5rem, add padding: 0 1rem for mobile)
 
 **Checkpoint**: Images appear significantly larger in overlay, category is visually secondary to title/description
 
@@ -128,9 +128,9 @@ This is a single-project static site generator:
 
 ### Implementation for User Story 5
 
-- [ ] T024 [P] [US5] Refine shimmer animation contrast in src/static/css/gallery.css (.image-item img[loading="lazy"] background gradient use rgba(255, 255, 255, 0.3) instead of #f8f8f8)
-- [ ] T025 [P] [US5] Slow shimmer animation speed in src/static/css/gallery.css (animation: shimmer 2.0s ease-in-out infinite, increased from 1.5s)
-- [ ] T026 [P] [US5] Add dark mode shimmer refinement in src/static/css/gallery.css (@media (prefers-color-scheme: dark) use rgba(255, 255, 255, 0.05) for even more subtlety)
+- [X] T024 [P] [US5] Refine shimmer animation contrast in src/static/css/gallery.css (.image-item img[loading="lazy"] background gradient use rgba(255, 255, 255, 0.3) instead of #f8f8f8)
+- [X] T025 [P] [US5] Slow shimmer animation speed in src/static/css/gallery.css (animation: shimmer 2.0s ease-in-out infinite, increased from 1.5s)
+- [X] T026 [P] [US5] Add dark mode shimmer refinement in src/static/css/gallery.css (@media (prefers-color-scheme: dark) use rgba(255, 255, 255, 0.05) for even more subtlety)
 
 **Checkpoint**: Visual polish complete - no artifacts, loading animation professional and unobtrusive
 
