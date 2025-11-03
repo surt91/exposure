@@ -19,6 +19,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-02
 - Python 3.11+ + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), PyYAML 6.0+ (config), Jinja2 3.1+ (templates), Babel 2.13+ (i18n) (010-metadata-privacy)
 - File-based (source images, generated thumbnails, build cache JSON, no database) (010-metadata-privacy)
 - Python 3.11+ + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), piexif 1.1+ (EXIF manipulation), PyYAML 6.0+ (config), Jinja2 3.1+ (templates), Babel 2.13+ (i18n) (010-metadata-privacy)
+- Python 3.11 (build tooling), HTML5/CSS3/Vanilla ES Modules JavaScript (frontend) + Jinja2 3.1+ (templating), Pillow 10.0+ (image processing), PyYAML 6.0+ (config), Pydantic 2.0+ (data models) (011-frontend-polish)
+- File-based (static HTML/CSS/JS generation, image assets, no database) (011-frontend-polish)
 
 ## Project Structure
 
@@ -53,9 +55,9 @@ uv run pybabel compile -d locales
 Python 3.11: Follow standard conventions
 
 ## Recent Changes
+- 011-frontend-polish: Added Python 3.11 (build tooling), HTML5/CSS3/Vanilla ES Modules JavaScript (frontend) + Jinja2 3.1+ (templating), Pillow 10.0+ (image processing), PyYAML 6.0+ (config), Pydantic 2.0+ (data models)
+- 011-frontend-polish: Added Python 3.11 (build tooling), HTML5/CSS3/Vanilla ES Modules JavaScript (frontend) + Jinja2 3.1+ (templating), Pillow 10.0+ (image processing), PyYAML 6.0+ (config), Pydantic 2.0+ (data models)
 - 010-metadata-privacy: Added Python 3.11+ + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), piexif 1.1+ (EXIF manipulation), PyYAML 6.0+ (config), Jinja2 3.1+ (templates), Babel 2.13+ (i18n)
-- 010-metadata-privacy: Added Python 3.11+ + Pillow 10.0+ (image processing), Pydantic 2.0+ (data models), PyYAML 6.0+ (config), Jinja2 3.1+ (templates), Babel 2.13+ (i18n)
-- 009-gallery-banner: Added Python 3.11+ + Pydantic 2.0+ (data models), Jinja2 3.1+ (templates), Pillow 10.0+ (image metadata), PyYAML 6.0+ (config), Babel 2.13+ (i18n)
 
 
 <!-- MANUAL ADDITIONS START -->

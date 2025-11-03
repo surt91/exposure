@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Mobile touch swipe gestures** - Swipe left/right in fullscreen overlay to navigate between images
+- Cross-category navigation - Seamlessly browse through all images across categories with wrapping
+- **Progressive image loading** - Thumbnails display immediately (<100ms) while original images load in background
+- Smooth fade-in transition when original images finish loading
+- **Improved mobile layout** - Eliminated horizontal scrolling on all mobile viewport sizes (320px-768px)
+- Simplified CSS architecture - Removed body padding complexity and negative margins
+- Banner now naturally extends edge-to-edge without viewport calculations
+- **Optimized overlay layout** - Larger images in fullscreen view (80vh desktop, 75vh mobile, up from 70vh/60vh)
+- De-emphasized category label for better visual hierarchy (smaller font, reduced opacity)
+- **Refined loading animations** - More subtle shimmer effect (slower speed, reduced contrast, extra-subtle in dark mode)
+
+### Changed
+- Touch gesture detection uses horizontal angle threshold (<30° or >150°) to prevent scroll conflicts
+- Navigation buttons and keyboard arrows now cross category boundaries
+- Modal category label updates dynamically when crossing category boundaries
 - **Gallery banner and title** - Optional full-width banner image with styled title overlay
 - Banner image displayed at top of gallery spanning full viewport width
 - Responsive banner height: 40vh (desktop), 30vh (tablet), 25vh (mobile)

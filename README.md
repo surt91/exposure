@@ -28,7 +28,7 @@ Modern static image gallery generator - build responsive, accessible galleries f
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd fotoview
+cd exposure
 
 # Install dependencies with uv
 uv sync
@@ -46,11 +46,20 @@ uv run exposure
 ### Development Commands
 
 ```bash
+# Install Playwright browsers (required for accessibility tests)
+uv run playwright install --with-deps chromium
+
+# Initialize pre-commit hooks
+uv run pre-commit install
+
 # Run tests
 uv run pytest
 
 # Run with coverage
 uv run pytest --cov=src --cov-report=html
+
+# Skip accessibility tests (if Playwright browsers not installed)
+uv run pytest -m "not a11y"
 
 # Type check
 uv run ty check src/

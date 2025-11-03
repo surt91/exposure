@@ -14,8 +14,100 @@
   let currentImageIndex = -1;
   let currentCategory = '';
   let images = [];
+  let allImages = []; // Flat array of all images across categories with globalIndex
   let modal = null;
   let previousFocus = null;
+  let currentImageLoader = null; // Track current Image() preloader for cancellation
+  let preloadCache = new Map(); // Cache for preloaded images: key=src, value=Image()
+
+  // Touch gesture state
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+  let touchStartTime = 0;
+  let touchEndTime = 0;
+
+  /**
+   * Handle touch start event
+   */
+  function handleTouchStart(event) {
+    touchStartX = event.changedTouches[0].screenX;
+    touchStartY = event.changedTouches[0].screenY;
+    touchStartTime = performance.now();
+  }
+
+  /**
+   * Handle touch end event
+   */
+  function handleTouchEnd(event) {
+    touchEndX = event.changedTouches[0].screenX;
+    touchEndY = event.changedTouches[0].screenY;
+    touchEndTime = performance.now();
+    handleSwipeGesture();
+  }
+
+  /**
+   * Process swipe gesture and navigate if valid
+   */
+  function handleSwipeGesture() {
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    const distance = Math.abs(deltaX);
+    const angle = Math.abs(Math.atan2(deltaY, deltaX) * 180 / Math.PI);
+
+    // Validate: must be primarily horizontal (within 30° of horizontal axis)
+    // and meet minimum distance threshold (50px)
+    if ((angle < 30 || angle > 150) && distance > 50) {
+      if (deltaX > 0) {
+        showPreviousImage(); // Swipe right
+      } else {
+        showNextImage(); // Swipe left
+      }
+    }
+  }
+
+  /**
+   * Preload adjacent images (next and previous) for instant navigation
+   */
+  function preloadAdjacentImages(currentIndex) {
+    if (allImages.length === 0) return;
+
+    // Calculate indices for next and previous images (with wraparound)
+    const nextIndex = (currentIndex + 1) % allImages.length;
+    const prevIndex = (currentIndex - 1 + allImages.length) % allImages.length;
+
+    // Preload next image (original)
+    const nextImage = allImages[nextIndex];
+    if (nextImage && !preloadCache.has(nextImage.originalSrc)) {
+      const img = new Image();
+      img.src = nextImage.originalSrc;
+      preloadCache.set(nextImage.originalSrc, img);
+    }
+
+    // Preload previous image (original)
+    const prevImage = allImages[prevIndex];
+    if (prevImage && !preloadCache.has(prevImage.originalSrc)) {
+      const img = new Image();
+      img.src = prevImage.originalSrc;
+      preloadCache.set(prevImage.originalSrc, img);
+    }
+
+    // Clean up old cache entries (keep only current + 2 neighbors to save memory)
+    if (preloadCache.size > 10) {
+      const keepSrcs = new Set([
+        allImages[currentIndex].originalSrc,
+        nextImage.originalSrc,
+        prevImage.originalSrc
+      ]);
+
+      for (const [src, img] of preloadCache.entries()) {
+        if (!keepSrcs.has(src)) {
+          preloadCache.delete(src);
+        }
+      }
+    }
+  }
 
   /**
    * Initialize fullscreen functionality
@@ -26,6 +118,22 @@
 
     // Get all image items
     images = Array.from(document.querySelectorAll('.image-item'));
+
+    // Create flat allImages array with globalIndex and parsed metadata
+    allImages = images.map((item, globalIndex) => {
+      const img = item.querySelector('img');
+      return {
+        element: item,
+        category: item.dataset.category || '',
+        categoryName: item.dataset.category || '',
+        thumbnailSrc: item.dataset.thumbnailSrc || img.src,
+        originalSrc: item.dataset.originalSrc || img.src,
+        title: item.dataset.title || img.alt || item.dataset.filename || '',
+        description: item.dataset.description || '',
+        filename: item.dataset.filename || '',
+        globalIndex: globalIndex
+      };
+    });
 
     // Attach click handlers to all image items
     images.forEach((item, index) => {
@@ -61,13 +169,17 @@
         closeFullscreen();
       }
     });
+
+    // Touch event listeners for swipe gestures
+    modal.addEventListener('touchstart', handleTouchStart, { passive: true });
+    modal.addEventListener('touchend', handleTouchEnd, { passive: true });
   }
 
   /**
    * Open fullscreen view for a specific image
    */
   function openFullscreen(index) {
-    if (index < 0 || index >= images.length) return;
+    if (index < 0 || index >= allImages.length) return;
 
     // Mark performance milestone
     const startTime = performance.now();
@@ -76,19 +188,14 @@
     previousFocus = document.activeElement;
 
     currentImageIndex = index;
-    const imageItem = images[index];
+    const imageItem = allImages[index];
 
-    // Get image data
-    const img = imageItem.querySelector('img');
-    const filename = imageItem.dataset.filename || '';
-    currentCategory = imageItem.dataset.category || '';
+    // Update current category for consistency
+    currentCategory = imageItem.category;
 
-    // Get metadata from YAML (if available in data attributes)
-    const title = imageItem.dataset.title || img.alt || filename;
-    const description = imageItem.dataset.description || '';
-
-    // Get original image URL (use data-original-src if available for thumbnails, fallback to img.src)
-    const originalSrc = imageItem.dataset.originalSrc || img.src;
+    // Get thumbnail and original image URLs
+    const thumbnailSrc = imageItem.thumbnailSrc;
+    const originalSrc = imageItem.originalSrc;
 
     // Update modal content
     const modalImg = modal.querySelector('#modal-image');
@@ -96,24 +203,64 @@
     const modalDescription = modal.querySelector('#modal-description');
     const modalCategory = modal.querySelector('#modal-category');
 
-    if (modalImg) {
-      modalImg.src = originalSrc;
-      modalImg.alt = img.alt;
+    // Cancel previous image load
+    if (currentImageLoader) {
+      currentImageLoader = null;
     }
 
+    if (modalImg) {
+      // Check if original image is already preloaded
+      const preloadedOriginal = preloadCache.get(originalSrc);
+      const isOriginalReady = preloadedOriginal && preloadedOriginal.complete;
+
+      if (isOriginalReady) {
+        // Original is ready - show it immediately
+        modalImg.src = originalSrc;
+        modalImg.alt = imageItem.title;
+        modalImg.classList.add('loaded');
+        modalImg.style.opacity = '1';
+      } else {
+        // Original not ready - show thumbnail first
+        modalImg.src = thumbnailSrc;
+        modalImg.alt = imageItem.title;
+        modalImg.classList.remove('loaded');
+        modalImg.style.opacity = '1';
+
+        // Load original in background
+        currentImageLoader = new Image();
+        const loaderId = currentImageLoader;
+        currentImageLoader.onload = function() {
+          // Only update if this is still the current image
+          if (currentImageLoader === loaderId) {
+            modalImg.src = originalSrc;
+            modalImg.classList.add('loaded');
+          }
+        };
+        currentImageLoader.onerror = function() {
+          console.warn(`Failed to load original image: ${originalSrc}`);
+        };
+        currentImageLoader.src = originalSrc;
+        // Add to cache
+        preloadCache.set(originalSrc, currentImageLoader);
+      }
+    }
+
+    // Preload adjacent images for instant navigation
+    preloadAdjacentImages(index);
+
     if (modalTitle) {
-      modalTitle.textContent = title;
+      modalTitle.textContent = imageItem.title;
     }
 
     if (modalDescription) {
-      modalDescription.textContent = description;
-      modalDescription.style.display = description ? 'block' : 'none';
+      modalDescription.textContent = imageItem.description;
+      modalDescription.style.display = imageItem.description ? 'block' : 'none';
     }
 
     if (modalCategory) {
       // Get translated category label from modal data attribute
       const categoryLabel = modal.dataset.i18nCategory || 'Category:';
-      modalCategory.textContent = `${categoryLabel} ${currentCategory}`;
+      modalCategory.textContent = `${categoryLabel} ${imageItem.categoryName}`;
     }
 
     // Show modal
@@ -174,35 +321,21 @@
   }
 
   /**
-   * Show previous image in the same category
+   * Show previous image (crosses category boundaries, wraps around)
    */
   function showPreviousImage() {
-    if (currentImageIndex <= 0) return;
-
-    // Find previous image in same category
-    for (let i = currentImageIndex - 1; i >= 0; i--) {
-      const item = images[i];
-      if (item.dataset.category === currentCategory) {
-        openFullscreen(i);
-        return;
-      }
-    }
+    if (currentImageIndex < 0 || allImages.length === 0) return;
+    currentImageIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+    openFullscreen(currentImageIndex);
   }
 
   /**
-   * Show next image in the same category
+   * Show next image (crosses category boundaries, wraps around)
    */
   function showNextImage() {
-    if (currentImageIndex >= images.length - 1) return;
-
-    // Find next image in same category
-    for (let i = currentImageIndex + 1; i < images.length; i++) {
-      const item = images[i];
-      if (item.dataset.category === currentCategory) {
-        openFullscreen(i);
-        return;
-      }
-    }
+    if (currentImageIndex < 0 || allImages.length === 0) return;
+    currentImageIndex = (currentImageIndex + 1) % allImages.length;
+    openFullscreen(currentImageIndex);
   }
 
   /**
