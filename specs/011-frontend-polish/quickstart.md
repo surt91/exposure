@@ -85,17 +85,56 @@ document.body.scrollWidth === window.innerWidth  // Should be true
 4. Note: Emulation may not perfectly replicate touch behavior
 
 **Expected**:
-- ✅ Swipe left → Shows next image in same category
-- ✅ Swipe right → Shows previous image in same category
+- ✅ Swipe left → Shows next image (seamlessly crosses to next category if at end)
+- ✅ Swipe right → Shows previous image (seamlessly crosses to previous category if at start)
+- ✅ At last image of category → Swipe left → First image of next category
+- ✅ At first image of category → Swipe right → Last image of previous category
+- ✅ At last image of last category → Swipe left → First image of first category (wraps)
+- ✅ Category label updates when crossing category boundaries
 - ✅ Vertical swipe → Ignored (doesn't trigger navigation)
 - ✅ Diagonal swipe → Ignored (unless primarily horizontal)
-- ✅ Swipe at first image → No navigation (subtle feedback)
-- ✅ Swipe at last image → No navigation (subtle feedback)
 
 **Manual verification**:
 - Swipe should feel natural (not too sensitive, not too sluggish)
 - 50px minimum swipe distance required
 - Angle must be within 30° of horizontal
+
+---
+
+### Test 2.1: Cross-Category Navigation
+
+**What to test**: Navigation seamlessly crosses category boundaries, wrapping around the entire gallery.
+
+**Steps**:
+1. Open gallery and note the categories (e.g., "Dragons", "Dinosaurs", "Animals")
+2. Click the last image in the first category to open overlay
+3. Click the "Next" button (or swipe left, or press Right arrow key)
+4. Verify you see the first image of the second category
+5. Verify the category label updates to show the new category name
+6. Repeat until you reach the last image of the last category
+7. Click "Next" one more time
+8. Verify you wrap back to the first image of the first category
+
+**Expected**:
+- ✅ Navigation crosses from last image of Category A → first image of Category B
+- ✅ Category label updates immediately when boundary crossed
+- ✅ No visual disruption or delay at category boundaries
+- ✅ At last image of gallery → Next → wraps to first image of gallery
+- ✅ At first image of gallery → Previous → wraps to last image of gallery
+- ✅ Works identically for: button clicks, keyboard arrows, and swipe gestures
+
+**Verification in console**:
+```javascript
+// Check category label updates
+const categoryLabel = document.querySelector('#modal-category');
+console.log('Current category:', categoryLabel.textContent);
+// Should change when crossing boundaries
+
+// Check wrapping behavior
+window.fullscreenDebug.getCurrentIndex(); // Note the index
+// Navigate to last image, then press Next
+// Index should wrap to 0
+```
 
 ---
 

@@ -130,37 +130,42 @@ IDLE → LOADING
 ```javascript
 {
   isOpen: boolean,             // Whether modal is currently visible
-  currentImageIndex: number,   // Index of currently displayed image (-1 if closed)
-  currentCategory: string,     // Category of current image (for same-category navigation)
+  currentImageIndex: number,   // Index in FLAT allImages array (-1 if closed)
   previousFocus: Element | null, // Element to restore focus to when modal closes
-  images: Array<ImageItem>     // Reference to all image items in gallery
+  allImages: Array<ImageItem>  // FLAT array of ALL images across ALL categories
 }
 ```
 
-**ImageItem Structure** (stored in images array):
+**ImageItem Structure** (stored in allImages flat array):
 ```javascript
 {
   element: HTMLElement,        // DOM reference to .image-item div
   category: string,            // From data-category attribute
+  categoryName: string,        // Display name of category (for overlay label)
   thumbnailSrc: string,        // From data-thumbnail-src attribute
   originalSrc: string,         // From data-original-src attribute
   title: string,               // From data-title attribute
   description: string,         // From data-description attribute
-  filename: string             // From data-filename attribute
+  filename: string,            // From data-filename attribute
+  globalIndex: number          // Index in flat allImages array (for navigation)
 }
 ```
 
 **Lifecycle**:
 1. **Initialized**: On page load (`init()` function)
-2. **Images array populated**: Query all `.image-item` elements, extract data attributes
+2. **allImages array populated**: Flatten all categories into single array, each item gets globalIndex
 3. **Modal opened**: `isOpen = true`, `currentImageIndex` set, `previousFocus` stored
 4. **Modal closed**: `isOpen = false`, `currentImageIndex = -1`, focus restored
 
 **Validation Rules**:
-- `currentImageIndex`: Must be -1 (closed) or valid index (0 ≤ index < images.length)
-- `currentCategory`: Must match category of image at `currentImageIndex`
+- `currentImageIndex`: Must be -1 (closed) or valid index (0 ≤ index < allImages.length)
 - `previousFocus`: Can be null (no previous focus) or valid DOM element
-- `images`: Array length must match number of `.image-item` elements in DOM
+- `allImages`: Flat array length must match total number of `.image-item` elements across ALL categories
+
+**Cross-Category Navigation**:
+- Navigation uses modulo arithmetic: `(currentIndex + 1) % allImages.length` for next
+- Wrapping behavior: Last image of gallery → First image of gallery (and vice versa)
+- Category label updates automatically when crossing boundaries (tracked via image.categoryName)
 
 **Relationships**:
 - One global instance per page

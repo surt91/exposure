@@ -38,9 +38,10 @@ Mobile users viewing the photo gallery should be able to naturally swipe through
 
 1. **Given** user is viewing an image in the fullscreen overlay on a mobile device, **When** user swipes left on the image, **Then** the previous image in the same category is displayed with a smooth transition
 2. **Given** user is viewing an image in the fullscreen overlay on a mobile device, **When** user swipes right on the image, **Then** the next image in the same category is displayed with a smooth transition
-3. **Given** user is viewing the first image in a category, **When** user swipes left, **Then** no navigation occurs and a subtle visual feedback indicates beginning of category
-4. **Given** user is viewing the last image in a category, **When** user swipes right, **Then** no navigation occurs and a subtle visual feedback indicates end of category
+3. **Given** user is viewing the first image in a category, **When** user swipes left, **Then** the system navigates to the last image of the previous category (wrapping to the last category if at the beginning of the gallery)
+4. **Given** user is viewing the last image in a category, **When** user swipes right, **Then** the system navigates to the first image of the next category (wrapping to the first category if at the end of the gallery)
 5. **Given** user swipes diagonally or vertically, **When** the gesture is not clearly horizontal, **Then** the swipe gesture is ignored to avoid conflicts with scrolling
+6. **Given** the overlay left/right navigation buttons are clicked, **When** at category boundaries, **Then** navigation continues seamlessly to the next/previous category just like swipe gestures
 
 ---
 
@@ -125,6 +126,13 @@ Users viewing the gallery should experience a visually clean interface without v
   - Swipe detection should require primarily horizontal movement (>30 degree angle from horizontal)
   - Pinch-to-zoom gestures take precedence over swipe navigation
   - Vertical scrolling is not prevented by swipe detection
+- How does cross-category navigation work when categories have different numbers of images?
+  - Navigation wraps seamlessly: last image of Category A → swipe right → first image of Category B
+  - Category label in overlay updates to reflect the new category
+  - No visual disruption or delay when crossing category boundaries
+- What happens if a user rapidly swipes through images across multiple categories?
+  - System queues navigation events and processes them sequentially to prevent race conditions
+  - Each navigation waits for image thumbnail to be ready before allowing next navigation
 - How does the banner handle images with extreme aspect ratios or small dimensions?
   - Banner height is fixed (CSS custom properties: --banner-height-*), object-fit: cover handles aspect ratios
   - Very small images may appear pixelated but are constrained by object-position: center
@@ -150,9 +158,11 @@ Users viewing the gallery should experience a visually clean interface without v
 - **FR-009**: Category label in fullscreen overlay MUST be visually de-emphasized (smaller font size, reduced opacity) compared to title and description
 - **FR-010**: System MUST replace the current shimmer loading animation with a more subtle version (reduced contrast)
 - **FR-011**: Swipe gesture detection MUST require primarily horizontal movement to avoid conflicts with vertical scrolling
-- **FR-012**: System MUST provide subtle visual feedback when swiping at category boundaries (first/last image)
-- **FR-013**: System MUST cancel previous image loading requests when user navigates to a different image
-- **FR-014**: Gallery banner MUST correctly calculate width including body padding compensation to prevent overflow
+- **FR-012**: Navigation in fullscreen overlay (both swipe and button-based) MUST seamlessly cross category boundaries, moving to the next/previous category when reaching the end/beginning of a category
+- **FR-013**: System MUST update the category label in the overlay when navigation crosses into a different category
+- **FR-014**: System MUST support wrapping navigation: from the last image of the last category to the first image of the first category, and vice versa
+- **FR-015**: System MUST cancel previous image loading requests when user navigates to a different image
+- **FR-016**: Gallery banner MUST correctly calculate width including body padding compensation to prevent overflow
 
 ### Key Entities
 
@@ -168,8 +178,9 @@ Users viewing the gallery should experience a visually clean interface without v
 - **SC-001**: Gallery page displays without horizontal scrolling on all tested mobile devices (320px, 375px, 414px, 480px viewport widths)
 - **SC-002**: Fullscreen overlay opens with thumbnail visible within 100 milliseconds of user click/tap
 - **SC-003**: Users on mobile can successfully navigate between images using swipe gestures with 90% success rate (based on gesture recognition)
-- **SC-004**: Visual artifacts (black lines near banner) are eliminated and not visible on any tested viewport size
-- **SC-005**: Image size in fullscreen overlay increases by at least 15% of viewport height compared to current implementation
-- **SC-006**: Category label in overlay uses font size at least 20% smaller than title and opacity reduced to 0.7 or below
-- **SC-007**: Loading animation perceived as "subtle" or "unobtrusive" by 80% of test users (qualitative feedback)
-- **SC-008**: Perceived performance improvement: Users report fullscreen overlay feels "instant" or "fast" rather than experiencing noticeable delays
+- **SC-004**: Users can seamlessly navigate across category boundaries with the same interaction pattern (swipe or button click) used for within-category navigation
+- **SC-005**: Visual artifacts (black lines near banner) are eliminated and not visible on any tested viewport size
+- **SC-006**: Image size in fullscreen overlay increases by at least 15% of viewport height compared to current implementation
+- **SC-007**: Category label in overlay uses font size at least 20% smaller than title and opacity reduced to 0.7 or below
+- **SC-008**: Loading animation perceived as "subtle" or "unobtrusive" by 80% of test users (qualitative feedback)
+- **SC-009**: Perceived performance improvement: Users report fullscreen overlay feels "instant" or "fast" rather than experiencing noticeable delays

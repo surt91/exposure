@@ -61,21 +61,21 @@ This document defines the public interfaces and contracts for JavaScript modules
 **Event Handlers**:
 ```javascript
 // Click events:
-.image-item.click → openFullscreen(index)
+.image-item.click → openFullscreen(globalIndex)
 .modal-close.click → closeFullscreen()
-.modal-prev.click → showPreviousImage()
-.modal-next.click → showNextImage()
+.modal-prev.click → showPreviousImage()  // Crosses category boundaries seamlessly
+.modal-next.click → showNextImage()      // Crosses category boundaries seamlessly
 #fullscreen-modal.click (on backdrop) → closeFullscreen()
 
 // Keyboard events (document-level):
 Escape → closeFullscreen()
-ArrowLeft → showPreviousImage()
-ArrowRight → showNextImage()
+ArrowLeft → showPreviousImage()   // Crosses category boundaries seamlessly
+ArrowRight → showNextImage()      // Crosses category boundaries seamlessly
 Tab → trapFocus(event) // Keep focus within modal
 
 // Touch events (NEW - on #fullscreen-modal):
 touchstart → Record touch coordinates
-touchend → Validate and process swipe gesture
+touchend → Validate and process swipe gesture  // Crosses category boundaries seamlessly
 ```
 
 **New Functions** (internal, documented for maintainability):
@@ -136,13 +136,14 @@ function handleSwipeGesture() {
 }
 ```
 
-### Modified: openFullscreen(index: number)
+### Modified: openFullscreen(globalIndex: number)
 ```javascript
 /**
  * Open fullscreen overlay with progressive image loading
  * CHANGED: Now displays thumbnail immediately, loads original in background
+ * CHANGED: Now uses flat globalIndex across ALL categories
  *
- * @param {number} index - Index of image in images array
+ * @param {number} globalIndex - Index of image in flat allImages array
  * @returns {void}
  *
  * Performance Requirements:
@@ -156,9 +157,16 @@ function handleSwipeGesture() {
  * 3. On original.onload: Swap src and add 'loaded' class
  * 4. On original.onerror: Keep thumbnail, log warning
  * 5. Cancel previous load if user navigates before completion
+ *
+ * Cross-Category Navigation:
+ * - globalIndex spans ALL categories (flattened array)
+ * - Category label updates when image.category changes
+ * - No special boundary handling needed (seamless wrapping)
  */
-function openFullscreen(index) {
+function openFullscreen(globalIndex) {
   // ... existing validation and setup ...
+
+  const imageItem = allImages[globalIndex];  // From flat array
 
   // NEW: Cancel previous image load
   if (currentImageLoader) {
@@ -166,10 +174,13 @@ function openFullscreen(index) {
   }
 
   // NEW: Display thumbnail immediately
-  const thumbnailSrc = imageItem.dataset.thumbnailSrc;
-  const originalSrc = imageItem.dataset.originalSrc;
+  const thumbnailSrc = imageItem.thumbnailSrc;
+  const originalSrc = imageItem.originalSrc;
   modalImg.src = thumbnailSrc;
   modalImg.classList.remove('loaded');
+
+  // NEW: Update category label (may have crossed category boundary)
+  modalCategory.textContent = imageItem.categoryName;
 
   // NEW: Preload original in background
   currentImageLoader = new Image();
@@ -185,6 +196,32 @@ function openFullscreen(index) {
   currentImageLoader.src = originalSrc;
 
   // ... existing modal display logic ...
+}
+```
+
+### Modified: showNextImage()
+```javascript
+/**
+ * Navigate to next image in flat array (crosses category boundaries)
+ * CHANGED: Uses modulo arithmetic for seamless wrapping
+ */
+function showNextImage() {
+  if (!isOpen) return;
+  currentImageIndex = (currentImageIndex + 1) % allImages.length;
+  openFullscreen(currentImageIndex);
+}
+```
+
+### Modified: showPreviousImage()
+```javascript
+/**
+ * Navigate to previous image in flat array (crosses category boundaries)
+ * CHANGED: Uses modulo arithmetic for seamless wrapping
+ */
+function showPreviousImage() {
+  if (!isOpen) return;
+  currentImageIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+  openFullscreen(currentImageIndex);
 }
 ```
 
