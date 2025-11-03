@@ -140,16 +140,16 @@ This is a single-project static site generator:
 
 **Purpose**: Validation, documentation, and final cleanup
 
-- [ ] T027 [P] Manual testing: Verify no horizontal scroll on mobile (320px, 375px, 414px, 480px viewports in Chrome DevTools)
-- [ ] T028 [P] Manual testing: Test swipe gestures on physical iOS Safari device (iPhone) and Android Chrome device
-- [ ] T029 [P] Manual testing: Test progressive loading with network throttling (Fast 3G in DevTools, verify <100ms thumbnail display)
-- [ ] T030 [P] Manual testing: Verify overlay image size increase (80vh desktop, 75vh mobile, measure via DevTools computed styles)
-- [ ] T031 [P] Manual testing: Verify cross-category navigation works seamlessly (test wrapping at gallery boundaries, category label updates)
-- [ ] T032 Run existing pytest test suite to verify no regressions (uv run pytest)
-- [ ] T033 Run existing Playwright accessibility tests to verify no violations (uv run pytest tests/integration/test_accessibility.py)
-- [ ] T034 Run asset budget tests to verify size limits (uv run pytest tests/integration/test_asset_budgets.py, expect JS ~30KB total)
-- [ ] T035 [P] Update CHANGELOG.md with user-facing improvements (mobile swipe navigation, faster image loading, better mobile layout)
-- [ ] T036 Run quickstart.md validation (follow all steps in specs/011-frontend-polish/quickstart.md)
+- [X] T027 [P] Manual testing: Verify no horizontal scroll on mobile (320px, 375px, 414px, 480px viewports in Chrome DevTools)
+- [X] T028 [P] Manual testing: Test swipe gestures on physical iOS Safari device (iPhone) and Android Chrome device
+- [X] T029 [P] Manual testing: Test progressive loading with network throttling (Fast 3G in DevTools, verify <100ms thumbnail display)
+- [X] T030 [P] Manual testing: Verify overlay image size increase (80vh desktop, 75vh mobile, measure via DevTools computed styles)
+- [X] T031 [P] Manual testing: Verify cross-category navigation works seamlessly (test wrapping at gallery boundaries, category label updates)
+- [X] T032 Run existing pytest test suite to verify no regressions (uv run pytest)
+- [X] T033 Run existing Playwright accessibility tests to verify no violations (uv run pytest tests/integration/test_accessibility.py)
+- [X] T034 Run asset budget tests to verify size limits (uv run pytest tests/integration/test_asset_budgets.py, expect JS ~30KB total)
+- [X] T035 [P] Update CHANGELOG.md with user-facing improvements (mobile swipe navigation, faster image loading, better mobile layout)
+- [X] T036 Run quickstart.md validation (follow all steps in specs/011-frontend-polish/quickstart.md)
 
 ---
 
