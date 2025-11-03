@@ -18,6 +18,7 @@
   let modal = null;
   let previousFocus = null;
   let currentImageLoader = null; // Track current Image() preloader for cancellation
+  let preloadCache = new Map(); // Cache for preloaded images: key=src, value=Image()
 
   // Touch gesture state
   let touchStartX = 0;
@@ -62,6 +63,48 @@
         showPreviousImage(); // Swipe right
       } else {
         showNextImage(); // Swipe left
+      }
+    }
+  }
+
+  /**
+   * Preload adjacent images (next and previous) for instant navigation
+   */
+  function preloadAdjacentImages(currentIndex) {
+    if (allImages.length === 0) return;
+
+    // Calculate indices for next and previous images (with wraparound)
+    const nextIndex = (currentIndex + 1) % allImages.length;
+    const prevIndex = (currentIndex - 1 + allImages.length) % allImages.length;
+
+    // Preload next image (original)
+    const nextImage = allImages[nextIndex];
+    if (nextImage && !preloadCache.has(nextImage.originalSrc)) {
+      const img = new Image();
+      img.src = nextImage.originalSrc;
+      preloadCache.set(nextImage.originalSrc, img);
+    }
+
+    // Preload previous image (original)
+    const prevImage = allImages[prevIndex];
+    if (prevImage && !preloadCache.has(prevImage.originalSrc)) {
+      const img = new Image();
+      img.src = prevImage.originalSrc;
+      preloadCache.set(prevImage.originalSrc, img);
+    }
+
+    // Clean up old cache entries (keep only current + 2 neighbors to save memory)
+    if (preloadCache.size > 10) {
+      const keepSrcs = new Set([
+        allImages[currentIndex].originalSrc,
+        nextImage.originalSrc,
+        prevImage.originalSrc
+      ]);
+
+      for (const [src, img] of preloadCache.entries()) {
+        if (!keepSrcs.has(src)) {
+          preloadCache.delete(src);
+        }
       }
     }
   }
@@ -166,25 +209,44 @@
     }
 
     if (modalImg) {
-      // Display thumbnail immediately
-      modalImg.src = thumbnailSrc;
-      modalImg.alt = imageItem.title;
-      modalImg.classList.remove('loaded');
+      // Check if original image is already preloaded
+      const preloadedOriginal = preloadCache.get(originalSrc);
+      const isOriginalReady = preloadedOriginal && preloadedOriginal.complete;
 
-      // Preload original in background
-      currentImageLoader = new Image();
-      currentImageLoader.onload = function() {
-        // Only update if this is still the current image
-        if (currentImageLoader === this) {
-          modalImg.src = originalSrc;
-          modalImg.classList.add('loaded');
-        }
-      };
-      currentImageLoader.onerror = function() {
-        console.warn(`Failed to load original image: ${originalSrc}`);
-      };
-      currentImageLoader.src = originalSrc;
+      if (isOriginalReady) {
+        // Original is ready - show it immediately
+        modalImg.src = originalSrc;
+        modalImg.alt = imageItem.title;
+        modalImg.classList.add('loaded');
+        modalImg.style.opacity = '1';
+      } else {
+        // Original not ready - show thumbnail first
+        modalImg.src = thumbnailSrc;
+        modalImg.alt = imageItem.title;
+        modalImg.classList.remove('loaded');
+        modalImg.style.opacity = '1';
+
+        // Load original in background
+        currentImageLoader = new Image();
+        const loaderId = currentImageLoader;
+        currentImageLoader.onload = function() {
+          // Only update if this is still the current image
+          if (currentImageLoader === loaderId) {
+            modalImg.src = originalSrc;
+            modalImg.classList.add('loaded');
+          }
+        };
+        currentImageLoader.onerror = function() {
+          console.warn(`Failed to load original image: ${originalSrc}`);
+        };
+        currentImageLoader.src = originalSrc;
+        // Add to cache
+        preloadCache.set(originalSrc, currentImageLoader);
+      }
     }
+
+    // Preload adjacent images for instant navigation
+    preloadAdjacentImages(index);
 
     if (modalTitle) {
       modalTitle.textContent = imageItem.title;
