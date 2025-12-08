@@ -76,6 +76,8 @@
 
   /**
    * Preload adjacent images (next and previous) for instant navigation
+   * Preloads both thumbnails and originals since gallery uses lazy loading
+   * (thumbnails may not be loaded if images are outside viewport)
    */
   function preloadAdjacentImages(currentIndex) {
     if (allImages.length === 0) return;
@@ -84,29 +86,55 @@
     const nextIndex = (currentIndex + 1) % allImages.length;
     const prevIndex = (currentIndex - 1 + allImages.length) % allImages.length;
 
-    // Preload next image (original)
     const nextImage = allImages[nextIndex];
-    if (nextImage && !preloadCache.has(nextImage.originalSrc)) {
-      const img = new Image();
-      img.src = nextImage.originalSrc;
-      preloadCache.set(nextImage.originalSrc, img);
-    }
-
-    // Preload previous image (original)
     const prevImage = allImages[prevIndex];
-    if (prevImage && !preloadCache.has(prevImage.originalSrc)) {
-      const img = new Image();
-      img.src = prevImage.originalSrc;
-      preloadCache.set(prevImage.originalSrc, img);
+
+    // Preload next image (both thumbnail and original for instant + smooth loading)
+    if (nextImage) {
+      // Thumbnail for instant display during navigation
+      if (nextImage.thumbnailSrc && !preloadCache.has(nextImage.thumbnailSrc)) {
+        const thumbImg = new Image();
+        thumbImg.src = nextImage.thumbnailSrc;
+        preloadCache.set(nextImage.thumbnailSrc, thumbImg);
+      }
+
+      // Original for high-res display
+      if (nextImage.originalSrc && !preloadCache.has(nextImage.originalSrc)) {
+        const origImg = new Image();
+        origImg.src = nextImage.originalSrc;
+        preloadCache.set(nextImage.originalSrc, origImg);
+      }
     }
 
-    // Clean up old cache entries (keep only current + 2 neighbors to save memory)
-    if (preloadCache.size > 10) {
+    // Preload previous image (both thumbnail and original for instant + smooth loading)
+    if (prevImage) {
+      // Thumbnail for instant display during navigation
+      if (prevImage.thumbnailSrc && !preloadCache.has(prevImage.thumbnailSrc)) {
+        const thumbImg = new Image();
+        thumbImg.src = prevImage.thumbnailSrc;
+        preloadCache.set(prevImage.thumbnailSrc, thumbImg);
+      }
+
+      // Original for high-res display
+      if (prevImage.originalSrc && !preloadCache.has(prevImage.originalSrc)) {
+        const origImg = new Image();
+        origImg.src = prevImage.originalSrc;
+        preloadCache.set(prevImage.originalSrc, origImg);
+      }
+    }
+
+    // Clean up old cache entries (keep current + 2 neighbors, both formats)
+    // Increased limit to accommodate thumbnails + originals
+    if (preloadCache.size > 15) {
+      const currentImage = allImages[currentIndex];
       const keepSrcs = new Set([
-        allImages[currentIndex].originalSrc,
-        nextImage.originalSrc,
-        prevImage.originalSrc
-      ]);
+        currentImage.thumbnailSrc,
+        currentImage.originalSrc,
+        nextImage?.thumbnailSrc,
+        nextImage?.originalSrc,
+        prevImage?.thumbnailSrc,
+        prevImage?.originalSrc
+      ].filter(Boolean)); // Remove null/undefined values
 
       for (const [src, img] of preloadCache.entries()) {
         if (!keepSrcs.has(src)) {
@@ -262,14 +290,14 @@
       if (navigationDirection && modalImageContainer) {
         // Remove previous animation classes
         modalImageContainer.classList.remove('swipe-out-left', 'swipe-out-right', 'swipe-in-left', 'swipe-in-right');
-        
+
         // Apply exit animation for current image
         if (navigationDirection === 'next') {
           modalImageContainer.classList.add('swipe-out-left');
         } else if (navigationDirection === 'prev') {
           modalImageContainer.classList.add('swipe-out-right');
         }
-        
+
         // Wait for exit animation to complete before loading new image
         setTimeout(() => {
           loadImage();
@@ -395,14 +423,14 @@
       if (navigationDirection && modalImageContainer) {
         // Remove exit animations
         modalImageContainer.classList.remove('swipe-out-left', 'swipe-out-right');
-        
+
         // Apply entrance animation
         if (navigationDirection === 'next') {
           modalImageContainer.classList.add('swipe-in-right');
         } else if (navigationDirection === 'prev') {
           modalImageContainer.classList.add('swipe-in-left');
         }
-        
+
         // Remove animation classes after animation completes
         setTimeout(() => {
           if (modalImageContainer) {
