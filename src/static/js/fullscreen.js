@@ -20,6 +20,7 @@
   let previousFocus = null;
   let currentImageLoader = null; // Track current Image() preloader for cancellation
   let preloadCache = new Map(); // Cache for preloaded images: key=src, value=Image()
+  let navigationDirection = null; // Track navigation direction: 'next' or 'prev'
 
   // Touch gesture state
   let touchStartX = 0;
@@ -257,6 +258,29 @@
     }
 
     if (modalImg) {
+      // Apply swipe animation if navigating between images
+      if (navigationDirection && modalImageContainer) {
+        // Remove previous animation classes
+        modalImageContainer.classList.remove('swipe-out-left', 'swipe-out-right', 'swipe-in-left', 'swipe-in-right');
+        
+        // Apply exit animation for current image
+        if (navigationDirection === 'next') {
+          modalImageContainer.classList.add('swipe-out-left');
+        } else if (navigationDirection === 'prev') {
+          modalImageContainer.classList.add('swipe-out-right');
+        }
+        
+        // Wait for exit animation to complete before loading new image
+        setTimeout(() => {
+          loadImage();
+        }, 300); // Match animation duration
+      } else {
+        // No animation for initial open
+        loadImage();
+      }
+    }
+
+    function loadImage() {
       // Hide the image immediately to prevent showing previous image
       modalImg.style.opacity = '0';
 
@@ -366,6 +390,29 @@
         // Add to cache
         preloadCache.set(originalSrc, currentImageLoader);
       }
+
+      // Apply entrance animation if navigating between images
+      if (navigationDirection && modalImageContainer) {
+        // Remove exit animations
+        modalImageContainer.classList.remove('swipe-out-left', 'swipe-out-right');
+        
+        // Apply entrance animation
+        if (navigationDirection === 'next') {
+          modalImageContainer.classList.add('swipe-in-right');
+        } else if (navigationDirection === 'prev') {
+          modalImageContainer.classList.add('swipe-in-left');
+        }
+        
+        // Remove animation classes after animation completes
+        setTimeout(() => {
+          if (modalImageContainer) {
+            modalImageContainer.classList.remove('swipe-in-left', 'swipe-in-right');
+          }
+        }, 300); // Match animation duration
+      }
+
+      // Reset navigation direction
+      navigationDirection = null;
     }
 
     // Preload adjacent images for instant navigation
@@ -453,6 +500,7 @@
    */
   function showPreviousImage() {
     if (currentImageIndex < 0 || allImages.length === 0) return;
+    navigationDirection = 'prev';
     currentImageIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
     openFullscreen(currentImageIndex);
   }
@@ -462,6 +510,7 @@
    */
   function showNextImage() {
     if (currentImageIndex < 0 || allImages.length === 0) return;
+    navigationDirection = 'next';
     currentImageIndex = (currentImageIndex + 1) % allImages.length;
     openFullscreen(currentImageIndex);
   }

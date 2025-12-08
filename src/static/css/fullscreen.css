@@ -1,5 +1,66 @@
 /* Fullscreen Modal Styles */
 
+/* Swipe animations for image transitions */
+@keyframes swipeOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes swipeInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes swipeOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes swipeInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.modal-image-container.swipe-out-left {
+  animation: swipeOutLeft 300ms ease-in-out;
+}
+
+.modal-image-container.swipe-in-right {
+  animation: swipeInRight 300ms ease-in-out;
+}
+
+.modal-image-container.swipe-out-right {
+  animation: swipeOutRight 300ms ease-in-out;
+}
+
+.modal-image-container.swipe-in-left {
+  animation: swipeInLeft 300ms ease-in-out;
+}
+
 .modal {
   display: none;
   position: fixed;
