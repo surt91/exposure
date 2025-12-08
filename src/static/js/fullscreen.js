@@ -16,7 +16,6 @@
   let images = [];
   let allImages = []; // Flat array of all images across categories with globalIndex
   let modal = null;
-  let fullscreenManager = null; // FullscreenManager instance for native fullscreen support
   let controlVisibilityManager = null; // ControlVisibilityManager for mobile auto-hide
   let previousFocus = null;
   let currentImageLoader = null; // Track current Image() preloader for cancellation
@@ -122,11 +121,6 @@
   function init() {
     modal = document.getElementById('fullscreen-modal');
     if (!modal) return;
-
-    // Initialize fullscreen manager for native fullscreen support
-    if (typeof FullscreenManager !== 'undefined') {
-      fullscreenManager = new FullscreenManager(modal);
-    }
 
     // Initialize control visibility manager for mobile auto-hide
     const controlsElement = modal.querySelector('.fullscreen-controls');
@@ -298,13 +292,31 @@
           displayWidth = maxHeight * aspectRatio;
         }
 
-        // Set explicit dimensions to prevent size jumps
+        // Set container dimensions to exactly match the image display size
+        // This ensures the blur placeholder background is fully covered by the image
+        if (modalImageContainer) {
+          modalImageContainer.style.width = `${displayWidth}px`;
+          modalImageContainer.style.height = `${displayHeight}px`;
+          // Adjust background to fill the exact container size (stretch to fit)
+          modalImageContainer.style.backgroundSize = '100% 100%';
+        }
+
+        // Set explicit image dimensions to prevent size jumps
+        // Use object-fit: cover to ensure image completely fills the container
+        // This crops to fill rather than stretching, maintaining aspect ratio
         modalImg.style.width = `${displayWidth}px`;
         modalImg.style.height = `${displayHeight}px`;
+        modalImg.style.objectFit = 'cover';
       } else {
         // Fallback: clear explicit dimensions if metadata unavailable
+        if (modalImageContainer) {
+          modalImageContainer.style.width = '';
+          modalImageContainer.style.height = '';
+          modalImageContainer.style.backgroundSize = 'cover';
+        }
         modalImg.style.width = '';
         modalImg.style.height = '';
+        modalImg.style.objectFit = 'contain';
       }
 
       // Check if original image is already preloaded
@@ -378,13 +390,6 @@
     modal.setAttribute('aria-hidden', 'false');
     modal.style.display = 'flex';
 
-    // Enter native fullscreen mode if supported (mobile devices)
-    if (fullscreenManager) {
-      fullscreenManager.enterFullscreen().catch(err => {
-        console.warn('Fullscreen mode not available:', err);
-      });
-    }
-
     // Show controls initially on mobile with auto-hide timer
     if (controlVisibilityManager) {
       controlVisibilityManager.forceShow();
@@ -417,13 +422,6 @@
    */
   function closeFullscreen() {
     if (!modal) return;
-
-    // Exit native fullscreen mode if active
-    if (fullscreenManager && fullscreenManager.isFullscreen()) {
-      fullscreenManager.exitFullscreen().catch(err => {
-        console.warn('Error exiting fullscreen:', err);
-      });
-    }
 
     // Hide modal
     modal.classList.remove('visible');
