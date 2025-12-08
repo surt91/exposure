@@ -21,52 +21,64 @@
   }
 
   /**
-   * Setup lazy loading for images with fallback for older browsers
+   * Setup sequential lazy loading for images - top images load first
    */
   function setupLazyLoading() {
     const images = document.querySelectorAll('.image-item img');
 
-    // Check for native lazy loading support
-    if ('loading' in HTMLImageElement.prototype) {
-      // Native lazy loading is supported
-      images.forEach(img => {
-        img.setAttribute('loading', 'lazy');
-        // Add async decoding hint for better performance
-        img.setAttribute('decoding', 'async');
-      });
-    } else {
-      // Fallback: Use IntersectionObserver
-      if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const img = entry.target;
-              if (img.dataset.src) {
-                img.src = img.dataset.src;
-                img.removeAttribute('data-src');
-              }
-              observer.unobserve(img);
-            }
-          });
-        }, {
-          rootMargin: '50px 0px',
-          threshold: 0.01
-        });
+    // Separate above-the-fold images from below-the-fold
+    const viewportHeight = window.innerHeight;
+    const aboveFoldImages = [];
+    const belowFoldImages = [];
 
-        images.forEach(img => {
-          // Move src to data-src for lazy loading
-          if (img.src && !img.dataset.src) {
-            img.dataset.src = img.src;
-            img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
-          }
-          imageObserver.observe(img);
-        });
+    images.forEach(img => {
+      const rect = img.getBoundingClientRect();
+      if (rect.top < viewportHeight) {
+        aboveFoldImages.push(img);
+      } else {
+        belowFoldImages.push(img);
       }
+    });
+
+    // Load above-the-fold images immediately with high priority
+    aboveFoldImages.forEach(img => {
+      img.setAttribute('loading', 'eager');
+      img.setAttribute('decoding', 'async');
+      img.setAttribute('fetchpriority', 'high');
+    });
+
+    // Load below-the-fold images lazily as user scrolls
+    belowFoldImages.forEach(img => {
+      img.setAttribute('loading', 'lazy');
+      img.setAttribute('decoding', 'async');
+      img.setAttribute('fetchpriority', 'low');
+    });
+
+    // Optional: Use IntersectionObserver for progress tracking
+    if ('IntersectionObserver' in window) {
+      const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            // Image is entering viewport - browser will start loading it
+            // due to loading="lazy" attribute
+          }
+        });
+      }, {
+        // Start observing when image is 300px from viewport
+        rootMargin: '300px 0px',
+        threshold: 0.01
+      });
+
+      // Observe below-fold images for analytics/debugging
+      belowFoldImages.forEach(img => {
+        imageObserver.observe(img);
+      });
     }
   }
 
   /**
-   * Track image load states for performance and UX
+   * Track image load states for performance and UX with blur placeholder support
    */
   function setupImageLoadTracking() {
     const images = document.querySelectorAll('.image-item img');
@@ -74,6 +86,9 @@
     const totalCount = images.length;
 
     images.forEach(img => {
+      const container = img.closest('.image-item');
+      const hasBlurPlaceholder = container && container.style.backgroundImage;
+
       // Skip if already loaded
       if (img.complete && img.naturalHeight !== 0) {
         img.classList.add('loaded');
@@ -81,9 +96,26 @@
         return;
       }
 
+      // Track load start time for intelligent skip logic
+      const loadStartTime = performance.now();
+
       // Track load event
       img.addEventListener('load', function() {
-        this.classList.add('loaded');
+        const loadDuration = performance.now() - loadStartTime;
+
+        // Intelligent skip: if image loads very fast (<100ms), skip fade animation
+        if (loadDuration < 100 && hasBlurPlaceholder) {
+          // Image was cached/fast - immediately show without fade
+          this.style.transition = 'none';
+          this.classList.add('loaded');
+          // Force reflow to apply transition:none before removing it
+          void this.offsetHeight;
+          this.style.transition = '';
+        } else {
+          // Normal progressive loading with fade
+          this.classList.add('loaded');
+        }
+
         loadedCount++;
 
         // Log when all images are loaded (for debugging/metrics)
@@ -99,6 +131,7 @@
         this.alt = 'Image failed to load';
         loadedCount++;
         console.warn('Failed to load image:', this.src);
+        // Keep blur placeholder on error as fallback
       }, { once: true });
     });
 

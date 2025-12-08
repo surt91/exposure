@@ -27,9 +27,9 @@ Single project structure with:
 
 **Purpose**: Project initialization and configuration for new features
 
-- [ ] T001 Create ADR document for blur placeholder strategy at docs/decisions/0012-blur-placeholder-strategy.md
-- [ ] T002 Update pyproject.toml dependencies to ensure Pillow 10.0+ with ImageFilter support
-- [ ] T003 Verify existing build cache infrastructure in src/generator/cache.py supports versioning
+- [X] T001 Create ADR document for blur placeholder strategy at docs/decisions/0012-blur-placeholder-strategy.md
+- [X] T002 Update pyproject.toml dependencies to ensure Pillow 10.0+ with ImageFilter support
+- [X] T003 Verify existing build cache infrastructure in src/generator/cache.py supports versioning
 
 ---
 
@@ -39,11 +39,11 @@ Single project structure with:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 [P] Add BlurPlaceholder and BlurPlaceholderConfig data models to src/generator/model.py
-- [ ] T005 [P] Extend ImageMetadata model with blur_placeholder field in src/generator/model.py
-- [ ] T006 [P] Extend BuildCacheEntry model with blur_placeholder field and bump cache version to 2.0.0 in src/generator/cache.py
-- [ ] T007 Add BlurPlaceholderConfig to Settings model with default values (enabled=True, target_size=20, blur_radius=10, jpeg_quality=50) in src/generator/model.py
-- [ ] T008 Add cache validation method is_valid() to BuildCacheEntry to check blur placeholder hashes in src/generator/cache.py
+- [X] T004 [P] Add BlurPlaceholder and BlurPlaceholderConfig data models to src/generator/model.py
+- [X] T005 [P] Extend ImageMetadata model with blur_placeholder field in src/generator/model.py
+- [X] T006 [P] Extend BuildCacheEntry model with blur_placeholder field and bump cache version to 2.0.0 in src/generator/cache.py
+- [X] T007 Add BlurPlaceholderConfig to Settings model with default values (enabled=True, target_size=20, blur_radius=10, jpeg_quality=50) in src/generator/model.py
+- [X] T008 Add cache validation method is_valid() to BuildCacheEntry to check blur placeholder hashes in src/generator/cache.py
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -57,18 +57,18 @@ Single project structure with:
 
 ### Implementation for User Story 3
 
-- [ ] T009 [P] [US3] Implement generate_blur_placeholder() function in src/generator/thumbnails.py using Pillow (resize to 20x20, apply GaussianBlur radius 10, JPEG quality 50, base64 encode)
-- [ ] T010 [P] [US3] Add _compute_image_hash() helper function in src/generator/thumbnails.py for SHA256 hashing of source images
-- [ ] T011 [P] [US3] Add _optimize_data_url_size() helper in src/generator/thumbnails.py to iteratively reduce JPEG quality if data URL exceeds max_size_bytes
-- [ ] T012 [US3] Integrate blur placeholder generation into existing thumbnail generation workflow in src/generator/thumbnails.py (check cache first, skip if disabled)
-- [ ] T013 [US3] Update build cache save/load logic in src/generator/cache.py to serialize/deserialize BlurPlaceholder objects
-- [ ] T014 [US3] Modify scan.py to pass blur placeholder config from settings to thumbnail generator
-- [ ] T015 [US3] Update build_html.py to pass blur_placeholder data to template context for each image
-- [ ] T016 [US3] Modify templates/index.html.j2 to embed blur placeholders as inline background-image style on .image-container divs
+- [X] T009 [P] [US3] Implement generate_blur_placeholder() function in src/generator/thumbnails.py using Pillow (resize to 20x20, apply GaussianBlur radius 10, JPEG quality 50, base64 encode)
+- [X] T010 [P] [US3] Add _compute_image_hash() helper function in src/generator/thumbnails.py for SHA256 hashing of source images
+- [X] T011 [P] [US3] Add _optimize_data_url_size() helper in src/generator/thumbnails.py to iteratively reduce JPEG quality if data URL exceeds max_size_bytes
+- [X] T012 [US3] Integrate blur placeholder generation into existing thumbnail generation workflow in src/generator/thumbnails.py (check cache first, skip if disabled)
+- [X] T013 [US3] Update build cache save/load logic in src/generator/cache.py to serialize/deserialize BlurPlaceholder objects
+- [X] T014 [US3] Modify scan.py to pass blur placeholder config from settings to thumbnail generator
+- [X] T015 [US3] Update build_html.py to pass blur_placeholder data to template context for each image
+- [X] T016 [US3] Modify templates/index.html.j2 to embed blur placeholders as inline background-image style on .image-container divs
 - [ ] T017 [US3] Modify templates/fullscreen.html.j2 to embed blur placeholders for fullscreen overlay
-- [ ] T018 [P] [US3] Add CSS styles for blur placeholder progressive loading in src/static/css/gallery.css (.image-container background-size: cover, .image-progressive opacity transition 300ms)
-- [ ] T019 [US3] Implement progressive image loading JavaScript in src/static/js/gallery.js (load thumbnail → fade in, skip blur if cached)
-- [ ] T020 [US3] Add intelligent skip logic in gallery.js to detect fast-loading cached images (<100ms) and skip blur placeholder display
+- [X] T018 [P] [US3] Add CSS styles for blur placeholder progressive loading in src/static/css/gallery.css (.image-container background-size: cover, .image-progressive opacity transition 300ms)
+- [X] T019 [US3] Implement progressive image loading JavaScript in src/static/js/gallery.js (load thumbnail → fade in, skip blur if cached)
+- [X] T020 [US3] Add intelligent skip logic in gallery.js to detect fast-loading cached images (<100ms) and skip blur placeholder display
 
 **Checkpoint**: At this point, blur placeholders should generate during build, embed in HTML, display instantly, and progressively enhance to thumbnails
 

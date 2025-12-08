@@ -1,8 +1,11 @@
 """Thumbnail generation service for image preprocessing."""
 
+import base64
+import hashlib
 import json
 import logging
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -11,7 +14,13 @@ from PIL import ImageOps
 
 from src.generator.constants import CACHE_VERSION, EXIF_ORIENTATION_TAG
 from src.generator.metadata_filter import filter_metadata
-from src.generator.model import ImageMetadata, ThumbnailConfig, ThumbnailImage
+from src.generator.model import (
+    BlurPlaceholder,
+    BlurPlaceholderConfig,
+    ImageMetadata,
+    ThumbnailConfig,
+    ThumbnailImage,
+)
 from src.generator.utils import ensure_directory, hash_bytes, validate_file_exists
 
 
@@ -20,15 +29,21 @@ class ThumbnailGenerator:
     Service for generating optimized image thumbnails.
 
     Handles WebP and JPEG format generation, EXIF orientation correction,
-    and incremental build caching.
+    blur placeholder generation, and incremental build caching.
     """
 
-    def __init__(self, config: ThumbnailConfig, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self,
+        config: ThumbnailConfig,
+        blur_placeholder_config: Optional[BlurPlaceholderConfig] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
         """
         Initialize thumbnail generator with configuration.
 
         Args:
             config: Thumbnail generation configuration
+            blur_placeholder_config: Optional blur placeholder configuration
             logger: Optional logger instance (creates default if None)
 
         Raises:
@@ -36,6 +51,7 @@ class ThumbnailGenerator:
             OSError: If output directory cannot be created
         """
         self.config = config
+        self.blur_placeholder_config = blur_placeholder_config or BlurPlaceholderConfig()
         self.logger = logger or logging.getLogger(__name__)
 
         # Create output directory if it doesn't exist
@@ -56,6 +72,11 @@ class ThumbnailGenerator:
         """
         cache_entry = self.cache.entries.get(str(source_path))
         if not cache_entry:
+            return None
+
+        # Check if cache is valid (handles blur placeholder config changes)
+        current_hash = _compute_image_hash(source_path)
+        if not cache_entry.is_valid(current_hash, self.blur_placeholder_config.enabled):
             return None
 
         webp_path = Path(cache_entry.webp_path)
@@ -91,6 +112,11 @@ class ThumbnailGenerator:
                 )
                 return None
 
+        # Generate blur placeholder if enabled (not stored in cache, generated on demand)
+        blur_placeholder = None
+        if self.blur_placeholder_config.enabled:
+            blur_placeholder = generate_blur_placeholder(source_path, self.blur_placeholder_config)
+
         # Return cached thumbnail info
         return ThumbnailImage(
             source_filename=source_path.name,
@@ -106,6 +132,7 @@ class ThumbnailGenerator:
             generated_at=cache_entry.thumbnail_generated_at,
             metadata_stripped=cache_entry.metadata_stripped,
             metadata_strip_warning=None,  # Don't carry warnings from cache
+            blur_placeholder=blur_placeholder,
         )
 
     def generate_thumbnail(
@@ -327,7 +354,7 @@ class ThumbnailGenerator:
         strip_warning: Optional[str],
     ) -> ThumbnailImage:
         """
-        Build ThumbnailImage result object.
+        Build ThumbnailImage result object with optional blur placeholder.
 
         Args:
             source_path: Path to source image
@@ -340,10 +367,15 @@ class ThumbnailGenerator:
             strip_warning: Error message if stripping failed
 
         Returns:
-            ThumbnailImage object
+            ThumbnailImage object with optional blur placeholder
         """
         webp_size = webp_path.stat().st_size
         jpeg_size = jpeg_path.stat().st_size
+
+        # Generate blur placeholder if enabled
+        blur_placeholder = None
+        if self.blur_placeholder_config.enabled:
+            blur_placeholder = generate_blur_placeholder(source_path, self.blur_placeholder_config)
 
         return ThumbnailImage(
             source_filename=source_path.name,
@@ -359,6 +391,7 @@ class ThumbnailGenerator:
             generated_at=datetime.now(),
             metadata_stripped=metadata_stripped,
             metadata_strip_warning=strip_warning,
+            blur_placeholder=blur_placeholder,
         )
 
     def _format_size(self, bytes_count: int) -> str:
@@ -620,6 +653,142 @@ def generate_content_hash(image_bytes: bytes) -> str:
         'a1b2c3d4'
     """
     return hash_bytes(image_bytes)
+
+
+def _compute_image_hash(source_path: Path) -> str:
+    """
+    Compute SHA256 hash of source image file.
+
+    Used for cache invalidation when source image changes.
+
+    Args:
+        source_path: Path to source image file
+
+    Returns:
+        SHA256 hash as hexadecimal string (64 characters)
+
+    Examples:
+        >>> _compute_image_hash(Path("photo.jpg"))
+        'a1b2c3d4e5f6...'  # 64 character hex string
+    """
+    return hashlib.sha256(source_path.read_bytes()).hexdigest()
+
+
+def _optimize_data_url_size(
+    img: PILImage.Image, max_size_bytes: int, initial_quality: int = 50
+) -> tuple[str, int]:
+    """
+    Optimize JPEG data URL size by iteratively reducing quality.
+
+    Encodes image as JPEG with progressively lower quality until
+    data URL size is under max_size_bytes. Stops at quality 10.
+
+    Args:
+        img: PIL Image to encode
+        max_size_bytes: Maximum allowed data URL size in bytes
+        initial_quality: Starting JPEG quality (1-100)
+
+    Returns:
+        Tuple of (data_url, actual_size_bytes)
+
+    Examples:
+        >>> img = PILImage.new("RGB", (20, 20))
+        >>> url, size = _optimize_data_url_size(img, 1000, 50)
+        >>> size <= 1000
+        True
+    """
+    quality = initial_quality
+
+    while quality >= 10:
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=quality, optimize=True)
+        b64_data = base64.b64encode(buffer.getvalue()).decode("ascii")
+        data_url = f"data:image/jpeg;base64,{b64_data}"
+
+        if len(data_url) <= max_size_bytes:
+            return data_url, len(data_url)
+
+        # Reduce quality by 10 and try again
+        quality -= 10
+
+    # Return smallest possible even if over budget
+    return data_url, len(data_url)
+
+
+def generate_blur_placeholder(
+    source_path: Path, config: BlurPlaceholderConfig
+) -> Optional[BlurPlaceholder]:
+    """
+    Generate ultra-low-resolution blur placeholder from source image.
+
+    Process:
+    1. Open source image and apply EXIF orientation
+    2. Resize to target_size (e.g., 20x20px) maintaining aspect ratio
+    3. Apply Gaussian blur with specified radius
+    4. Encode as JPEG with specified quality
+    5. Base64 encode as data URL
+    6. Optimize size if exceeds max_size_bytes
+
+    Args:
+        source_path: Path to source image file
+        config: Blur placeholder configuration
+
+    Returns:
+        BlurPlaceholder with data URL and metadata, or None if generation fails
+
+    Examples:
+        >>> config = BlurPlaceholderConfig()
+        >>> placeholder = generate_blur_placeholder(Path("photo.jpg"), config)
+        >>> placeholder.data_url.startswith("data:image/jpeg;base64,")
+        True
+        >>> placeholder.size_bytes < 1000
+        True
+    """
+    try:
+        with PILImage.open(source_path) as img:
+            # Apply EXIF orientation first
+            img = apply_exif_orientation(img)
+
+            # Convert to RGB (required for JPEG)
+            if img.mode not in ("RGB", "L"):
+                if img.mode in ("RGBA", "LA", "P"):
+                    # Create white background
+                    rgb_img = PILImage.new("RGB", img.size, (255, 255, 255))
+                    if img.mode == "P":
+                        img = img.convert("RGBA")
+                    rgb_img.paste(img, mask=img.split()[-1] if "A" in img.mode else None)
+                    img = rgb_img
+                else:
+                    img = img.convert("RGB")
+
+            # Resize to target size (maintaining aspect ratio)
+            img.thumbnail((config.target_size, config.target_size), PILImage.Resampling.LANCZOS)
+
+            # NOTE: No blur applied here - CSS filter: blur() is used instead
+            # This results in smaller data URLs and GPU-accelerated rendering
+
+            # Optimize data URL size
+            data_url, size_bytes = _optimize_data_url_size(
+                img, config.max_size_bytes, config.jpeg_quality
+            )
+
+            # Compute source hash for cache validation
+            source_hash = _compute_image_hash(source_path)
+
+            return BlurPlaceholder(
+                data_url=data_url,
+                size_bytes=size_bytes,
+                dimensions=(img.width, img.height),
+                blur_radius=config.blur_radius,
+                source_hash=source_hash,
+                generated_at=datetime.now(),
+            )
+
+    except Exception as e:
+        logging.getLogger(__name__).warning(
+            f"Failed to generate blur placeholder for {source_path.name}: {e}"
+        )
+        return None
 
 
 def apply_exif_orientation(image: PILImage.Image) -> PILImage.Image:

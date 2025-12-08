@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import BaseModel, Field
 
@@ -32,8 +32,36 @@ class CacheEntry(BaseModel):
     webp_size_bytes: int = Field(default=0, description="WebP file size in bytes")
     jpeg_size_bytes: int = Field(default=0, description="JPEG file size in bytes")
     source_size_bytes: int = Field(default=0, description="Source file size in bytes")
+    blur_placeholder_hash: Optional[str] = Field(
+        default=None,
+        description="SHA256 hash of blur placeholder data URL for cache validation",
+    )
+    blur_placeholder_generated_at: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp when blur placeholder was generated",
+    )
 
     model_config = {"arbitrary_types_allowed": True}
+
+    def is_valid(self, current_source_hash: str, blur_config_enabled: bool) -> bool:
+        """Check if cache entry is still valid.
+
+        Args:
+            current_source_hash: SHA256 hash of current source image
+            blur_config_enabled: Whether blur placeholder generation is enabled
+
+        Returns:
+            True if cache is valid, False if regeneration needed
+        """
+        # If blur placeholders are now enabled but weren't in cache
+        if blur_config_enabled and self.blur_placeholder_hash is None:
+            return False
+
+        # If source image content changed (hash mismatch)
+        if self.content_hash != current_source_hash:
+            return False
+
+        return True
 
 
 class BuildCache(BaseModel):
@@ -68,5 +96,11 @@ class BuildCache(BaseModel):
             webp_size_bytes=thumbnail.webp_size_bytes,
             jpeg_size_bytes=thumbnail.jpeg_size_bytes,
             source_size_bytes=thumbnail.source_size_bytes,
+            blur_placeholder_hash=thumbnail.blur_placeholder.source_hash
+            if thumbnail.blur_placeholder
+            else None,
+            blur_placeholder_generated_at=thumbnail.blur_placeholder.generated_at
+            if thumbnail.blur_placeholder
+            else None,
         )
         self.last_updated = datetime.now()

@@ -154,6 +154,9 @@ class ThumbnailImage(BaseModel):
     metadata_strip_warning: Optional[str] = Field(
         default=None, description="Error message if metadata stripping failed"
     )
+    blur_placeholder: Optional["BlurPlaceholder"] = Field(
+        default=None, description="Optional blur placeholder for progressive loading"
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -173,6 +176,113 @@ class ThumbnailImage(BaseModel):
         return self.width / self.height
 
 
+class BlurPlaceholder(BaseModel):
+    """Ultra-low-resolution blur placeholder for instant image preview.
+
+    Generated during build process from source images. Encoded as base64
+    data URL for inline embedding in HTML (zero network requests).
+    """
+
+    data_url: str = Field(
+        ...,
+        description="Base64-encoded JPEG data URL (format: 'data:image/jpeg;base64,...')",
+        min_length=50,
+        max_length=2000,
+    )
+
+    size_bytes: int = Field(
+        ...,
+        description="Size of data_url string in bytes (for budget tracking)",
+        ge=0,
+        le=2000,
+    )
+
+    dimensions: tuple[int, int] = Field(
+        ...,
+        description="Placeholder dimensions (width, height) in pixels, typically (20, 20)",
+    )
+
+    blur_radius: int = Field(
+        default=10,
+        description="Gaussian blur radius applied (pixels)",
+        ge=5,
+        le=20,
+    )
+
+    source_hash: str = Field(
+        ...,
+        description="SHA256 hash of source image (for cache invalidation)",
+        pattern=r"^[a-f0-9]{64}$",
+    )
+
+    generated_at: datetime = Field(
+        default_factory=datetime.now,
+        description="Timestamp of placeholder generation",
+    )
+
+    @field_validator("data_url")
+    @classmethod
+    def validate_data_url_format(cls, v: str) -> str:
+        """Ensure data URL has correct JPEG format prefix."""
+        if not v.startswith("data:image/jpeg;base64,"):
+            raise ValueError("data_url must start with 'data:image/jpeg;base64,'")
+        return v
+
+    @field_validator("dimensions")
+    @classmethod
+    def validate_dimensions(cls, v: tuple[int, int]) -> tuple[int, int]:
+        """Ensure dimensions are reasonable for blur placeholder."""
+        width, height = v
+        # At least one dimension must be >= 10, both must be <= 50
+        # (handles extreme panoramas where one dimension might be < 10)
+        if max(width, height) > 50 or min(width, height) < 5:
+            raise ValueError("Dimensions must have max dimension <= 50px and min dimension >= 5px")
+        return v
+
+
+class BlurPlaceholderConfig(BaseModel):
+    """Configuration for blur placeholder generation."""
+
+    enabled: bool = Field(default=True, description="Enable/disable blur placeholder generation")
+
+    target_size: int = Field(
+        default=20,
+        description="Target dimension (longer edge) for placeholder before blur",
+        ge=10,
+        le=50,
+    )
+
+    blur_radius: int = Field(
+        default=10,
+        description="Gaussian blur radius in pixels",
+        ge=5,
+        le=20,
+    )
+
+    jpeg_quality: int = Field(
+        default=50,
+        description="JPEG compression quality (1-100, lower = smaller file)",
+        ge=1,
+        le=100,
+    )
+
+    max_size_bytes: int = Field(
+        default=1000,
+        description="Maximum data URL size in bytes (triggers quality reduction if exceeded)",
+        ge=100,
+        le=2000,
+    )
+
+    @field_validator("target_size")
+    @classmethod
+    def validate_target_size(cls, v: int) -> int:
+        """Warn if target size too large for placeholders."""
+        if v > 30:
+            # Log warning but allow - user may want larger placeholders
+            pass
+        return v
+
+
 class ImageMetadata(BaseModel):
     """Extended metadata extracted from source images during thumbnail generation."""
 
@@ -188,6 +298,9 @@ class ImageMetadata(BaseModel):
     is_animated: bool = False
     frame_count: int = Field(default=1, ge=1)
     dpi: Optional[tuple[int, int]] = None
+    blur_placeholder: Optional[BlurPlaceholder] = Field(
+        default=None, description="Optional blur placeholder for progressive loading"
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -259,6 +372,10 @@ class GalleryConfig(BaseSettings):
     )
     thumbnail_config: ThumbnailConfig = Field(
         default_factory=ThumbnailConfig, description="Thumbnail generation configuration"
+    )
+    blur_placeholder_config: BlurPlaceholderConfig = Field(
+        default_factory=BlurPlaceholderConfig,
+        description="Blur placeholder generation configuration for progressive loading",
     )
     output_dir: Path = Field(
         default=DEFAULT_OUTPUT_DIR,
