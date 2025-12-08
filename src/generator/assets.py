@@ -97,9 +97,44 @@ def get_hashed_filename(filename: str, content: str) -> str:
     return f"{stem}.{content_hash}{ext}"
 
 
+def _remove_old_hashed_files(base_filename: str, dest_dir: Path, keep_file: Path) -> None:
+    """
+    Remove old hashed versions of a file, keeping only the current one.
+
+    Args:
+        base_filename: Base filename without hash (e.g., "gallery.css")
+        dest_dir: Directory containing the files
+        keep_file: Path to the current file to keep
+
+    Examples:
+        If base_filename is "gallery.css" and keep_file is "gallery.abc123.css",
+        this will delete files like "gallery.xyz789.css" but keep "gallery.abc123.css".
+    """
+    path = Path(base_filename)
+    stem = path.stem
+    ext = path.suffix
+
+    # Pattern: stem.*.ext (e.g., gallery.*.css)
+    pattern = f"{stem}.*{ext}"
+
+    for file_path in dest_dir.glob(pattern):
+        # Skip if it's the file we want to keep
+        if file_path == keep_file:
+            continue
+
+        # Check if it matches our hash pattern (stem + 8 hex chars + extension)
+        # This ensures we only delete our hashed files, not user files
+        if file_path.stem.startswith(f"{stem}.") and file_path.suffix == ext:
+            try:
+                file_path.unlink()
+                logger.debug(f"Removed old hashed file: {file_path.name}")
+            except Exception as e:
+                logger.warning(f"Failed to remove old file {file_path.name}: {e}")
+
+
 def write_with_hash(content: str, filename: str, dest_dir: Path) -> Path:
     """
-    Write content to file with hash in filename.
+    Write content to file with hash in filename, removing old hashed versions.
 
     Args:
         content: Content to write
@@ -113,4 +148,8 @@ def write_with_hash(content: str, filename: str, dest_dir: Path) -> Path:
     hashed_name = get_hashed_filename(filename, content)
     dest_path = dest_dir / hashed_name
     dest_path.write_text(content, encoding="utf-8")
+
+    # Clean up old hashed versions
+    _remove_old_hashed_files(filename, dest_dir, dest_path)
+
     return dest_path
