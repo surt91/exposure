@@ -301,6 +301,8 @@ def _combine_js_files() -> str:
         ("gallery.js", "Gallery functionality"),
         ("a11y.js", "Accessibility helpers"),
         ("layout.js", "Flexible layout"),
+        ("fullscreen-manager.js", "Fullscreen manager"),
+        ("control-visibility-manager.js", "Control visibility manager"),
         ("fullscreen.js", "Fullscreen controller"),
     ]
 
@@ -402,6 +404,12 @@ def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
 
     # Add thumbnail info
     template_data.update(_get_thumbnail_info(image))
+
+    # Add blur placeholder if available
+    if image.thumbnail and image.thumbnail.blur_placeholder:
+        template_data["blur_placeholder"] = image.thumbnail.blur_placeholder.data_url
+    else:
+        template_data["blur_placeholder"] = None
 
     return template_data
 
@@ -506,7 +514,7 @@ def _generate_thumbnails_for_images(images: list[Image], config: GalleryConfig) 
     thumbnail_config.output_dir = config.output_dir / "images" / "thumbnails"
     thumbnail_config.cache_file = config.output_dir / ".build-cache.json"
 
-    thumb_gen = ThumbnailGenerator(thumbnail_config, logger)
+    thumb_gen = ThumbnailGenerator(thumbnail_config, config.blur_placeholder_config, logger)
 
     # Generate thumbnails
     image_paths = [img.file_path for img in images]

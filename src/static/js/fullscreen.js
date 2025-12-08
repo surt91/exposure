@@ -16,6 +16,8 @@
   let images = [];
   let allImages = []; // Flat array of all images across categories with globalIndex
   let modal = null;
+  let fullscreenManager = null; // FullscreenManager instance for native fullscreen support
+  let controlVisibilityManager = null; // ControlVisibilityManager for mobile auto-hide
   let previousFocus = null;
   let currentImageLoader = null; // Track current Image() preloader for cancellation
   let preloadCache = new Map(); // Cache for preloaded images: key=src, value=Image()
@@ -59,6 +61,11 @@
     // Validate: must be primarily horizontal (within 30° of horizontal axis)
     // and meet minimum distance threshold (50px)
     if ((angle < 30 || angle > 150) && distance > 50) {
+      // Hide controls immediately on swipe navigation
+      if (controlVisibilityManager) {
+        controlVisibilityManager.immediateHide();
+      }
+
       if (deltaX > 0) {
         showPreviousImage(); // Swipe right
       } else {
@@ -116,6 +123,17 @@
     modal = document.getElementById('fullscreen-modal');
     if (!modal) return;
 
+    // Initialize fullscreen manager for native fullscreen support
+    if (typeof FullscreenManager !== 'undefined') {
+      fullscreenManager = new FullscreenManager(modal);
+    }
+
+    // Initialize control visibility manager for mobile auto-hide
+    const controlsElement = modal.querySelector('.fullscreen-controls');
+    if (typeof ControlVisibilityManager !== 'undefined' && controlsElement) {
+      controlVisibilityManager = new ControlVisibilityManager(controlsElement);
+    }
+
     // Get all image items
     images = Array.from(document.querySelectorAll('.image-item'));
 
@@ -128,6 +146,7 @@
         categoryName: item.dataset.category || '',
         thumbnailSrc: item.dataset.thumbnailSrc || img.src,
         originalSrc: item.dataset.originalSrc || img.src,
+        blurPlaceholder: item.dataset.blurPlaceholder || '',
         title: item.dataset.title || img.alt || item.dataset.filename || '',
         description: item.dataset.description || '',
         filename: item.dataset.filename || '',
@@ -145,7 +164,13 @@
     // Close button
     const closeBtn = modal.querySelector('.modal-close');
     if (closeBtn) {
-      closeBtn.addEventListener('click', closeFullscreen);
+      closeBtn.addEventListener('click', function(e) {
+        // Reset control visibility timer on button click
+        if (controlVisibilityManager) {
+          controlVisibilityManager.resetHideTimer();
+        }
+        closeFullscreen();
+      });
     }
 
     // Navigation buttons
@@ -153,11 +178,36 @@
     const nextBtn = modal.querySelector('.modal-next');
 
     if (prevBtn) {
-      prevBtn.addEventListener('click', showPreviousImage);
+      prevBtn.addEventListener('click', function(e) {
+        // Reset control visibility timer on button click
+        if (controlVisibilityManager) {
+          controlVisibilityManager.resetHideTimer();
+        }
+        showPreviousImage();
+      });
     }
 
     if (nextBtn) {
-      nextBtn.addEventListener('click', showNextImage);
+      nextBtn.addEventListener('click', function(e) {
+        // Reset control visibility timer on button click
+        if (controlVisibilityManager) {
+          controlVisibilityManager.resetHideTimer();
+        }
+        showNextImage();
+      });
+    }
+
+    // Tap on image area to toggle control visibility (mobile)
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent && controlVisibilityManager) {
+      modalContent.addEventListener('click', function(e) {
+        // Only toggle if clicking on the image area, not the metadata
+        if (e.target.classList.contains('modal-content') ||
+            e.target.classList.contains('modal-image-container') ||
+            e.target.id === 'modal-image') {
+          controlVisibilityManager.handleUserInteraction(e);
+        }
+      });
     }
 
     // Keyboard handlers
@@ -196,9 +246,11 @@
     // Get thumbnail and original image URLs
     const thumbnailSrc = imageItem.thumbnailSrc;
     const originalSrc = imageItem.originalSrc;
+    const blurPlaceholder = imageItem.blurPlaceholder;
 
     // Update modal content
     const modalImg = modal.querySelector('#modal-image');
+    const modalImageContainer = modal.querySelector('.modal-image-container');
     const modalTitle = modal.querySelector('#modal-title');
     const modalDescription = modal.querySelector('#modal-description');
     const modalCategory = modal.querySelector('#modal-category');
@@ -209,6 +261,13 @@
     }
 
     if (modalImg) {
+      // Set blur placeholder as background if available
+      if (modalImageContainer && blurPlaceholder) {
+        modalImageContainer.style.backgroundImage = `url('${blurPlaceholder}')`;
+        modalImageContainer.style.backgroundSize = 'cover';
+        modalImageContainer.style.backgroundPosition = 'center';
+      }
+
       // Check if original image is already preloaded
       const preloadedOriginal = preloadCache.get(originalSrc);
       const isOriginalReady = preloadedOriginal && preloadedOriginal.complete;
@@ -267,6 +326,18 @@
     modal.setAttribute('aria-hidden', 'false');
     modal.style.display = 'flex';
 
+    // Enter native fullscreen mode if supported (mobile devices)
+    if (fullscreenManager) {
+      fullscreenManager.enterFullscreen().catch(err => {
+        console.warn('Fullscreen mode not available:', err);
+      });
+    }
+
+    // Show controls initially on mobile with auto-hide timer
+    if (controlVisibilityManager) {
+      controlVisibilityManager.forceShow();
+    }
+
     // Focus on close button
     const closeBtn = modal.querySelector('.modal-close');
     if (closeBtn) {
@@ -294,6 +365,13 @@
    */
   function closeFullscreen() {
     if (!modal) return;
+
+    // Exit native fullscreen mode if active
+    if (fullscreenManager && fullscreenManager.isFullscreen()) {
+      fullscreenManager.exitFullscreen().catch(err => {
+        console.warn('Error exiting fullscreen:', err);
+      });
+    }
 
     // Hide modal
     modal.classList.remove('visible');

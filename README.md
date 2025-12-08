@@ -146,6 +146,54 @@ Exposure uses a justified layout algorithm that displays images at their origina
 
 For algorithm choice rationale and implementation details, see [ADR 0007](/docs/decisions/0007-flexible-layout-algorithm.md)
 
+## Mobile Full-Screen Experience
+
+Exposure provides an immersive, true full-screen image viewing experience optimized for mobile devices:
+
+**Features:**
+- **True full-screen mode** - Browser UI minimizes/hides, images fill entire viewport (iOS Safari, Chrome Mobile)
+- **Auto-hiding controls** - Navigation controls fade out after 3 seconds on mobile, tap to reveal
+- **Instant perceived loading** - Ultra-low-resolution blur placeholders (<1KB) embedded inline for zero-latency preview
+- **Progressive enhancement** - Blur → thumbnail → original image loading sequence
+- **Orientation-aware** - Automatically adjusts to portrait/landscape rotation
+- **Keyboard accessible** - Controls remain accessible via Tab key even when visually hidden
+- **Safe area support** - Respects device notches (iPhone X+) with `env(safe-area-inset-*)`
+
+**Mobile Full-Screen:**
+- Native Fullscreen API with vendor prefixes (Chrome, Firefox, Edge)
+- iOS Safari fallback using fixed positioning + viewport units
+- Automatic orientation change handling
+- Exit via close button, ESC key, or back gesture
+
+**Control Visibility (Mobile < 768px):**
+- Controls hidden by default for unobstructed viewing
+- Tap image to toggle visibility (300ms fade animation)
+- 3-second auto-hide timer after inactivity
+- Button clicks reset timer to keep controls visible
+- Swipe navigation immediately hides controls
+- Desktop (≥768px) always shows controls
+
+**Blur Placeholders:**
+- Generated at build time using Pillow (20x20px → Gaussian blur → base64 JPEG)
+- Embedded as inline data URLs in HTML (no network requests)
+- Visible within 50ms of page load
+- Size optimized (<1KB per placeholder, ~80KB total for 100 images)
+- Build cache prevents regeneration (incremental builds)
+- Configurable via `blur_placeholder` settings (enabled/disabled, quality, max size)
+
+**Performance:**
+- Blur visible: <50ms
+- Full-screen transition: <100ms
+- Control fade animations: 300ms
+- Compliant with performance budget thresholds
+
+**Browser Support:**
+- Fullscreen API: Chrome 71+, Firefox 64+, Safari 11.3+, Edge 79+
+- iOS Safari: Fallback mode (fixed positioning)
+- Covers 95%+ of mobile browsers
+
+For implementation details and design decisions, see `specs/010-mobile-fullscreen-performance/`
+
 ## Configuration
 
 Edit `config/settings.yaml` to customize paths and behavior:

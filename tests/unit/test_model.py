@@ -739,7 +739,7 @@ class TestBuildCache:
         cache = BuildCache()
 
         assert len(cache.entries) == 0
-        assert cache.cache_version == "2.0"  # Updated for metadata stripping feature
+        assert cache.cache_version == "2.0.0"  # Updated for blur placeholder support
         assert isinstance(cache.last_updated, datetime)
 
     def test_should_regenerate_missing_entry(self, tmp_path):

@@ -190,6 +190,39 @@ header h1 {
   background: none;
 }
 
+/* Blur placeholder progressive loading */
+.image-item[style*="background-image"] {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative; /* Required for ::before positioning */
+  overflow: hidden; /* Hide blur overflow */
+}
+
+/* Use ::before pseudo-element for blurred background */
+.image-item[style*="background-image"]::before {
+  content: '';
+  position: absolute;
+  inset: -10px; /* Extend beyond edges to hide blur artifacts */
+  background-image: inherit;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px);
+  z-index: 0;
+}
+
+/* Ensure actual image is above the blur */
+.image-item[style*="background-image"] img {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 300ms ease-in;
+}
+
+.image-item[style*="background-image"] img.loaded {
+  opacity: 1;
+}
+
 /* Image Caption Overlay (optional) */
 .image-caption {
   position: absolute;
