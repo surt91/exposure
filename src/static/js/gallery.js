@@ -31,9 +31,10 @@
     const aboveFoldImages = [];
     const belowFoldImages = [];
 
-    images.forEach(img => {
-      const rect = img.getBoundingClientRect();
-      if (rect.top < viewportHeight) {
+    images.forEach((img, index) => {
+      // First 5 images get eager loading for quick initial display
+      // Everything else gets lazy loading for performance
+      if (index < 5) {
         aboveFoldImages.push(img);
       } else {
         belowFoldImages.push(img);

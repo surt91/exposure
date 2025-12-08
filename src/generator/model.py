@@ -211,8 +211,8 @@ class BlurPlaceholder(BaseModel):
 
     source_hash: str = Field(
         ...,
-        description="SHA256 hash of source image (for cache invalidation)",
-        pattern=r"^[a-f0-9]{64}$",
+        description="SHA256 hash of source image (for cache invalidation, truncated)",
+        pattern=r"^[a-f0-9]{8}$",
     )
 
     generated_at: datetime = Field(

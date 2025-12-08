@@ -665,13 +665,15 @@ def _compute_image_hash(source_path: Path) -> str:
         source_path: Path to source image file
 
     Returns:
-        SHA256 hash as hexadecimal string (64 characters)
+        SHA256 hash as hexadecimal string (first CONTENT_HASH_LENGTH characters)
 
     Examples:
         >>> _compute_image_hash(Path("photo.jpg"))
-        'a1b2c3d4e5f6...'  # 64 character hex string
+        'a1b2c3d4'  # 8 character hex string
     """
-    return hashlib.sha256(source_path.read_bytes()).hexdigest()
+    from .constants import CONTENT_HASH_LENGTH
+
+    return hashlib.sha256(source_path.read_bytes()).hexdigest()[:CONTENT_HASH_LENGTH]
 
 
 def _optimize_data_url_size(
