@@ -61,23 +61,35 @@ class ThumbnailGenerator:
         webp_path = Path(cache_entry.webp_path)
         jpeg_path = Path(cache_entry.jpeg_path)
 
-        # Verify files exist
+        # Verify files exist (quick check without opening)
         if not (webp_path.exists() and jpeg_path.exists()):
             return None
 
-        # Get file sizes
-        webp_size = webp_path.stat().st_size
-        jpeg_size = jpeg_path.stat().st_size
+        # Use cached dimensions and sizes if available (cache v2+)
+        # Otherwise fall back to reading from files (for backward compatibility)
+        if cache_entry.width > 0 and cache_entry.height > 0:
+            # Fast path: use cached values
+            thumb_width = cache_entry.width
+            thumb_height = cache_entry.height
+            webp_size = cache_entry.webp_size_bytes
+            jpeg_size = cache_entry.jpeg_size_bytes
+            source_size = cache_entry.source_size_bytes
+        else:
+            # Slow path: read from files (for old cache entries)
+            webp_size = webp_path.stat().st_size
+            jpeg_size = jpeg_path.stat().st_size
+            source_size = source_path.stat().st_size
 
-        # Extract dimensions from WebP file
-        try:
-            with PILImage.open(webp_path) as thumb:
-                thumb_width = thumb.width
-                thumb_height = thumb.height
-        except Exception:
-            # If we can't open the thumbnail, invalidate cache
-            self.logger.warning(f"Cached thumbnail unreadable, regenerating: {source_path.name}")
-            return None
+            try:
+                with PILImage.open(webp_path) as thumb:
+                    thumb_width = thumb.width
+                    thumb_height = thumb.height
+            except Exception:
+                # If we can't open the thumbnail, invalidate cache
+                self.logger.warning(
+                    f"Cached thumbnail unreadable, regenerating: {source_path.name}"
+                )
+                return None
 
         # Return cached thumbnail info
         return ThumbnailImage(
@@ -89,7 +101,7 @@ class ThumbnailGenerator:
             height=thumb_height,
             webp_size_bytes=webp_size,
             jpeg_size_bytes=jpeg_size,
-            source_size_bytes=source_path.stat().st_size,
+            source_size_bytes=source_size,
             content_hash=cache_entry.content_hash,
             generated_at=cache_entry.thumbnail_generated_at,
             metadata_stripped=cache_entry.metadata_stripped,

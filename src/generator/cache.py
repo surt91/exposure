@@ -26,6 +26,12 @@ class CacheEntry(BaseModel):
     metadata_stripped: bool = Field(
         default=True, description="Whether metadata was stripped in this build"
     )
+    # Cached dimensions and sizes to avoid reopening files
+    width: int = Field(default=0, description="Thumbnail width in pixels")
+    height: int = Field(default=0, description="Thumbnail height in pixels")
+    webp_size_bytes: int = Field(default=0, description="WebP file size in bytes")
+    jpeg_size_bytes: int = Field(default=0, description="JPEG file size in bytes")
+    source_size_bytes: int = Field(default=0, description="Source file size in bytes")
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -57,5 +63,10 @@ class BuildCache(BaseModel):
             content_hash=thumbnail.content_hash,
             thumbnail_generated_at=thumbnail.generated_at,
             metadata_stripped=thumbnail.metadata_stripped,
+            width=thumbnail.width,
+            height=thumbnail.height,
+            webp_size_bytes=thumbnail.webp_size_bytes,
+            jpeg_size_bytes=thumbnail.jpeg_size_bytes,
+            source_size_bytes=thumbnail.source_size_bytes,
         )
         self.last_updated = datetime.now()
