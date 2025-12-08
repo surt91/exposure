@@ -65,7 +65,7 @@ Single project structure with:
 - [X] T014 [US3] Modify scan.py to pass blur placeholder config from settings to thumbnail generator
 - [X] T015 [US3] Update build_html.py to pass blur_placeholder data to template context for each image
 - [X] T016 [US3] Modify templates/index.html.j2 to embed blur placeholders as inline background-image style on .image-container divs
-- [ ] T017 [US3] Modify templates/fullscreen.html.j2 to embed blur placeholders for fullscreen overlay
+- [X] T017 [US3] Modify templates/fullscreen.html.j2 to embed blur placeholders for fullscreen overlay
 - [X] T018 [P] [US3] Add CSS styles for blur placeholder progressive loading in src/static/css/gallery.css (.image-container background-size: cover, .image-progressive opacity transition 300ms)
 - [X] T019 [US3] Implement progressive image loading JavaScript in src/static/js/gallery.js (load thumbnail → fade in, skip blur if cached)
 - [X] T020 [US3] Add intelligent skip logic in gallery.js to detect fast-loading cached images (<100ms) and skip blur placeholder display
@@ -82,18 +82,18 @@ Single project structure with:
 
 ### Implementation for User Story 1
 
-- [ ] T021 [P] [US1] Create new FullscreenManager class in src/static/js/fullscreen-manager.js implementing native Fullscreen API with vendor prefixes
-- [ ] T022 [P] [US1] Implement enterFullscreen() method with iOS Safari fallback (fixed positioning + viewport units) in src/static/js/fullscreen-manager.js
-- [ ] T023 [P] [US1] Implement exitFullscreen() method handling both native API and fallback mode in src/static/js/fullscreen-manager.js
-- [ ] T024 [P] [US1] Implement isFullscreen() method and fullscreen state tracking in src/static/js/fullscreen-manager.js
-- [ ] T025 [P] [US1] Add handleOrientationChange() method to recalculate dimensions on device rotation in src/static/js/fullscreen-manager.js
-- [ ] T026 [US1] Integrate FullscreenManager into existing fullscreen.js overlay initialization
-- [ ] T027 [US1] Add fullscreen mode trigger on image click/tap in src/static/js/fullscreen.js
-- [ ] T028 [US1] Add fullscreen exit trigger on close button or ESC key in src/static/js/fullscreen.js
-- [ ] T029 [P] [US1] Add CSS styles for fullscreen mode in src/static/css/fullscreen.css (position: fixed, width: 100vw, height: 100vh, z-index: 9999)
-- [ ] T030 [P] [US1] Add CSS safe area insets for notched devices in src/static/css/fullscreen.css (padding with env(safe-area-inset-*))
-- [ ] T031 [US1] Add orientation change event listeners in src/static/js/fullscreen.js to maintain fullscreen through rotation
-- [ ] T032 [US1] Implement fallback for iOS Safari (scroll to hide address bar, prevent body scroll) in src/static/js/fullscreen-manager.js
+- [X] T021 [P] [US1] Create new FullscreenManager class in src/static/js/fullscreen-manager.js implementing native Fullscreen API with vendor prefixes
+- [X] T022 [P] [US1] Implement enterFullscreen() method with iOS Safari fallback (fixed positioning + viewport units) in src/static/js/fullscreen-manager.js
+- [X] T023 [P] [US1] Implement exitFullscreen() method handling both native API and fallback mode in src/static/js/fullscreen-manager.js
+- [X] T024 [P] [US1] Implement isFullscreen() method and fullscreen state tracking in src/static/js/fullscreen-manager.js
+- [X] T025 [P] [US1] Add handleOrientationChange() method to recalculate dimensions on device rotation in src/static/js/fullscreen-manager.js
+- [X] T026 [US1] Integrate FullscreenManager into existing fullscreen.js overlay initialization
+- [X] T027 [US1] Add fullscreen mode trigger on image click/tap in src/static/js/fullscreen.js
+- [X] T028 [US1] Add fullscreen exit trigger on close button or ESC key in src/static/js/fullscreen.js
+- [X] T029 [P] [US1] Add CSS styles for fullscreen mode in src/static/css/fullscreen.css (position: fixed, width: 100vw, height: 100vh, z-index: 9999)
+- [X] T030 [P] [US1] Add CSS safe area insets for notched devices in src/static/css/fullscreen.css (padding with env(safe-area-inset-*))
+- [X] T031 [US1] Add orientation change event listeners in src/static/js/fullscreen.js to maintain fullscreen through rotation
+- [X] T032 [US1] Implement fallback for iOS Safari (scroll to hide address bar, prevent body scroll) in src/static/js/fullscreen-manager.js
 
 **Checkpoint**: At this point, mobile users should have true full-screen image viewing with browser UI hidden
 
@@ -107,20 +107,20 @@ Single project structure with:
 
 ### Implementation for User Story 2
 
-- [ ] T033 [P] [US2] Create new ControlVisibilityManager class in src/static/js/control-visibility-manager.js with state machine (HIDDEN/VISIBLE/PENDING)
-- [ ] T034 [P] [US2] Implement showControls() method with 300ms fade-in transition in src/static/js/control-visibility-manager.js
-- [ ] T035 [P] [US2] Implement hideControls() method with 300ms fade-out transition in src/static/js/control-visibility-manager.js
-- [ ] T036 [P] [US2] Implement resetHideTimer() method with 3-second countdown in src/static/js/control-visibility-manager.js
-- [ ] T037 [P] [US2] Add mobile detection logic (viewport width < 768px) in src/static/js/control-visibility-manager.js
-- [ ] T038 [P] [US2] Implement handleUserInteraction() event handler (tap, click, swipe) in src/static/js/control-visibility-manager.js
-- [ ] T039 [US2] Integrate ControlVisibilityManager into fullscreen.js overlay initialization
-- [ ] T040 [US2] Add tap event listener on fullscreen image area to toggle control visibility in src/static/js/fullscreen.js
-- [ ] T041 [US2] Add control button click handlers that reset auto-hide timer in src/static/js/fullscreen.js
-- [ ] T042 [US2] Add swipe gesture detection to keep controls hidden during navigation in src/static/js/fullscreen.js
-- [ ] T043 [P] [US2] Add CSS styles for control visibility states in src/static/css/fullscreen.css (opacity: 0/1, pointer-events: none/auto, transition: 300ms)
-- [ ] T044 [P] [US2] Add CSS media query to keep controls visible on desktop (min-width: 768px) in src/static/css/fullscreen.css
-- [ ] T045 [US2] Add keyboard accessibility support (Tab, :focus-within keeps controls visible) in src/static/css/fullscreen.css
-- [ ] T046 [US2] Add destroy() cleanup method to remove event listeners in src/static/js/control-visibility-manager.js
+- [X] T033 [P] [US2] Create new ControlVisibilityManager class in src/static/js/control-visibility-manager.js with state machine (HIDDEN/VISIBLE/PENDING)
+- [X] T034 [P] [US2] Implement showControls() method with 300ms fade-in transition in src/static/js/control-visibility-manager.js
+- [X] T035 [P] [US2] Implement hideControls() method with 300ms fade-out transition in src/static/js/control-visibility-manager.js
+- [X] T036 [P] [US2] Implement resetHideTimer() method with 3-second countdown in src/static/js/control-visibility-manager.js
+- [X] T037 [P] [US2] Add mobile detection logic (viewport width < 768px) in src/static/js/control-visibility-manager.js
+- [X] T038 [P] [US2] Implement handleUserInteraction() event handler (tap, click, swipe) in src/static/js/control-visibility-manager.js
+- [X] T039 [US2] Integrate ControlVisibilityManager into fullscreen.js overlay initialization
+- [X] T040 [US2] Add tap event listener on fullscreen image area to toggle control visibility in src/static/js/fullscreen.js
+- [X] T041 [US2] Add control button click handlers that reset auto-hide timer in src/static/js/fullscreen.js
+- [X] T042 [US2] Add swipe gesture detection to keep controls hidden during navigation in src/static/js/fullscreen.js
+- [X] T043 [P] [US2] Add CSS styles for control visibility states in src/static/css/fullscreen.css (opacity: 0/1, pointer-events: none/auto, transition: 300ms)
+- [X] T044 [P] [US2] Add CSS media query to keep controls visible on desktop (min-width: 768px) in src/static/css/fullscreen.css
+- [X] T045 [US2] Add keyboard accessibility support (Tab, :focus-within keeps controls visible) in src/static/css/fullscreen.css
+- [X] T046 [US2] Add destroy() cleanup method to remove event listeners in src/static/js/control-visibility-manager.js
 
 **Checkpoint**: All user stories should now be independently functional - mobile users have full-screen with hidden controls, blur placeholders load instantly
 
@@ -130,8 +130,8 @@ Single project structure with:
 
 **Purpose**: Improvements that affect multiple user stories, documentation, and validation
 
-- [ ] T047 [P] Update README.md with blur placeholder feature description and configuration options
-- [ ] T048 [P] Update README.md with mobile full-screen feature description and browser compatibility notes
+- [X] T047 [P] Update README.md with blur placeholder feature description and configuration options
+- [X] T048 [P] Update README.md with mobile full-screen feature description and browser compatibility notes
 - [ ] T049 [P] Add logging for blur placeholder generation (success/failure counts, size statistics) in src/generator/thumbnails.py
 - [ ] T050 [P] Add performance monitoring logging in src/static/js/gallery.js (time to first blur display, time to thumbnail load)
 - [ ] T051 Update tests/integration/test_asset_budgets.py to adjust HTML size budget expectations for blur placeholder data URLs

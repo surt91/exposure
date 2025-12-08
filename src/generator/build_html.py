@@ -301,6 +301,8 @@ def _combine_js_files() -> str:
         ("gallery.js", "Gallery functionality"),
         ("a11y.js", "Accessibility helpers"),
         ("layout.js", "Flexible layout"),
+        ("fullscreen-manager.js", "Fullscreen manager"),
+        ("control-visibility-manager.js", "Control visibility manager"),
         ("fullscreen.js", "Fullscreen controller"),
     ]
 

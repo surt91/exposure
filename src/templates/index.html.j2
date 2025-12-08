@@ -53,6 +53,7 @@
                     data-height="{{ image['height'] }}"
 {% endif %}
 {% if image['blur_placeholder'] %}
+                    data-blur-placeholder="{{ image['blur_placeholder'] }}"
                     style="background-image: url('{{ image['blur_placeholder'] }}'); background-size: cover; background-position: center;"
 {% endif %}
                 >
