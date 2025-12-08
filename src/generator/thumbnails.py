@@ -112,10 +112,28 @@ class ThumbnailGenerator:
                 )
                 return None
 
-        # Generate blur placeholder if enabled (not stored in cache, generated on demand)
+        # Load blur placeholder from cache if available, otherwise regenerate
         blur_placeholder = None
         if self.blur_placeholder_config.enabled:
-            blur_placeholder = generate_blur_placeholder(source_path, self.blur_placeholder_config)
+            if (
+                cache_entry.blur_placeholder_data_url
+                and cache_entry.blur_placeholder_dimensions
+                and cache_entry.blur_placeholder_size_bytes is not None
+            ):
+                # Fast path: reconstruct from cache
+                blur_placeholder = BlurPlaceholder(
+                    data_url=cache_entry.blur_placeholder_data_url,
+                    size_bytes=cache_entry.blur_placeholder_size_bytes,
+                    dimensions=cache_entry.blur_placeholder_dimensions,
+                    blur_radius=self.blur_placeholder_config.blur_radius,
+                    source_hash=cache_entry.blur_placeholder_hash or "",
+                    generated_at=cache_entry.blur_placeholder_generated_at or datetime.now(),
+                )
+            else:
+                # Slow path: cache entry from old version without blur data, regenerate
+                blur_placeholder = generate_blur_placeholder(
+                    source_path, self.blur_placeholder_config
+                )
 
         # Return cached thumbnail info
         return ThumbnailImage(

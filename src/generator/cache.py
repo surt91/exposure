@@ -40,6 +40,18 @@ class CacheEntry(BaseModel):
         default=None,
         description="Timestamp when blur placeholder was generated",
     )
+    blur_placeholder_data_url: Optional[str] = Field(
+        default=None,
+        description="Cached base64-encoded blur placeholder data URL",
+    )
+    blur_placeholder_dimensions: Optional[tuple[int, int]] = Field(
+        default=None,
+        description="Cached blur placeholder dimensions (width, height)",
+    )
+    blur_placeholder_size_bytes: Optional[int] = Field(
+        default=None,
+        description="Cached blur placeholder data URL size in bytes",
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -100,6 +112,15 @@ class BuildCache(BaseModel):
             if thumbnail.blur_placeholder
             else None,
             blur_placeholder_generated_at=thumbnail.blur_placeholder.generated_at
+            if thumbnail.blur_placeholder
+            else None,
+            blur_placeholder_data_url=thumbnail.blur_placeholder.data_url
+            if thumbnail.blur_placeholder
+            else None,
+            blur_placeholder_dimensions=thumbnail.blur_placeholder.dimensions
+            if thumbnail.blur_placeholder
+            else None,
+            blur_placeholder_size_bytes=thumbnail.blur_placeholder.size_bytes
             if thumbnail.blur_placeholder
             else None,
         )
