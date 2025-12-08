@@ -150,6 +150,8 @@
         title: item.dataset.title || img.alt || item.dataset.filename || '',
         description: item.dataset.description || '',
         filename: item.dataset.filename || '',
+        width: parseInt(item.dataset.width) || null,
+        height: parseInt(item.dataset.height) || null,
         globalIndex: globalIndex
       };
     });
@@ -261,11 +263,48 @@
     }
 
     if (modalImg) {
+      // Hide the image immediately to prevent showing previous image
+      modalImg.style.opacity = '0';
+
       // Set blur placeholder as background if available
       if (modalImageContainer && blurPlaceholder) {
         modalImageContainer.style.backgroundImage = `url('${blurPlaceholder}')`;
         modalImageContainer.style.backgroundSize = 'cover';
         modalImageContainer.style.backgroundPosition = 'center';
+      } else {
+        // Clear background if no placeholder
+        if (modalImageContainer) {
+          modalImageContainer.style.backgroundImage = '';
+        }
+      }
+
+      // Calculate display dimensions to prevent size jumps
+      // Both thumbnail and original will be constrained to these dimensions
+      if (imageItem.width && imageItem.height) {
+        const maxWidth = Math.min(window.innerWidth * 0.9, imageItem.width);
+        const maxHeight = Math.min(window.innerHeight * 0.8, imageItem.height);
+        const aspectRatio = imageItem.width / imageItem.height;
+
+        let displayWidth, displayHeight;
+
+        // Fit within constraints while maintaining aspect ratio
+        if (imageItem.width / maxWidth > imageItem.height / maxHeight) {
+          // Width is the limiting factor
+          displayWidth = maxWidth;
+          displayHeight = maxWidth / aspectRatio;
+        } else {
+          // Height is the limiting factor
+          displayHeight = maxHeight;
+          displayWidth = maxHeight * aspectRatio;
+        }
+
+        // Set explicit dimensions to prevent size jumps
+        modalImg.style.width = `${displayWidth}px`;
+        modalImg.style.height = `${displayHeight}px`;
+      } else {
+        // Fallback: clear explicit dimensions if metadata unavailable
+        modalImg.style.width = '';
+        modalImg.style.height = '';
       }
 
       // Check if original image is already preloaded
@@ -277,13 +316,26 @@
         modalImg.src = originalSrc;
         modalImg.alt = imageItem.title;
         modalImg.classList.add('loaded');
-        modalImg.style.opacity = '1';
+
+        // Wait for the image to be rendered at correct size before showing
+        requestAnimationFrame(() => {
+          modalImg.style.opacity = '1';
+        });
       } else {
         // Original not ready - show thumbnail first
         modalImg.src = thumbnailSrc;
         modalImg.alt = imageItem.title;
         modalImg.classList.remove('loaded');
-        modalImg.style.opacity = '1';
+
+        // Show thumbnail after it's loaded
+        const thumbnailLoader = new Image();
+        thumbnailLoader.onload = function() {
+          // Thumbnail is loaded, fade it in
+          requestAnimationFrame(() => {
+            modalImg.style.opacity = '1';
+          });
+        };
+        thumbnailLoader.src = thumbnailSrc;
 
         // Load original in background
         currentImageLoader = new Image();
