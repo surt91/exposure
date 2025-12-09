@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Copilot Instructions**: Made more concise while remaining self-contained (228 lines, down from 220)
+  - Compressed data models section to show essential fields only
+  - Compressed i18n workflow to single command chain
+  - Streamlined output structure section
+
+### Added
+- **Copilot Instructions**: Added maintenance rule to update file after code changes
+- **Copilot Instructions**: Added error handling patterns section (path validation, PIL exceptions, logging)
+- **Copilot Instructions**: Expanded testing section with patterns for fixtures, mocking, and a11y tests
+
 ### Fixed
 - **Accessibility bug in fullscreen focus trap** - Fixed keyboard navigation issue where disabled buttons/inputs could receive focus during Tab navigation in the fullscreen modal, improving WCAG 2.1 compliance
 

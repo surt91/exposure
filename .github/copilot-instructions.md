@@ -2,6 +2,13 @@
 
 Static image gallery generator. Build-time Python pipeline → production-ready HTML/CSS/JS.
 
+## Maintenance Rule
+
+**⚠️ IMPORTANT:** After any code change, update this file if:
+- New patterns/conventions emerge
+- Project structure changes
+- New common gotchas discovered
+
 ## Tech Stack
 
 - **Python 3.11+**: Pydantic v2, Jinja2, Pillow, PyYAML, Babel, piexif, pydantic-settings
@@ -64,10 +71,7 @@ GalleryConfig(BaseSettings):  # settings.yaml + env vars
     gallery_yaml_path: Path
     output_dir: Path
     locale: str  # en or de
-    banner_image: Optional[Path]
-    gallery_title: Optional[str]
-    thumbnail_config: ThumbnailConfig
-    blur_placeholder_config: BlurPlaceholderConfig
+    # See model.py for full field list (banner_image, thumbnail_config, etc.)
 
 Image(BaseModel):
     filename: str
@@ -148,6 +152,15 @@ EXPOSURE_LOCALE=de EXPOSURE_LOG_LEVEL=DEBUG uv run exposure
 - Keep module internals private within IIFE
 - Document exports with JSDoc comments
 
+## Error Handling Patterns
+
+- Validate paths with `Path.exists()` before operations
+- Catch PIL exceptions (`OSError`, `UnidentifiedImageError`) when loading images
+- Use specific exceptions: `FileNotFoundError`, `ValueError`, `ValidationError`
+- Log errors with context: `logger.error(f"Failed to process {path}: {e}")`
+- Use context managers for file operations: `with open(path) as f:`
+- Prefer `Path.read_text()` and `Path.read_bytes()` for simple file reads
+
 ## Output Structure
 
 ```
@@ -190,6 +203,12 @@ dist/
 - **Unit** (`tests/unit/`): Fast, isolated
 - **Integration** (`tests/integration/`): Full pipeline, asset budgets, reproducibility
 - **Accessibility** (`tests/accessibility/`): Playwright+axe (requires `playwright install --with-deps chromium`)
+
+**Testing Patterns:**
+- Use pytest fixtures from `tests/fixtures/` (tmp_path, sample images, configs)
+- Mock external dependencies (file I/O, subprocess calls) in unit tests
+- Test both success and error paths
+- Run `uv run pytest -m a11y` before committing UI changes
 
 ## Debugging
 
