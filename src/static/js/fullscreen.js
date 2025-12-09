@@ -224,15 +224,33 @@
 
     // Tap on image area to toggle control visibility (mobile)
     const modalContent = modal.querySelector('.modal-content');
-    if (modalContent && controlVisibilityManager) {
-      modalContent.addEventListener('click', function(e) {
-        // Only toggle if clicking on the image area, not the metadata
+    const modalImageContainer = modal.querySelector('.modal-image-container');
+    const modalImage = modal.querySelector('#modal-image');
+
+    if (controlVisibilityManager) {
+      // Handle tap/click on various elements to show controls
+      const handleTapToShowControls = function(e) {
+        // Only toggle if tapping on the image area, not controls or metadata
         if (e.target.classList.contains('modal-content') ||
             e.target.classList.contains('modal-image-container') ||
             e.target.id === 'modal-image') {
           controlVisibilityManager.handleUserInteraction(e);
         }
-      });
+      };
+
+      // Use both touch and click events for better mobile support
+      if (modalContent) {
+        modalContent.addEventListener('click', handleTapToShowControls);
+        modalContent.addEventListener('touchend', handleTapToShowControls, { passive: true });
+      }
+      if (modalImageContainer) {
+        modalImageContainer.addEventListener('click', handleTapToShowControls);
+        modalImageContainer.addEventListener('touchend', handleTapToShowControls, { passive: true });
+      }
+      if (modalImage) {
+        modalImage.addEventListener('click', handleTapToShowControls);
+        modalImage.addEventListener('touchend', handleTapToShowControls, { passive: true });
+      }
     }
 
     // Keyboard handlers
