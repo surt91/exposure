@@ -26,7 +26,19 @@ src/generator/          # Core build logic
 └── constants.py       # Configuration defaults
 
 src/templates/         # Jinja2 HTML templates
-src/static/           # Vanilla ES modules + CSS
+src/static/            # Frontend JavaScript + CSS
+├── js/
+│   ├── gallery.js               # Main gallery initialization, lazy loading
+│   ├── fullscreen.js            # Fullscreen modal controller
+│   ├── fullscreen-manager.js   # Fullscreen API wrapper (class)
+│   ├── control-visibility-manager.js  # Auto-hide controls (class)
+│   ├── a11y.js                  # Accessibility helpers (focus trap, announcements)
+│   ├── layout.js                # Justified layout calculator
+│   └── vendor/justified-layout.js  # Vendored Flickr layout library
+└── css/
+    ├── gallery.css              # Main gallery styles
+    └── fullscreen.css           # Fullscreen modal styles
+
 config/               # settings.yaml (global), gallery.yaml (images)
 content/              # Source images
 tests/                # Unit, integration, accessibility
@@ -101,6 +113,40 @@ EXPOSURE_LOCALE=de EXPOSURE_LOG_LEVEL=DEBUG uv run exposure
 - Line length: 100 chars (Ruff)
 - Use `pathlib.Path`, not strings
 - Relative imports within `generator/`
+
+## Code Consistency Rules (Python)
+
+**Imports:**
+- Module-level imports only (no local imports in functions)
+- Exception: `setup_logging` in `main()` to avoid circular dependencies
+- Import order: stdlib → third-party → local modules
+
+**Utilities:**
+- Use `utils.py` for common operations: `hash_file()`, `hash_bytes()`, `hash_content()`
+- Never duplicate hash/validation functions in other modules
+- Single source of truth for reusable utilities
+
+**Logging:**
+- Always use module-level: `logger = logging.getLogger("exposure")`
+- Never inject logger as constructor parameter
+- No ad-hoc `logging.getLogger(__name__)` calls
+
+## Code Consistency Rules (JavaScript)
+
+**Module Pattern:**
+- Use IIFE for non-class modules: `(function() { 'use strict'; ... })();`
+- Use ES6 classes for stateful components: `class ComponentName { ... }`
+- Always include `'use strict';` at top of IIFE
+
+**Accessibility:**
+- Use `window.a11y.FOCUSABLE_ELEMENTS_SELECTOR` for all focusable element queries
+- Never create custom focusable selectors - ensures consistent `:not([disabled])` handling
+- Include proper ARIA attributes for all interactive elements
+
+**Global Exports:**
+- Export public API via `window.moduleName = { ... };`
+- Keep module internals private within IIFE
+- Document exports with JSDoc comments
 
 ## Output Structure
 

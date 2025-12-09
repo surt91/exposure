@@ -7,13 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Accessibility bug in fullscreen focus trap** - Fixed keyboard navigation issue where disabled buttons/inputs could receive focus during Tab navigation in the fullscreen modal, improving WCAG 2.1 compliance
+
 ### Changed
 - **Code quality improvements** - Refactored internal code structure for better maintainability
-  - Consolidated duplicate hash functions from `thumbnails.py` into `utils.py`
-  - Moved repeated local imports to module-level in `build_html.py` for better clarity
-  - Standardized logging patterns across all modules using consistent logger instances
-  - Removed ~50 lines of duplicate code with zero functionality changes
-  - All 162 tests passing with no breaking changes
+  - **Python backend:**
+    - Consolidated duplicate hash functions from `thumbnails.py` into `utils.py`
+    - Moved repeated local imports to module-level in `build_html.py` for better clarity
+    - Standardized logging patterns across all modules using consistent logger instances
+    - Removed ~50 lines of duplicate code with zero functionality changes
+  - **JavaScript frontend:**
+    - Extracted focusable element selector to single constant in `a11y.js`
+    - Eliminated duplicate selector definitions (3 instances → 1 constant)
+    - Exported selector via `window.a11y.FOCUSABLE_ELEMENTS_SELECTOR` for reuse
+  - All 225 tests passing with no breaking changes (162 Python + 63 integration/accessibility)
 
 ### Added
 - **Mobile touch swipe gestures** - Swipe left/right in fullscreen overlay to navigate between images

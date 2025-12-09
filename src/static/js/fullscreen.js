@@ -597,9 +597,10 @@
    * Trap focus within modal for accessibility
    */
   function trapFocus(e) {
-    const focusableElements = modal.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
+    // Use standard focusable selector from a11y module (includes :not([disabled]))
+    const selector = window.a11y?.FOCUSABLE_ELEMENTS_SELECTOR ||
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusableElements = modal.querySelectorAll(selector);
 
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];

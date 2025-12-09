@@ -12,18 +12,25 @@
   'use strict';
 
   /**
+   * Standard selector for all focusable elements
+   * Includes proper handling of disabled elements for accessibility
+   * @constant {string}
+   */
+  const FOCUSABLE_ELEMENTS_SELECTOR = [
+    'a[href]',
+    'button:not([disabled])',
+    'textarea:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(', ');
+
+  /**
    * Focus trap manager for modal dialogs
    * @param {HTMLElement} container - Container to trap focus within
    */
   function createFocusTrap(container) {
-    const focusableSelectors = [
-      'a[href]',
-      'button:not([disabled])',
-      'textarea:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])'
-    ].join(', ');
+    const focusableSelectors = FOCUSABLE_ELEMENTS_SELECTOR;
 
     return {
       activate: function() {
@@ -114,16 +121,7 @@
     }
 
     getFocusableElements(container) {
-      const selectors = [
-        'a[href]',
-        'button:not([disabled])',
-        'textarea:not([disabled])',
-        'input:not([disabled])',
-        'select:not([disabled])',
-        '[tabindex]:not([tabindex="-1"])'
-      ].join(', ');
-
-      return Array.from(container.querySelectorAll(selectors));
+      return Array.from(container.querySelectorAll(FOCUSABLE_ELEMENTS_SELECTOR));
     }
   }
 
@@ -212,6 +210,7 @@
 
   // Export utilities
   window.a11y = {
+    FOCUSABLE_ELEMENTS_SELECTOR: FOCUSABLE_ELEMENTS_SELECTOR,
     createFocusTrap: createFocusTrap,
     announce: announce,
     FocusManager: FocusManager,
