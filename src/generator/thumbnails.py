@@ -1,7 +1,6 @@
 """Thumbnail generation service for image preprocessing."""
 
 import base64
-import hashlib
 import json
 import logging
 from datetime import datetime
@@ -21,7 +20,9 @@ from src.generator.model import (
     ThumbnailConfig,
     ThumbnailImage,
 )
-from src.generator.utils import ensure_directory, hash_bytes, validate_file_exists
+from src.generator.utils import ensure_directory, hash_bytes, hash_file, validate_file_exists
+
+logger = logging.getLogger("exposure")
 
 
 class ThumbnailGenerator:
@@ -36,7 +37,6 @@ class ThumbnailGenerator:
         self,
         config: ThumbnailConfig,
         blur_placeholder_config: Optional[BlurPlaceholderConfig] = None,
-        logger: Optional[logging.Logger] = None,
     ) -> None:
         """
         Initialize thumbnail generator with configuration.
@@ -44,7 +44,6 @@ class ThumbnailGenerator:
         Args:
             config: Thumbnail generation configuration
             blur_placeholder_config: Optional blur placeholder configuration
-            logger: Optional logger instance (creates default if None)
 
         Raises:
             ValueError: If config validation fails
@@ -52,7 +51,6 @@ class ThumbnailGenerator:
         """
         self.config = config
         self.blur_placeholder_config = blur_placeholder_config or BlurPlaceholderConfig()
-        self.logger = logger or logging.getLogger(__name__)
 
         # Create output directory if it doesn't exist
         ensure_directory(self.config.output_dir)
@@ -75,7 +73,7 @@ class ThumbnailGenerator:
             return None
 
         # Check if cache is valid (handles blur placeholder config changes)
-        current_hash = _compute_image_hash(source_path)
+        current_hash = hash_file(source_path)
         if not cache_entry.is_valid(current_hash, self.blur_placeholder_config.enabled):
             return None
 
@@ -107,9 +105,7 @@ class ThumbnailGenerator:
                     thumb_height = thumb.height
             except Exception:
                 # If we can't open the thumbnail, invalidate cache
-                self.logger.warning(
-                    f"Cached thumbnail unreadable, regenerating: {source_path.name}"
-                )
+                logger.warning(f"Cached thumbnail unreadable, regenerating: {source_path.name}")
                 return None
 
         # Load blur placeholder from cache if available, otherwise regenerate
@@ -181,7 +177,7 @@ class ThumbnailGenerator:
         if self.config.enable_cache and not self.cache.should_regenerate(source_path):
             cached_thumbnail = self._load_from_cache(source_path)
             if cached_thumbnail:
-                self.logger.debug(f"Skipping {source_path.name} (cached, unchanged)")
+                logger.debug(f"Skipping {source_path.name} (cached, unchanged)")
                 return cached_thumbnail
 
         try:
@@ -189,7 +185,7 @@ class ThumbnailGenerator:
             if metadata is None:
                 metadata = self.extract_metadata(source_path)
 
-            content_hash = generate_content_hash(source_path.read_bytes())
+            content_hash = hash_bytes(source_path.read_bytes())
 
             with PILImage.open(source_path) as img:
                 # Prepare image for thumbnailing
@@ -221,7 +217,7 @@ class ThumbnailGenerator:
                 return thumbnail
 
         except Exception as e:
-            self.logger.warning(f"Failed to generate thumbnail for {source_path.name}: {e}")
+            logger.warning(f"Failed to generate thumbnail for {source_path.name}: {e}")
             return None
 
     def _prepare_image(self, img: PILImage.Image, metadata: ImageMetadata) -> PILImage.Image:
@@ -302,9 +298,9 @@ class ThumbnailGenerator:
             if current_hash not in old_file.name:
                 try:
                     old_file.unlink()
-                    self.logger.debug(f"Cleaned up old thumbnail: {old_file.name}")
+                    logger.debug(f"Cleaned up old thumbnail: {old_file.name}")
                 except OSError as e:
-                    self.logger.warning(f"Failed to remove old thumbnail {old_file.name}: {e}")
+                    logger.warning(f"Failed to remove old thumbnail {old_file.name}: {e}")
 
     def _save_thumbnails(
         self, thumb: PILImage.Image, source_path: Path, content_hash: str
@@ -338,7 +334,7 @@ class ThumbnailGenerator:
         if cleaned_exif is None:
             # Metadata filtering failed, log warning
             strip_warning = f"Metadata filtering failed for {source_path.name}"
-            self.logger.warning(f"⚠ WARNING: {strip_warning}")
+            logger.warning(f"⚠ WARNING: {strip_warning}")
 
         # Save WebP thumbnail with cleaned EXIF
         thumb.save(
@@ -436,14 +432,14 @@ class ThumbnailGenerator:
         reduction_pct = thumbnail.size_reduction_percent
 
         # Log INFO-level progress message
-        self.logger.info(
+        logger.info(
             f"✓ {thumbnail.source_filename} → {source_size_str} → {thumb_size_str} "
             f"({reduction_pct:.1f}% reduction)"
         )
 
         # Log warning if metadata stripping failed
         if thumbnail.metadata_strip_warning:
-            self.logger.warning(
+            logger.warning(
                 f"⚠ WARNING: Metadata stripping failed for {thumbnail.source_filename}: "
                 f"{thumbnail.metadata_strip_warning}"
             )
@@ -487,7 +483,7 @@ class ThumbnailGenerator:
                     else:
                         cached_count += 1
             except Exception as e:
-                self.logger.warning(f"Failed to process {source_path.name}: {e}")
+                logger.warning(f"Failed to process {source_path.name}: {e}")
                 failed.append(source_path)
 
             # Report progress
@@ -499,7 +495,7 @@ class ThumbnailGenerator:
             self.save_cache()
 
         # Log summary
-        self.logger.info(
+        logger.info(
             f"Thumbnails: {generated_count} generated, {cached_count} cached, {len(failed)} failed"
         )
 
@@ -518,7 +514,7 @@ class ThumbnailGenerator:
         cache_file = self.config.cache_file
 
         if not cache_file.exists():
-            self.logger.debug(f"No cache file found at {cache_file}, starting fresh")
+            logger.debug(f"No cache file found at {cache_file}, starting fresh")
             return BuildCache()
 
         try:
@@ -526,12 +522,12 @@ class ThumbnailGenerator:
 
             # Validate cache version
             if cache_data.get("cache_version") != CACHE_VERSION:
-                self.logger.warning("Cache version mismatch, regenerating all thumbnails")
+                logger.warning("Cache version mismatch, regenerating all thumbnails")
                 return BuildCache()
 
             return BuildCache(**cache_data)
         except (json.JSONDecodeError, ValueError) as e:
-            self.logger.warning(f"Build cache corrupted ({e}), regenerating all thumbnails")
+            logger.warning(f"Build cache corrupted ({e}), regenerating all thumbnails")
             return BuildCache()
 
     def save_cache(self) -> None:
@@ -654,44 +650,8 @@ def calculate_thumbnail_dimensions(
     return (thumb_width, thumb_height)
 
 
-def generate_content_hash(image_bytes: bytes) -> str:
-    """
-    Generate hash from image content.
-
-    Uses SHA-256 for reproducibility and collision resistance.
-
-    Args:
-        image_bytes: Raw image file bytes
-
-    Returns:
-        Hash string of fixed length
-
-    Examples:
-        >>> generate_content_hash(Path("photo.jpg").read_bytes())
-        'a1b2c3d4'
-    """
-    return hash_bytes(image_bytes)
-
-
-def _compute_image_hash(source_path: Path) -> str:
-    """
-    Compute SHA256 hash of source image file.
-
-    Used for cache invalidation when source image changes.
-
-    Args:
-        source_path: Path to source image file
-
-    Returns:
-        SHA256 hash as hexadecimal string (first CONTENT_HASH_LENGTH characters)
-
-    Examples:
-        >>> _compute_image_hash(Path("photo.jpg"))
-        'a1b2c3d4'  # 8 character hex string
-    """
-    from .constants import CONTENT_HASH_LENGTH
-
-    return hashlib.sha256(source_path.read_bytes()).hexdigest()[:CONTENT_HASH_LENGTH]
+# Note: Hash functions consolidated in utils.py
+# Use hash_file() for file paths and hash_bytes() for byte data
 
 
 def _optimize_data_url_size(
@@ -793,7 +753,7 @@ def generate_blur_placeholder(
             )
 
             # Compute source hash for cache validation
-            source_hash = _compute_image_hash(source_path)
+            source_hash = hash_file(source_path)
 
             return BlurPlaceholder(
                 data_url=data_url,
@@ -805,9 +765,7 @@ def generate_blur_placeholder(
             )
 
     except Exception as e:
-        logging.getLogger(__name__).warning(
-            f"Failed to generate blur placeholder for {source_path.name}: {e}"
-        )
+        logger.warning(f"Failed to generate blur placeholder for {source_path.name}: {e}")
         return None
 
 

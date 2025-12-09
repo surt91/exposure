@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Code quality improvements** - Refactored internal code structure for better maintainability
+  - Consolidated duplicate hash functions from `thumbnails.py` into `utils.py`
+  - Moved repeated local imports to module-level in `build_html.py` for better clarity
+  - Standardized logging patterns across all modules using consistent logger instances
+  - Removed ~50 lines of duplicate code with zero functionality changes
+  - All 162 tests passing with no breaking changes
+
 ### Added
 - **Mobile touch swipe gestures** - Swipe left/right in fullscreen overlay to navigate between images
 - Cross-category navigation - Seamlessly browse through all images across categories with wrapping

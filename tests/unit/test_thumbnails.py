@@ -104,56 +104,56 @@ class TestCalculateThumbnailDimensions:
         assert abs((width / height) - (3 / 2)) < 0.01
 
 
-class TestGenerateContentHash:
-    """Tests for generate_content_hash helper function."""
+class TestHashBytes:
+    """Tests for hash_bytes utility function (used by thumbnail generation)."""
 
     def test_hash_length(self):
         """Test that hash is exactly 8 characters."""
-        from src.generator.thumbnails import generate_content_hash
+        from src.generator.utils import hash_bytes
 
         test_data = b"test image data"
-        hash_result = generate_content_hash(test_data)
+        hash_result = hash_bytes(test_data)
 
         assert len(hash_result) == 8
 
     def test_hash_is_hexadecimal(self):
         """Test that hash contains only hexadecimal characters."""
-        from src.generator.thumbnails import generate_content_hash
+        from src.generator.utils import hash_bytes
 
         test_data = b"test image data"
-        hash_result = generate_content_hash(test_data)
+        hash_result = hash_bytes(test_data)
 
         # Should be valid hex string
         assert all(c in "0123456789abcdef" for c in hash_result)
 
     def test_hash_reproducibility(self):
         """Test that same input produces same hash."""
-        from src.generator.thumbnails import generate_content_hash
+        from src.generator.utils import hash_bytes
 
         test_data = b"test image data"
-        hash1 = generate_content_hash(test_data)
-        hash2 = generate_content_hash(test_data)
+        hash1 = hash_bytes(test_data)
+        hash2 = hash_bytes(test_data)
 
         assert hash1 == hash2
 
     def test_hash_uniqueness(self):
         """Test that different inputs produce different hashes."""
-        from src.generator.thumbnails import generate_content_hash
+        from src.generator.utils import hash_bytes
 
         data1 = b"test image data 1"
         data2 = b"test image data 2"
 
-        hash1 = generate_content_hash(data1)
-        hash2 = generate_content_hash(data2)
+        hash1 = hash_bytes(data1)
+        hash2 = hash_bytes(data2)
 
         assert hash1 != hash2
 
     def test_hash_with_empty_data(self):
         """Test hash generation with empty data."""
-        from src.generator.thumbnails import generate_content_hash
+        from src.generator.utils import hash_bytes
 
         empty_data = b""
-        hash_result = generate_content_hash(empty_data)
+        hash_result = hash_bytes(empty_data)
 
         # Should still produce valid 8-character hash
         assert len(hash_result) == 8
@@ -161,11 +161,11 @@ class TestGenerateContentHash:
 
     def test_hash_with_large_data(self):
         """Test hash generation with large data."""
-        from src.generator.thumbnails import generate_content_hash
+        from src.generator.utils import hash_bytes
 
         # Simulate 1MB of data
         large_data = b"x" * (1024 * 1024)
-        hash_result = generate_content_hash(large_data)
+        hash_result = hash_bytes(large_data)
 
         assert len(hash_result) == 8
 

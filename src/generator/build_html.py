@@ -7,9 +7,12 @@ from typing import Any
 
 # Import model module to set the yaml file path
 from . import model
-from .i18n import _
+from .assets import copy_with_hash, write_with_hash
+from .i18n import _, setup_i18n
 from .model import Category, GalleryConfig, Image
 from .scan import detect_duplicates, discover_images, filter_valid_images, get_image_dimensions
+from .thumbnails import ThumbnailGenerator
+from .utils import ensure_directory
 from .yaml_sync import append_stub_entries, get_entry_map, load_gallery_yaml
 
 logger = logging.getLogger("exposure")
@@ -239,9 +242,6 @@ def copy_banner_image(config: GalleryConfig) -> str | None:
     if not config.banner_image:
         return None
 
-    from .assets import copy_with_hash
-    from .utils import ensure_directory
-
     # Create banner output directory
     banner_output_dir = config.output_dir / "images" / "banner"
     ensure_directory(banner_output_dir)
@@ -328,8 +328,6 @@ def _setup_jinja_environment(locale: str):
     """
     from jinja2 import Environment, FileSystemLoader
 
-    from .i18n import setup_i18n
-
     translations = setup_i18n(locale)
     templates_dir = Path(__file__).parent.parent / "templates"
 
@@ -382,8 +380,6 @@ def _prepare_template_image(image: Image, output_dir: Path) -> dict[str, Any]:
     Returns:
         Dictionary with image data for template
     """
-    from .assets import copy_with_hash
-
     # Copy original image to originals directory with metadata stripping
     originals_dir = output_dir / "images" / "originals"
     img_dest = copy_with_hash(image.file_path, originals_dir, strip_metadata=True)
@@ -446,8 +442,6 @@ def generate_gallery_html(categories: list[Category], config: GalleryConfig) -> 
     Returns:
         Generated HTML string
     """
-    from .assets import write_with_hash
-
     # Setup Jinja2 environment
     env = _setup_jinja_environment(config.locale)
     template = env.get_template("index.html.j2")
@@ -505,8 +499,6 @@ def _generate_thumbnails_for_images(images: list[Image], config: GalleryConfig) 
         images: List of Image objects to generate thumbnails for
         config: Gallery configuration
     """
-    from .thumbnails import ThumbnailGenerator
-
     logger.info(_("Generating thumbnails..."))
 
     # Configure thumbnail generator with gallery output paths
@@ -514,7 +506,7 @@ def _generate_thumbnails_for_images(images: list[Image], config: GalleryConfig) 
     thumbnail_config.output_dir = config.output_dir / "images" / "thumbnails"
     thumbnail_config.cache_file = config.output_dir / ".build-cache.json"
 
-    thumb_gen = ThumbnailGenerator(thumbnail_config, config.blur_placeholder_config, logger)
+    thumb_gen = ThumbnailGenerator(thumbnail_config, config.blur_placeholder_config)
 
     # Generate thumbnails
     image_paths = [img.file_path for img in images]
@@ -537,8 +529,6 @@ def _write_html_output(html: str, output_dir: Path) -> Path:
     Returns:
         Path to written HTML file
     """
-    from .utils import ensure_directory
-
     output_path = output_dir / "index.html"
     ensure_directory(output_path.parent)
     output_path.write_text(html, encoding="utf-8")
@@ -575,8 +565,6 @@ def build_gallery(config_path: Path = Path("config/settings.yaml")) -> None:
     """
     # Load configuration and setup i18n
     config = load_config(config_path)
-
-    from .i18n import setup_i18n
 
     setup_i18n(config.locale)
 
